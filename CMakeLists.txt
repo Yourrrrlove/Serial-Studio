@@ -41,7 +41,7 @@ find_package(
 #-------------------------------------------------------------------------------
 
 option(DEBUG_SANITIZER "Enable sanitizers for debug builds" OFF)
-option(PRODUCTION_OPTIMIZATION "Enable production optimization flags" ON)
+option(PRODUCTION_OPTIMIZATION "Enable production optimization flags" OFF)
 
 #-------------------------------------------------------------------------------
 # Project information
@@ -53,8 +53,8 @@ set(PROJECT_VENDOR              "Alex Spataru")
 set(PROJECT_CONTACT             "serial-studio.github.io")
 set(PROJECT_DESCRIPTION_SUMMARY "Flexible data visualization software for embedded devices and projects")
 set(PROJECT_VERSION_MAJOR       "3")
-set(PROJECT_VERSION_MINOR       "0")
-set(PROJECT_VERSION_PATCH       "6")
+set(PROJECT_VERSION_MINOR       "1")
+set(PROJECT_VERSION_PATCH       "2")
 set(PROJECT_VERSION             "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
 set(PROJECT_APPCAST             "https://raw.githubusercontent.com/Serial-Studio/Serial-Studio/master/updates.json")
 

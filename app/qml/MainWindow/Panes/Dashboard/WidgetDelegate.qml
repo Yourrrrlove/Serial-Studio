@@ -195,6 +195,7 @@ Widgets.MiniWindow {
   Item {
     id: container
     anchors.fill: parent
+    anchors.margins: 1
     anchors.topMargin: root.captionHeight
     Component.onCompleted: widgetLoader.createObject(container, {windowRoot: root})
   }
@@ -215,7 +216,7 @@ Widgets.MiniWindow {
         width: 640
         height: 480
         visible: true
-        flags: Qt.Window
+        transientParent: null
         minimumWidth: root.minimumWidth
         minimumHeight: root.minimumHeight
         onClosing: externalWindowLoader.active = false

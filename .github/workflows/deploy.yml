@@ -39,7 +39,7 @@ on:
 #-------------------------------------------------------------------------------
 
 env:
-  VERSION: "3.0.6"
+  VERSION: "3.1.2"
   INSTALL_QT: false
   QT_VERSION_LINUX: 6.9.1
   QT_VERSION_MACOS: 6.9.1
@@ -181,7 +181,7 @@ jobs:
 
         export QML_SOURCES_PATHS="${{env.QML_DIR}}"
 
-        ./linuxdeploy-x86_64.AppImage --appdir AppDir -e ${{env.UNIXNAME}} -i ../../app/deploy/linux/${{env.UNIXNAME}}.svg -d ../../app/deploy/linux/${{env.UNIXNAME}}.desktop --plugin qt --output appimage
+        ./linuxdeploy-x86_64.AppImage --appdir AppDir -e ${{env.UNIXNAME}} -i ../../app/deploy/linux/${{env.UNIXNAME}}.png -d ../../app/deploy/linux/${{env.UNIXNAME}}.desktop --plugin qt --output appimage
 
         rm linuxdeploy-x86_64.AppImage
         rm linuxdeploy-plugin-qt-x86_64.AppImage
@@ -344,7 +344,7 @@ jobs:
 
         export QML_SOURCES_PATHS="${{env.QML_DIR}}"
 
-        ./linuxdeploy-aarch64.AppImage --appdir AppDir -e ${{env.UNIXNAME}} -i ../../app/deploy/linux/${{env.UNIXNAME}}.svg -d ../../app/deploy/linux/${{env.UNIXNAME}}.desktop --plugin qt --output appimage
+        ./linuxdeploy-aarch64.AppImage --appdir AppDir -e ${{env.UNIXNAME}} -i ../../app/deploy/linux/${{env.UNIXNAME}}.png -d ../../app/deploy/linux/${{env.UNIXNAME}}.desktop --plugin qt --output appimage
 
         rm linuxdeploy-aarch64.AppImage
         rm linuxdeploy-plugin-qt-aarch64.AppImage
@@ -587,7 +587,7 @@ jobs:
         path: ${{env.EXECUTABLE}}-${{env.VERSION}}-Windows-x86_64.msi
 
 #-------------------------------------------------------------------------------
-# Create continous release
+# Create release
 #-------------------------------------------------------------------------------
 
   upload:
@@ -600,7 +600,7 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      RELEASE_TAG: continuous
+      RELEASE_TAG: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && github.ref_name || 'continuous' }}
 
     steps:
       - name: '📥 Download artifacts'
@@ -628,8 +628,8 @@ jobs:
           find ./artifacts -type f \( -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" -o -name "*.dmg" -o -name "*.exe" -o -name "*.msi" \) | sort | while read -r file; do
             hash=$(sha256sum "$file" | awk '{print $1}')
             filename=$(basename "$file")
-            echo "| \`$filename\` | \`$hash\` |"
-          done >> release-body.md
+            echo "| \`$filename\` | \`$hash\` |" >> release-body.md
+          done
 
       - name: '🚀 Create Release'
         uses: ncipollo/release-action@v1
@@ -641,9 +641,9 @@ jobs:
           name: 'Continuous Build'
           bodyFile: release-body.md
           artifacts: |
-            artifacts/*.deb,
-            artifacts/*.rpm,
-            artifacts/*.AppImage,
-            artifacts/*.dmg,
-            artifacts/*.exe,
+            artifacts/*.deb
+            artifacts/*.rpm
+            artifacts/*.AppImage
+            artifacts/*.dmg
+            artifacts/*.exe
             artifacts/*.msi
