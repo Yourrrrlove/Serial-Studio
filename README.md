@@ -1,6 +1,7 @@
 # Serial Studio
 
 [![GitHub downloads](https://img.shields.io/github/downloads/Serial-Studio/Serial-Studio/total.svg?logo=github)](https://github.com/Serial-Studio/Serial-Studio/releases/)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Serial-Studio/Serial-Studio)
 [![Instagram](https://img.shields.io/badge/Instagram-E4405F?logo=instagram&logoColor=white)](https://instagram.com/serialstudio.app)
 [![Donate](https://img.shields.io/badge/Donate-00457C?logo=paypal&logoColor=white)](https://www.paypal.com/donate?hosted_button_id=XN68J47QJKYDE)
 [![Buy Pro](https://img.shields.io/badge/Buy%20Pro-Lemon%20Squeezy-blue?logo=lemonsqueezy)](https://store.serial-studio.com/)
@@ -133,3 +134,19 @@ A paid license is required to:
 - Receive priority support.
 
 Without a valid license, use of the binary is limited to personal and evaluation purposes only.
+
+### Choosing the Right Version of Serial Studio
+
+Refer to the comparison table below to understand the capabilities and limitations of each edition. This will help you select the appropriate license for your technical or organizational requirements.
+
+| Feature / Use Case         | GPL Version *(Build it yourself)* | Free Version *(Official binary)* | Pro Version *(Commercial license)* |
+|---------------------------|------------------------------------|----------------------------------|-------------------------------------|
+| Commercial Use            | ✅ If GPL terms are respected      | ❌ Personal use only             | ✅ Fully licensed                   |
+| Official Support          | ❌ Community only                  | ❌ None                          | ✅ Priority support                |
+| Pro Features *(MQTT, XY, 3D)* | ❌ Not included                | ❌ Not included                  | ✅ Included                        |
+| Usage Restrictions        | Must release source code           | No commercial use               | Licensed use only                 |
+| Precompiled Binary        | ❌ Build required                  | ✅ Included                      | ✅ Included                        |
+| Qt Licensing              | Must use open-source Qt            | Handled by developer            | Handled by developer              |
+| Activation                | ❌                                 | ❌                               | ✅ License key required           |
+| Business Use              | ✅ If GPL compliant                | ❌ Not allowed                   | ✅ Allowed                         |
+| Best For                  | Open source devs, students         | Hobbyists, evaluation           | Businesses, professional teams    |

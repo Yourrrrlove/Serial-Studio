@@ -46,6 +46,7 @@ UI::Dashboard::Dashboard()
   , m_precision(2)
   , m_widgetCount(0)
   , m_updateRequired(false)
+  , m_showActionPanel(true)
   , m_terminalEnabled(false)
 {
   // clang-format off
@@ -77,6 +78,10 @@ UI::Dashboard::Dashboard()
               Q_EMIT updated();
             }
           });
+
+  // Update action items when frame format changes
+  connect(this, &UI::Dashboard::widgetCountChanged, this,
+          &UI::Dashboard::actionStatusChanged);
 }
 
 /**
@@ -102,20 +107,20 @@ UI::Dashboard &UI::Dashboard::instance()
  * @param min The minimum value of the range.
  * @param max The maximum value of the range.
  * @param multiplier Scaling factor for step size granularity (default = 0.2).
- * @return qreal The computed interval size for the given range.
+ * @return double The computed interval size for the given range.
  *
  * @note Common intervals (e.g., 0.1, 0.2, 0.5, 1, 2, 5, 10) are selected
  *       to enhance readability. Ensures the interval divides the range evenly.
  */
-qreal UI::Dashboard::smartInterval(const qreal min, const qreal max,
-                                   const qreal multiplier)
+double UI::Dashboard::smartInterval(const double min, const double max,
+                                    const double multiplier)
 {
   // Calculate an initial step size
   const auto range = qAbs(max - min);
   const auto digits = static_cast<int>(std::ceil(std::log10(range)));
-  const qreal r = std::pow(10.0, -digits) * 10;
-  const qreal v = std::ceil(range * r) / r;
-  qreal step = qMax(0.0001, v * multiplier);
+  const double r = std::pow(10.0, -digits) * 10;
+  const double v = std::ceil(range * r) / r;
+  double step = qMax(0.0001, v * multiplier);
 
   // For smaller steps, use 0.1, 0.2, 0.5, etc.
   if (step < 1.0)
@@ -133,8 +138,8 @@ qreal UI::Dashboard::smartInterval(const qreal min, const qreal max,
   // For larger steps, round to 1, 2, 5, 10, etc.
   else
   {
-    const qreal factor = std::pow(10.0, std::floor(std::log10(step)));
-    const qreal normalizedStep = step / factor;
+    const double factor = std::pow(10.0, std::floor(std::log10(step)));
+    const double normalizedStep = step / factor;
 
     if (normalizedStep <= 1.0)
       step = factor;
@@ -167,6 +172,15 @@ qreal UI::Dashboard::smartInterval(const qreal min, const qreal max,
 bool UI::Dashboard::available() const
 {
   return totalWidgetCount() > 0 && streamAvailable();
+}
+
+/**
+ * @brief Returns @c true if a rectangle with a list of actions should be
+ *        displayed alongside the dashboard.
+ */
+bool UI::Dashboard::showActionPanel() const
+{
+  return m_showActionPanel;
 }
 
 /**
@@ -356,8 +370,21 @@ const QString &UI::Dashboard::title() const
 }
 
 /**
- * @brief Retrieves the icons for each action available on the dashboard.
- * @return A list of icons corresponding to each action.
+ * @brief Returns a list of available dashboard actions with their metadata.
+ *
+ * Each action is represented as a QVariantMap containing the following keys:
+ * - `"id"`: The index of the action (used for identification).
+ * - `"text"`: The display title of the action.
+ * - `"icon"`: A path to the icon resource associated with the action.
+ * - `"checked"`: A boolean indicating the toggle state of the action.
+ *                This is only true if the action uses
+ * TimerMode::ToggleOnTrigger and its corresponding timer is currently active.
+ *
+ * This method is used to populate the user interface with actionable items,
+ * such as buttons. The "checked" state allows UI components to reflect
+ * whether an action with toggle behavior is currently running.
+ *
+ * @return A QVariantList of QVariantMaps describing each action.
  */
 QVariantList UI::Dashboard::actions() const
 {
@@ -368,8 +395,15 @@ QVariantList UI::Dashboard::actions() const
 
     QVariantMap m;
     m["id"] = i;
+    m["checked"] = false;
     m["text"] = action.title();
     m["icon"] = QStringLiteral("qrc:/rcc/actions/%1.svg").arg(action.icon());
+    if (action.timerMode() == JSON::Action::TimerMode::ToggleOnTrigger)
+    {
+      if (m_timers.contains(i) && m_timers[i] && m_timers[i]->isActive())
+        m["checked"] = true;
+    }
+
     actions.append(m);
   }
 
@@ -552,27 +586,6 @@ void UI::Dashboard::setPoints(const int points)
 }
 
 /**
- * @brief Activates an action by sending its associated data via the IO Manager.
- * @param index The index of the action to activate.
- * @throws An assertion failure if the index is out of bounds.
- */
-void UI::Dashboard::activateAction(const int index)
-{
-  if (index >= 0 && index < m_actions.count())
-  {
-    const auto &action = m_actions[index];
-
-    QByteArray bin;
-    if (action.binaryData())
-      bin = IO::Console::hexToBytes(action.txData());
-    else
-      bin = QString(action.txData() + action.eolSequence()).toUtf8();
-
-    IO::Manager::instance().writeData(bin);
-  }
-}
-
-/**
  * @brief Sets the precision level for the dashboard, if changed, and emits
  *        the @c precisionChanged signal to update the UI.
  *
@@ -616,8 +629,6 @@ void UI::Dashboard::resetData(const bool notify)
 
   // Clear widget & action structures
   m_widgetCount = 0;
-  m_actions.clear();
-  m_actions.squeeze();
   m_widgetMap.clear();
   m_widgetGroups.clear();
   m_widgetDatasets.clear();
@@ -627,6 +638,9 @@ void UI::Dashboard::resetData(const bool notify)
   m_rawFrame = JSON::Frame();
   m_lastFrame = JSON::Frame();
 
+  // Configure actions
+  configureActions(JSON::FrameBuilder::instance().frame());
+
   // Notify user interface
   if (notify)
   {
@@ -634,9 +648,20 @@ void UI::Dashboard::resetData(const bool notify)
 
     Q_EMIT updated();
     Q_EMIT dataReset();
-    Q_EMIT actionCountChanged();
     Q_EMIT widgetCountChanged();
     Q_EMIT containsCommercialFeaturesChanged();
+  }
+}
+
+/**
+ * @brief Enables/disables the action panel.
+ */
+void UI::Dashboard::setShowActionPanel(const bool enabled)
+{
+  if (m_showActionPanel != enabled)
+  {
+    m_showActionPanel = enabled;
+    Q_EMIT showActionPanelChanged();
   }
 }
 
@@ -652,6 +677,93 @@ void UI::Dashboard::setTerminalEnabled(const bool enabled)
   }
 
   Q_EMIT terminalEnabledChanged();
+}
+
+//------------------------------------------------------------------------------
+// Action activation, more complex that it seems...
+//------------------------------------------------------------------------------
+
+/**
+ * @brief Activates a dashboard action by transmitting its associated data and
+ * handling timer logic.
+ *
+ * This function is responsible for executing an action defined in the current
+ * dashboard configuration. It sends the action's payload over the serial
+ * interface and manages timer behavior based on the action's configured
+ * TimerMode.
+ *
+ * @param index The index of the action to activate. Must be within bounds of
+ *              the current action list.
+ * @param guiTrigger Indicates whether the action was triggered by user
+ *                   interaction (e.g. from the GUI). This affects behavior for
+ *                   actions using TimerMode::ToggleOnTrigger—toggling only
+ *                   occurs if the trigger originated from the GUI.
+ *
+ * Behavior:
+ * - If the action is configured with TimerMode::StartOnTrigger, the timer will
+ *   start on first activation.
+ * - If the action is configured with TimerMode::ToggleOnTrigger, the timer
+ *   toggles on GUI-triggered calls.
+ * - All actions result in data being transmitted via IO::Manager, using either
+ *   binary or text formatting.
+ *
+ * Emits:
+ * - actionStatusChanged() signal to notify the UI that the action state may
+ *   have changed (e.g. toggle state).
+ */
+void UI::Dashboard::activateAction(const int index, const bool guiTrigger)
+{
+  // Validate index
+  if (index < 0 || index >= m_actions.count())
+    return;
+
+  // Obtain action data
+  const auto &action = m_actions[index];
+
+  // Handle timer behavior
+  if (m_timers.contains(index))
+  {
+    auto *timer = m_timers[index];
+    if (!timer)
+      qWarning() << "Invalid timer pointer for action" << action.title();
+
+    else
+    {
+      if (action.timerMode() == JSON::Action::TimerMode::StartOnTrigger)
+      {
+        if (!timer->isActive())
+          timer->start();
+      }
+
+      else if (action.timerMode() == JSON::Action::TimerMode::ToggleOnTrigger)
+      {
+        if (guiTrigger)
+        {
+          if (timer->isActive())
+            timer->stop();
+          else
+            timer->start();
+        }
+      }
+    }
+  }
+
+  // Send data payload
+  if (!IO::Manager::instance().paused())
+  {
+    // Build data payload
+    QByteArray bin;
+    if (action.binaryData())
+      bin = SerialStudio::hexToBytes(action.txData());
+    else
+      bin = QString(action.txData() + action.eolSequence()).toUtf8();
+
+    // Transmit via IO Manager
+    IO::Manager::instance().writeData(bin);
+  }
+
+  // Update action model
+  Q_EMIT actionStatusChanged();
 }
 
 //------------------------------------------------------------------------------
@@ -892,8 +1004,7 @@ void UI::Dashboard::reconfigureDashboard(const JSON::Frame &frame)
   }
 
   // Update actions
-  m_actions = frame.actions();
-  Q_EMIT actionCountChanged();
+  configureActions(frame);
 
   // Update user interface
   Q_EMIT widgetCountChanged();
@@ -949,7 +1060,7 @@ void UI::Dashboard::updatePlots()
     const auto &dataset = getDatasetWidget(SerialStudio::DashboardFFT, i);
     auto *data = m_fftValues[i].data();
     auto count = m_fftValues[i].size();
-    SIMD::shift<qreal>(data, count, dataset.value().toDouble());
+    SIMD::shift(data, count, dataset.value().toDouble());
   }
 
   // Append latest values to linear plots data
@@ -964,7 +1075,7 @@ void UI::Dashboard::updatePlots()
       yAxesMoved.insert(yDataset.index());
       auto *yData = m_yAxisData[yDataset.index()].data();
       auto yCount = m_yAxisData[yDataset.index()].size();
-      SIMD::shift<qreal>(yData, yCount, yDataset.value().toDouble());
+      SIMD::shift(yData, yCount, yDataset.value().toDouble());
     }
 
     // Shift X-axis points
@@ -975,7 +1086,7 @@ void UI::Dashboard::updatePlots()
       const auto &xDataset = m_datasets[xAxisId];
       auto *xData = m_xAxisData[xAxisId].data();
       auto xCount = m_xAxisData[xAxisId].size();
-      SIMD::shift<qreal>(xData, xCount, xDataset.value().toDouble());
+      SIMD::shift(xData, xCount, xDataset.value().toDouble());
     }
   }
 
@@ -988,7 +1099,7 @@ void UI::Dashboard::updatePlots()
       const auto &dataset = group.datasets()[j];
       auto *data = m_multipltValues[i].y[j].data();
       auto count = m_multipltValues[i].y[j].size();
-      SIMD::shift<qreal>(data, count, dataset.value().toDouble());
+      SIMD::shift(data, count, dataset.value().toDouble());
     }
   }
 
@@ -1043,7 +1154,7 @@ void UI::Dashboard::configureFftSeries()
     const auto &dataset = getDatasetWidget(SerialStudio::DashboardFFT, i);
     m_fftValues.append(PlotDataY());
     m_fftValues.last().resize(dataset.fftSamples());
-    SIMD::fill<qreal>(m_fftValues.last().data(), dataset.fftSamples(), 0);
+    SIMD::fill(m_fftValues.last().data(), dataset.fftSamples(), 0);
   }
 }
 
@@ -1073,7 +1184,7 @@ void UI::Dashboard::configureLineSeries()
   m_pltXAxis.clear();
   m_pltXAxis.shrink_to_fit();
   m_pltXAxis.resize(points() + 1);
-  SIMD::fill_range<qreal>(m_pltXAxis.data(), m_pltXAxis.size(), 0);
+  SIMD::fill_range(m_pltXAxis.data(), m_pltXAxis.size(), 0);
 
   // Construct X/Y axis data arrays
   for (auto i = m_widgetDatasets.begin(); i != m_widgetDatasets.end(); ++i)
@@ -1117,8 +1228,8 @@ void UI::Dashboard::configureLineSeries()
       const auto &xDataset = m_datasets[yDataset.xAxisId()];
       m_xAxisData[xDataset.index()].resize(points() + 1);
       m_yAxisData[yDataset.index()].resize(points() + 1);
-      SIMD::fill<qreal>(m_xAxisData[xDataset.index()].data(), points() + 1, 0);
-      SIMD::fill<qreal>(m_yAxisData[yDataset.index()].data(), points() + 1, 0);
+      SIMD::fill(m_xAxisData[xDataset.index()].data(), points() + 1, 0);
+      SIMD::fill(m_yAxisData[yDataset.index()].data(), points() + 1, 0);
 
       LineSeries series;
       series.x = &m_xAxisData[xDataset.index()];
@@ -1130,7 +1241,7 @@ void UI::Dashboard::configureLineSeries()
     else
     {
       m_yAxisData[yDataset.index()].resize(points() + 1);
-      SIMD::fill<qreal>(m_yAxisData[yDataset.index()].data(), points() + 1, 0);
+      SIMD::fill(m_yAxisData[yDataset.index()].data(), points() + 1, 0);
 
       LineSeries series;
       series.x = &m_pltXAxis;
@@ -1160,7 +1271,7 @@ void UI::Dashboard::configureMultiLineSeries()
   m_multipltXAxis.clear();
   m_multipltXAxis.shrink_to_fit();
   m_multipltXAxis.resize(points() + 1);
-  SIMD::fill_range<qreal>(m_multipltXAxis.data(), m_multipltXAxis.size(), 0);
+  SIMD::fill_range(m_multipltXAxis.data(), m_multipltXAxis.size(), 0);
 
   // Construct multi-plot values structure
   for (int i = 0; i < widgetCount(SerialStudio::DashboardMultiPlot); ++i)
@@ -1173,9 +1284,94 @@ void UI::Dashboard::configureMultiLineSeries()
     {
       series.y.push_back(PlotDataY());
       series.y.back().resize(points() + 1);
-      SIMD::fill<qreal>(series.y.back().data(), points() + 1, 0);
+      SIMD::fill(series.y.back().data(), points() + 1, 0);
     }
 
     m_multipltValues.append(series);
+  }
+}
+
+/**
+ * @brief Configures dashboard actions and associated timers from the
+ *        given JSON frame.
+ *
+ * This method clears existing actions and timers, then loads a new set of
+ * actions from the provided JSON frame. For each action, it sets up an optional
+ * timer based on its configured TimerMode and interval.
+ *
+ * Timers are connected to trigger the corresponding action via
+ * `activateAction()`, and are automatically started if the action is configured
+ * with either:
+ * - TimerMode::AutoStart
+ * - autoExecuteOnConnect() flag
+ *
+ * @param frame The JSON frame containing the user-defined actions to configure.
+ *
+ * @note This method has no effect if:
+ * - The frame is invalid (`!frame.isValid()`).
+ * - There is no active device connection
+ *
+ * @warning If a timer-based action has an interval of 0 milliseconds, a warning
+ *          is logged and the timer is not created.
+ */
+void UI::Dashboard::configureActions(const JSON::Frame &frame)
+{
+  // Stop if frame is not valid
+  if (!frame.isValid())
+    return;
+
+  // Stop if we don't have a device connected (CSV player does not count)
+  if (!IO::Manager::instance().isConnected())
+    return;
+
+  // Delete actions
+  m_actions.clear();
+  m_actions.squeeze();
+
+  // Stop and delete all timers
+  for (auto it = m_timers.begin(); it != m_timers.end(); ++it)
+  {
+    if (it.value())
+    {
+      disconnect(it.value());
+      it.value()->stop();
+      it.value()->deleteLater();
+    }
+  }
+
+  // Clear timer map
+  m_timers.clear();
+
+  // Update actions
+  m_actions = frame.actions();
+
+  // Configure timers
+  for (int i = 0; i < m_actions.count(); ++i)
+  {
+    const auto &action = m_actions[i];
+    if (action.timerMode() != JSON::Action::TimerMode::Off)
+    {
+      auto interval = action.timerIntervalMs();
+      if (interval > 0)
+      {
+        auto *timer = new QTimer(this);
+        timer->setInterval(interval);
+        timer->setTimerType(Qt::PreciseTimer);
+        connect(timer, &QTimer::timeout, this,
+                [this, i]() { activateAction(i, false); });
+
+        if (action.timerMode() == JSON::Action::TimerMode::AutoStart
+            || action.autoExecuteOnConnect())
+          timer->start();
+
+        m_timers.insert(i, timer);
+      }
+
+      else
+      {
+        qWarning() << "Interval for action" << action.title()
+                   << "must be greater than 0!";
+      }
+    }
   }
 }

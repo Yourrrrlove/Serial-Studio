@@ -63,6 +63,7 @@ Item {
     property alias echo: echoCheck.checked
     property alias hex: hexCheckbox.checked
     property alias timestamp: timestampCheck.checked
+    property alias checksum: checkumCombo.currentIndex
     property alias vt100Enabled: terminal.vt100emulation
     property alias lineEnding: lineEndingCombo.currentIndex
     property alias displayMode: displayModeCombo.currentIndex
@@ -325,6 +326,20 @@ Item {
         onCurrentIndexChanged: {
           if (currentIndex !== Cpp_IO_Console.lineEnding)
             Cpp_IO_Console.lineEnding = currentIndex
+        }
+      }
+
+      ComboBox {
+        id: checkumCombo
+        Layout.minimumWidth: 128
+        opacity: enabled ? 1 : 0.5
+        enabled: Cpp_IO_Manager.readWrite
+        Layout.alignment: Qt.AlignVCenter
+        model: Cpp_IO_Console.checksumMethods
+        currentIndex: Cpp_IO_Console.checksumMethod
+        onCurrentIndexChanged: {
+          if (currentIndex !== Cpp_IO_Console.checksumMethod)
+            Cpp_IO_Console.checksumMethod = currentIndex
         }
       }
     }

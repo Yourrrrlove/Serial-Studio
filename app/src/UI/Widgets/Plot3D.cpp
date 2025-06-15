@@ -1,22 +1,23 @@
 /*
  * Serial Studio - https://serial-studio.github.io/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru <https://aspatru.com>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is part of the proprietary features of Serial Studio and is
+ * licensed under the Serial Studio Commercial License.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * Redistribution, modification, or use of this file in any form is permitted
+ * only under the terms of a valid Serial Studio Commercial License obtained
+ * from the author.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * This file must not be used or included in builds distributed under the
+ * GNU General Public License (GPL) unless explicitly permitted by a
+ * commercial agreement.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For details, see:
+ * https://github.com/Serial-Studio/Serial-Studio/blob/master/LICENSE.md
+ *
+ * SPDX-License-Identifier: LicenseRef-SerialStudio-Commercial
  */
 
 #include <QCursor>
@@ -246,7 +247,7 @@ void Widgets::Plot3D::paint(QPainter *painter)
  * @brief Returns the current worldScale level of the 3D plot.
  * @return The worldScale factor, where 1.0 is the default scale.
  */
-qreal Widgets::Plot3D::worldScale() const
+double Widgets::Plot3D::worldScale() const
 {
   return m_worldScale;
 }
@@ -255,7 +256,7 @@ qreal Widgets::Plot3D::worldScale() const
  * @brief Returns the X-axis rotation.
  * @return The X-axis rotation angle in degrees.
  */
-qreal Widgets::Plot3D::cameraAngleX() const
+double Widgets::Plot3D::cameraAngleX() const
 {
   return m_cameraAngleX;
 }
@@ -264,7 +265,7 @@ qreal Widgets::Plot3D::cameraAngleX() const
  * @brief Returns the Y-axis rotation.
  * @return The Y-axis rotation angle in degrees.
  */
-qreal Widgets::Plot3D::cameraAngleY() const
+double Widgets::Plot3D::cameraAngleY() const
 {
   return m_cameraAngleY;
 }
@@ -273,7 +274,7 @@ qreal Widgets::Plot3D::cameraAngleY() const
  * @brief Returns the Z-axis rotation.
  * @return The Z-axis rotation angle in degrees.
  */
-qreal Widgets::Plot3D::cameraAngleZ() const
+double Widgets::Plot3D::cameraAngleZ() const
 {
   return m_cameraAngleZ;
 }
@@ -282,7 +283,7 @@ qreal Widgets::Plot3D::cameraAngleZ() const
  * @brief Returns the X-axis camera offset.
  * @return The X-axis offset value.
  */
-qreal Widgets::Plot3D::cameraOffsetX() const
+double Widgets::Plot3D::cameraOffsetX() const
 {
   return m_cameraOffsetX;
 }
@@ -291,7 +292,7 @@ qreal Widgets::Plot3D::cameraOffsetX() const
  * @brief Returns the Y-axis camera offset.
  * @return The Y-axis offset value.
  */
-qreal Widgets::Plot3D::cameraOffsetY() const
+double Widgets::Plot3D::cameraOffsetY() const
 {
   return m_cameraOffsetY;
 }
@@ -300,7 +301,7 @@ qreal Widgets::Plot3D::cameraOffsetY() const
  * @brief Returns the Z-axis camera offset.
  * @return The Z-axis offset value.
  */
-qreal Widgets::Plot3D::cameraOffsetZ() const
+double Widgets::Plot3D::cameraOffsetZ() const
 {
   return m_cameraOffsetZ;
 }
@@ -308,28 +309,28 @@ qreal Widgets::Plot3D::cameraOffsetZ() const
 /**
  * @brief Returns the ideal zoom level for the plot.
  */
-qreal Widgets::Plot3D::idealWorldScale() const
+double Widgets::Plot3D::idealWorldScale() const
 {
-  const qreal dx = m_maxPoint.x() - m_minPoint.x();
-  const qreal dy = m_maxPoint.y() - m_minPoint.y();
-  const qreal dz = m_maxPoint.z() - m_minPoint.z();
+  const double dx = m_maxPoint.x() - m_minPoint.x();
+  const double dy = m_maxPoint.y() - m_minPoint.y();
+  const double dz = m_maxPoint.z() - m_minPoint.z();
 
-  const qreal distance = qMax(1e-9, std::sqrt(dx * dx + dy * dy + dz * dz));
-  const qreal targetWorldSize = distance * 2.0;
-  const qreal targetStep = targetWorldSize / 10.0;
+  const double distance = qMax(1e-9, std::sqrt(dx * dx + dy * dy + dz * dz));
+  const double targetWorldSize = distance * 2.0;
+  const double targetStep = targetWorldSize / 10.0;
 
-  const qreal estimatedScale = 1.0 / targetStep;
+  const double estimatedScale = 1.0 / targetStep;
   const int base = static_cast<int>(std::log(estimatedScale) / std::log(0.95));
 
   const int minIndex = base - 20;
   const int maxIndex = base + 20;
 
-  qreal scale = 1e-9;
+  double scale = 1e-9;
   for (int i = minIndex; i <= maxIndex; ++i)
   {
     scale = std::pow(0.95, i);
-    const qreal step = gridStep(scale);
-    const qreal totalVisibleWorld = 10.0 * step;
+    const double step = gridStep(scale);
+    const double totalVisibleWorld = 10.0 * step;
 
     if (totalVisibleWorld >= targetWorldSize)
     {
@@ -426,7 +427,7 @@ bool Widgets::Plot3D::interpolationEnabled() const
  *
  * Emits the cameraChanged() signal if the value is updated.
  */
-void Widgets::Plot3D::setWorldScale(const qreal z)
+void Widgets::Plot3D::setWorldScale(const double z)
 {
   auto limited = qBound(idealWorldScale(), z, 10e9);
   if (m_worldScale != limited)
@@ -444,7 +445,7 @@ void Widgets::Plot3D::setWorldScale(const qreal z)
  *
  * Emits the cameraChanged() signal if the value is updated.
  */
-void Widgets::Plot3D::setCameraAngleX(const qreal angle)
+void Widgets::Plot3D::setCameraAngleX(const double angle)
 {
   if (m_cameraAngleX != angle)
   {
@@ -461,7 +462,7 @@ void Widgets::Plot3D::setCameraAngleX(const qreal angle)
  *
  * Emits the cameraChanged() signal if the value is updated.
  */
-void Widgets::Plot3D::setCameraAngleY(const qreal angle)
+void Widgets::Plot3D::setCameraAngleY(const double angle)
 {
   if (m_cameraAngleY != angle)
   {
@@ -478,7 +479,7 @@ void Widgets::Plot3D::setCameraAngleY(const qreal angle)
  *
  * Emits the cameraChanged() signal if the value is updated.
  */
-void Widgets::Plot3D::setCameraAngleZ(const qreal angle)
+void Widgets::Plot3D::setCameraAngleZ(const double angle)
 {
   if (m_cameraAngleZ != angle)
   {
@@ -493,7 +494,7 @@ void Widgets::Plot3D::setCameraAngleZ(const qreal angle)
  * @brief Sets the X-axis camera offset.
  * @param offset The new X-axis offset value.
  */
-void Widgets::Plot3D::setCameraOffsetX(const qreal offset)
+void Widgets::Plot3D::setCameraOffsetX(const double offset)
 {
   if (m_cameraOffsetX != offset)
   {
@@ -507,7 +508,7 @@ void Widgets::Plot3D::setCameraOffsetX(const qreal offset)
  * @brief Sets the Y-axis camera offset.
  * @param offset The new Y-axis offset value.
  */
-void Widgets::Plot3D::setCameraOffsetY(const qreal offset)
+void Widgets::Plot3D::setCameraOffsetY(const double offset)
 {
   if (m_cameraOffsetY != offset)
   {
@@ -521,7 +522,7 @@ void Widgets::Plot3D::setCameraOffsetY(const qreal offset)
  * @brief Sets the Z-axis camera offset.
  * @param offset The new Z-axis offset value.
  */
-void Widgets::Plot3D::setCameraOffsetZ(const qreal offset)
+void Widgets::Plot3D::setCameraOffsetZ(const double offset)
 {
   if (m_cameraOffsetZ != offset)
   {
@@ -875,7 +876,7 @@ void Widgets::Plot3D::drawBackground()
 
   // Set up a radial gradient centered in the widget
   QPointF center(width() * 0.5f, height() * 0.5f);
-  qreal radius = qMax(width(), height()) * 0.25;
+  double radius = qMax(width(), height()) * 0.25;
   QRadialGradient gradient(center, radius);
   gradient.setColorAt(0.0, m_innerBackgroundColor);
   gradient.setColorAt(1.0, m_outerBackgroundColor);
@@ -959,7 +960,7 @@ void Widgets::Plot3D::drawCameraIndicator()
  *
  * @return Grid step size in world units (e.g., 1, 2, 5, 10, 20, 50, etc.).
  */
-qreal Widgets::Plot3D::gridStep(const qreal scale) const
+double Widgets::Plot3D::gridStep(const double scale) const
 {
   auto s = scale;
   if (s == -1)
@@ -1132,9 +1133,9 @@ QPixmap Widgets::Plot3D::renderGrid(const QMatrix4x4 &matrix)
   painter.setRenderHint(QPainter::Antialiasing, true);
 
   // Obtain grid interval
-  const qreal numSteps = 10;
-  const qreal step = gridStep();
-  const qreal l = numSteps * step;
+  const double numSteps = 10;
+  const double step = gridStep();
+  const double l = numSteps * step;
 
   // Construct grid lines
   QVector<QPair<QVector3D, QVector3D>> gridLines;
@@ -1328,7 +1329,7 @@ QPixmap Widgets::Plot3D::renderData(const QMatrix4x4 &matrix,
     for (qsizetype i = 1; i < numPoints; ++i)
     {
       QColor c;
-      qreal tVal = qreal(i) / numPoints;
+      double tVal = double(i) / numPoints;
       c.setRedF(startColor.redF() * (1 - tVal) + endColor.redF() * tVal);
       c.setGreenF(startColor.greenF() * (1 - tVal) + endColor.greenF() * tVal);
       c.setBlueF(startColor.blueF() * (1 - tVal) + endColor.blueF() * tVal);

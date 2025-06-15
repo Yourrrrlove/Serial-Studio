@@ -190,6 +190,55 @@ Widgets.Pane {
     anchors.bottomMargin: -9
 
     //
+    // Actions rectangle
+    //
+    Rectangle {
+      z: 1000
+      border.width: 1
+      implicitHeight: _actions.implicitHeight + 20
+      Layout.topMargin: -1
+      Layout.leftMargin: -1
+      Layout.rightMargin: -1
+      Layout.fillWidth: true
+      color: Cpp_ThemeManager.colors["groupbox_background"]
+      border.color: Cpp_ThemeManager.colors["groupbox_border"]
+      visible: Cpp_UI_Dashboard.actionCount > 0 &&
+               Cpp_UI_Dashboard.showActionPanel
+
+      ListView {
+        id: _actions
+
+        spacing: 2
+        interactive: true
+        implicitHeight: 32
+        model: Cpp_UI_Dashboard.actions
+        orientation: ListView.Horizontal
+
+        anchors {
+          leftMargin: 8
+          left: parent.left
+          right: parent.right
+          verticalCenter: parent.verticalCenter
+        }
+
+        delegate: Widgets.ToolbarButton {
+          required property var model
+
+          iconSize: 24
+          implicitHeight: 32
+          maxButtonWidth: 256
+          text: model["text"]
+          toolbarButton: false
+          horizontalLayout: true
+          checked: model["checked"]
+          icon.source: model["icon"]
+          enabled: !Cpp_IO_Manager.paused
+          onClicked: Cpp_UI_Dashboard.activateAction(model["id"], true)
+        }
+      }
+    }
+
+    //
     // Widget windows
     //
     DbItems.Canvas {

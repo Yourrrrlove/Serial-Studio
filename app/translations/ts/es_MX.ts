@@ -130,22 +130,37 @@
         <translation>Cambiar Ícono</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="126"/>
+        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="106"/>
+        <source>Change the icon used for this action</source>
+        <translation>Cambiar el ícono utilizado para esta acción</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="127"/>
         <source>Duplicate</source>
         <translation>Duplicar</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="137"/>
+        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="129"/>
+        <source>Duplicate this action with all its settings</source>
+        <translation>Duplicar esta acción con todas sus configuraciones</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="139"/>
         <source>Delete</source>
         <translation>Eliminar</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="188"/>
+        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="143"/>
+        <source>Delete this action from the project</source>
+        <translation>Eliminar esta acción del proyecto</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="191"/>
         <source>Send commands with a button click</source>
         <translation>Enviar comandos con un clic de botón</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="204"/>
+        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="207"/>
         <source>Actions let you send custom commands to the connected device with a single button press.</source>
         <translation>Las acciones te permiten enviar comandos personalizados al dispositivo conectado con solo presionar un botón.</translation>
     </message>
@@ -376,6 +391,19 @@
     </message>
 </context>
 <context>
+    <name>DataGrid</name>
+    <message>
+        <location filename="../../qml/Widgets/Dashboard/DataGrid.qml" line="90"/>
+        <source>Pause</source>
+        <translation>Pausar</translation>
+    </message>
+    <message>
+        <location filename="../../qml/Widgets/Dashboard/DataGrid.qml" line="90"/>
+        <source>Resume</source>
+        <translation>Reanudar</translation>
+    </message>
+</context>
+<context>
     <name>DatasetView</name>
     <message>
         <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="82"/>
@@ -393,39 +421,79 @@
         <translation>Gráfico</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="134"/>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="121"/>
+        <source>Toggle 2D plot visualization for this dataset</source>
+        <translation>Alternar visualización de gráfico 2D para este conjunto de datos</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="135"/>
         <source>FFT Plot</source>
         <translation>Gráfico FFT</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="151"/>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="139"/>
+        <source>Toggle FFT plot to visualize frequency content</source>
+        <translation>Alternar gráfico FFT para visualizar contenido de frecuencia</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="153"/>
         <source>Bar/Level</source>
         <translation>Barra/Nivel</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="168"/>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="157"/>
+        <source>Toggle bar/level indicator for this dataset</source>
+        <translation>Alternar indicador de barra/nivel para este conjunto de datos</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="171"/>
         <source>Gauge</source>
         <translation>Indicador</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="187"/>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="176"/>
+        <source>Toggle gauge widget for analog-style display</source>
+        <translation>Alternar widget de medidor para visualización estilo analógico</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="191"/>
         <source>Compass</source>
         <translation>Brújula</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="204"/>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="195"/>
+        <source>Toggle compass widget for directional data</source>
+        <translation>Alternar widget de brújula para datos direccionales</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="209"/>
         <source>LED</source>
         <translation>LED</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="229"/>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="213"/>
+        <source>Toggle LED indicator for binary or thresholded values</source>
+        <translation>Alternar indicador LED para valores binarios o con umbral</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="235"/>
         <source>Duplicate</source>
         <translation>Duplicar</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="241"/>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="239"/>
+        <source>Duplicate this dataset with the same configuration</source>
+        <translation>Duplicar este conjunto de datos con la misma configuración</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="248"/>
         <source>Delete</source>
         <translation>Eliminar</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="253"/>
+        <source>Delete this dataset from the group</source>
+        <translation>Eliminar este conjunto de datos del grupo</translation>
     </message>
 </context>
 <context>
@@ -721,31 +789,31 @@
     </message>
     <message>
         <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="82"/>
-        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="235"/>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="238"/>
         <source>Undo</source>
         <translation>Deshacer</translation>
     </message>
     <message>
         <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="89"/>
-        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="248"/>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="252"/>
         <source>Redo</source>
         <translation>Rehacer</translation>
     </message>
     <message>
         <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="98"/>
-        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="272"/>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="277"/>
         <source>Cut</source>
         <translation>Cortar</translation>
     </message>
     <message>
         <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="103"/>
-        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="284"/>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="290"/>
         <source>Copy</source>
         <translation>Copiar</translation>
     </message>
     <message>
         <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="108"/>
-        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="296"/>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="303"/>
         <source>Paste</source>
         <translation>Pegar</translation>
     </message>
@@ -760,21 +828,66 @@
         <translation>Restablecer</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="199"/>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="192"/>
+        <source>Reset to the default parsing script</source>
+        <translation>Restablecer al script de análisis predeterminado</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="200"/>
         <source>Import</source>
         <translation>Importar</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="212"/>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="205"/>
+        <source>Import a JavaScript file for data parsing</source>
+        <translation>Importar un archivo JavaScript para el análisis de datos</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="214"/>
         <source>Validate &amp; Save</source>
         <translation>Validar y Guardar</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="219"/>
+        <source>Validate syntax and apply parsing changes</source>
+        <translation>Validar la sintaxis y aplicar cambios de análisis</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="244"/>
+        <source>Undo the last code edit</source>
+        <translation>Deshacer la última edición de código</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="258"/>
+        <source>Redo the previously undone edit</source>
+        <translation>Rehacer la edición deshecha anteriormente</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="282"/>
+        <source>Cut selected code to clipboard</source>
+        <translation>Cortar el código seleccionado al portapapeles</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="295"/>
+        <source>Copy selected code to clipboard</source>
+        <translation>Copiar el código seleccionado al portapapeles</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="308"/>
+        <source>Paste code from clipboard</source>
+        <translation>Pegar el código desde el portapapeles</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="332"/>
+        <source>Open help documentation for JavaScript data parsing</source>
+        <translation>Abrir la documentación de ayuda para el análisis de datos en JavaScript</translation>
     </message>
     <message>
         <source>Apply</source>
         <translation type="vanished">Aplicar</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="319"/>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="327"/>
         <source>Help</source>
         <translation>Ayuda</translation>
     </message>
@@ -820,52 +933,97 @@
         <translation>Conjunto de datos</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="128"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="121"/>
+        <source>Add a generic dataset to the current group</source>
+        <translation>Agregar un conjunto de datos genérico al grupo actual</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="129"/>
         <source>Plot</source>
         <translation>Gráfico</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="142"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="135"/>
+        <source>Add a 2D plot to visualize numeric data</source>
+        <translation>Agregar un gráfico 2D para visualizar datos numéricos</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="144"/>
         <source>FFT Plot</source>
         <translation>Gráfico FFT</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="155"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="149"/>
+        <source>Add an FFT plot for frequency domain visualization</source>
+        <translation>Agregar un gráfico FFT para visualización en el dominio de frecuencia</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="158"/>
         <source>Bar/Level</source>
         <translation>Barra/Nivel</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="167"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="163"/>
+        <source>Add a bar or level indicator for scaled values</source>
+        <translation>Agregar un indicador de barra o nivel para valores escalados</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="171"/>
         <source>Gauge</source>
         <translation>Indicador</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="181"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="177"/>
+        <source>Add a gauge widget for analog-style visualization</source>
+        <translation>Agregar un widget de medidor para visualización de estilo analógico</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="186"/>
         <source>Compass</source>
         <translation>Brújula</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="193"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="191"/>
+        <source>Add a compass to display directional or angular data</source>
+        <translation>Agregar una brújula para mostrar datos direccionales o angulares</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="199"/>
         <source>LED</source>
         <translation>LED</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="214"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="205"/>
+        <source>Add an LED indicator for binary status signals</source>
+        <translation>Agregar un indicador LED para señales de estado binario</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="221"/>
         <source>Duplicate</source>
         <translation>Duplicar</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="226"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="225"/>
+        <source>Duplicate the current group and its contents</source>
+        <translation>Duplicar el grupo actual y su contenido</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="234"/>
         <source>Delete</source>
         <translation>Eliminar</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="278"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="238"/>
+        <source>Delete the current group and all contained datasets</source>
+        <translation>Eliminar el grupo actual y todos los conjuntos de datos contenidos</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="287"/>
         <source>Groups hold multiple datasets and organize your data.</source>
         <translation>Los grupos contienen múltiples conjuntos de datos y organizan tus datos.</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="292"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="301"/>
         <source>Use the sub-toolbar to quickly add plots, FFTs, and other dataset types to this group.</source>
         <translation>Usa la sub-barra de herramientas para agregar rápidamente gráficos, FFTs y otros tipos de conjuntos de datos a este grupo.</translation>
     </message>
@@ -883,17 +1041,22 @@ Usa los botones de la barra de herramientas de arriba para agregar un conjunto d
 <context>
     <name>Gyroscope</name>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Gyroscope.qml" line="279"/>
+        <location filename="../../qml/Widgets/Dashboard/Gyroscope.qml" line="99"/>
+        <source>Integrate Angles</source>
+        <translation>Integrar Ángulos</translation>
+    </message>
+    <message>
+        <location filename="../../qml/Widgets/Dashboard/Gyroscope.qml" line="343"/>
         <source>Roll: %1</source>
         <translation>Alabeo: %1</translation>
     </message>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Gyroscope.qml" line="297"/>
+        <location filename="../../qml/Widgets/Dashboard/Gyroscope.qml" line="361"/>
         <source>Yaw: %1</source>
         <translation>Guiñada: %1</translation>
     </message>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Gyroscope.qml" line="315"/>
+        <location filename="../../qml/Widgets/Dashboard/Gyroscope.qml" line="379"/>
         <source>Pitch: %1</source>
         <translation>Cabeceo: %1</translation>
     </message>
@@ -901,44 +1064,49 @@ Usa los botones de la barra de herramientas de arriba para agregar un conjunto d
 <context>
     <name>IO::Console</name>
     <message>
-        <location filename="../../src/IO/Console.cpp" line="149"/>
+        <location filename="../../src/IO/Console.cpp" line="165"/>
         <source>ASCII</source>
         <translation>ASCII</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Console.cpp" line="150"/>
+        <location filename="../../src/IO/Console.cpp" line="166"/>
         <source>HEX</source>
         <translation>HEX</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Console.cpp" line="161"/>
+        <location filename="../../src/IO/Console.cpp" line="177"/>
         <source>No Line Ending</source>
         <translation>Sin terminación de línea</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Console.cpp" line="162"/>
+        <location filename="../../src/IO/Console.cpp" line="178"/>
         <source>New Line</source>
         <translation>Nueva línea</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Console.cpp" line="163"/>
+        <location filename="../../src/IO/Console.cpp" line="179"/>
         <source>Carriage Return</source>
         <translation>Retorno de carro</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Console.cpp" line="164"/>
+        <location filename="../../src/IO/Console.cpp" line="180"/>
         <source>CR + NL</source>
         <translation>RC + NL</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Console.cpp" line="175"/>
+        <location filename="../../src/IO/Console.cpp" line="191"/>
         <source>Plain Text</source>
         <translation>Texto plano</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Console.cpp" line="176"/>
+        <location filename="../../src/IO/Console.cpp" line="192"/>
         <source>Hexadecimal</source>
         <translation>Hexadecimal</translation>
+    </message>
+    <message>
+        <location filename="../../src/IO/Console.cpp" line="213"/>
+        <source>No Checksum</source>
+        <translation>Sin suma de verificación</translation>
     </message>
     <message>
         <source>Export Console Data</source>
@@ -1185,131 +1353,129 @@ Usa los botones de la barra de herramientas de arriba para agregar un conjunto d
 <context>
     <name>IO::Drivers::UART</name>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="55"/>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="56"/>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="368"/>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="410"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="50"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="51"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="376"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="418"/>
         <source>None</source>
         <translation>Ninguno</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="251"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="247"/>
         <source>Failed to connect to serial port device</source>
         <translation>Error al conectar con el dispositivo de puerto serie</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="349"/>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="756"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="345"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="746"/>
         <source>Select Port</source>
         <translation>Seleccionar puerto</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="369"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="377"/>
         <source>Even</source>
         <translation>Par</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="370"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="378"/>
         <source>Odd</source>
         <translation>Impar</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="371"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="379"/>
         <source>Space</source>
         <translation>Espacio</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="372"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="380"/>
         <source>Mark</source>
         <translation>Marca</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="411"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="419"/>
         <source>RTS/CTS</source>
         <translation>RTS/CTS</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="412"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="420"/>
         <source>XON/XOFF</source>
         <translation>XON/XOFF</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="564"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="570"/>
         <source>"%1" is not a valid path</source>
         <translation>"%1" no es una ruta válida</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="565"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="571"/>
         <source>Please type another path to register a custom serial device</source>
         <translation>Por favor, escriba otra ruta para registrar un dispositivo serie personalizado</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="620"/>
         <source>Baud rate registered successfully</source>
-        <translation>Baud rate registrado exitosamente</translation>
+        <translation type="vanished">Baud rate registrado exitosamente</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="621"/>
         <source>Rate "%1" has been added to baud rate list</source>
-        <translation>La tasa "%1" ha sido añadida a la lista de baud rates</translation>
+        <translation type="vanished">La tasa "%1" ha sido añadida a la lista de baud rates</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="861"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="851"/>
         <source>Critical serial port error</source>
         <translation>Error crítico del puerto serial</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="966"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="880"/>
         <source>No error occurred.</source>
         <translation>No ocurrió ningún error.</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="967"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="881"/>
         <source>The specified device could not be found. Please check the connection and try again.</source>
         <translation>No se pudo encontrar el dispositivo especificado. Por favor, revise la conexión e intente de nuevo.</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="968"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="882"/>
         <source>Permission denied. Ensure the application has the necessary access rights to the device.</source>
         <translation>Permiso denegado. Asegúrese de que la aplicación tenga los derechos de acceso necesarios al dispositivo.</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="969"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="883"/>
         <source>Failed to open the device. It may already be in use or unavailable.</source>
         <translation>No se pudo abrir el dispositivo. Puede que ya esté en uso o no esté disponible.</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="970"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="884"/>
         <source>An error occurred while writing data to the device.</source>
         <translation>Ocurrió un error al escribir datos en el dispositivo.</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="971"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="885"/>
         <source>An error occurred while reading data from the device.</source>
         <translation>Ocurrió un error al leer datos del dispositivo.</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="972"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="886"/>
         <source>A critical resource error occurred. The device may have been disconnected or is no longer accessible.</source>
         <translation>Ocurrió un error crítico de recursos. El dispositivo puede haber sido desconectado o ya no estar accesible.</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="973"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="887"/>
         <source>The requested operation is not supported on this device.</source>
         <translation>La operación solicitada no es compatible con este dispositivo.</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="974"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="888"/>
         <source>An unknown error occurred. Please check the device and try again.</source>
         <translation>Ocurrió un error desconocido. Por favor, revise el dispositivo e intente de nuevo.</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="975"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="889"/>
         <source>The operation timed out. The device may not be responding.</source>
         <translation>La operación excedió el tiempo de espera. Es posible que el dispositivo no esté respondiendo.</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="976"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="890"/>
         <source>The device is not open. Please open the device before attempting this operation.</source>
         <translation>El dispositivo no está abierto. Por favor, abra el dispositivo antes de intentar esta operación.</translation>
     </message>
@@ -1334,17 +1500,17 @@ Usa los botones de la barra de herramientas de arriba para agregar un conjunto d
         <translation type="vanished">Puerto serial</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Manager.cpp" line="217"/>
+        <location filename="../../src/IO/Manager.cpp" line="231"/>
         <source>UART/COM</source>
         <translation>UART/COM</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Manager.cpp" line="218"/>
+        <location filename="../../src/IO/Manager.cpp" line="232"/>
         <source>Network Socket</source>
         <translation>Socket de red</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Manager.cpp" line="219"/>
+        <location filename="../../src/IO/Manager.cpp" line="233"/>
         <source>Bluetooth LE</source>
         <translation>Bluetooth LE</translation>
     </message>
@@ -1370,47 +1536,47 @@ Usa los botones de la barra de herramientas de arriba para agregar un conjunto d
 <context>
     <name>JSON::FrameBuilder</name>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="121"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="135"/>
         <source>Select JSON map file</source>
         <translation>Seleccionar archivo de mapa JSON</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="123"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="137"/>
         <source>JSON files</source>
         <translation>Archivos JSON</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="170"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="186"/>
         <source>JSON parse error</source>
         <translation>Error al analizar JSON</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="200"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="218"/>
         <source>Invalid JSON project format</source>
         <translation>Proyecto JSON inválido</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="213"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="231"/>
         <source>Cannot read JSON file</source>
         <translation>No se puede leer el archivo JSON</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="214"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="232"/>
         <source>Please check file permissions &amp; location</source>
         <translation>Por favor, verifica los permisos y la ubicación del archivo</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="377"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="436"/>
         <source>Channel %1</source>
         <translation>Canal %1</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="392"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="451"/>
         <source>Quick Plot Data</source>
         <translation>Gráfica Rápida de Datos</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="405"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="464"/>
         <source>Multiple Plots</source>
         <translation>Gráficas Múltiples</translation>
     </message>
@@ -1419,7 +1585,7 @@ Usa los botones de la barra de herramientas de arriba para agregar un conjunto d
         <translation type="vanished">Cuadrícula de Datos</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="387"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="446"/>
         <source>Quick Plot</source>
         <translation>Gráfico Rápido</translation>
     </message>
@@ -1427,36 +1593,36 @@ Usa los botones de la barra de herramientas de arriba para agregar un conjunto d
 <context>
     <name>JSON::FrameParser</name>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="408"/>
-        <location filename="../../src/JSON/FrameParser.cpp" line="429"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="420"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="441"/>
         <source>The document has been modified!</source>
         <translation>¡El documento ha sido modificado!</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="409"/>
-        <location filename="../../src/JSON/FrameParser.cpp" line="430"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="421"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="442"/>
         <source>Are you sure you want to continue?</source>
         <translation>¿Estás seguro de que quieres continuar?</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="438"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="450"/>
         <source>Select Javascript file to import</source>
         <translation>Seleccionar archivo Javascript para importar</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="230"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="242"/>
         <source>Frame parser code updated successfully!</source>
         <translation>¡Código del parser de tramas actualizado con éxito!</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="231"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="243"/>
         <source>No errors have been detected in the code.</source>
         <translation>No se han detectado errores en el código.</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="270"/>
-        <location filename="../../src/JSON/FrameParser.cpp" line="290"/>
-        <location filename="../../src/JSON/FrameParser.cpp" line="314"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="282"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="302"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="326"/>
         <source>Frame parser error!</source>
         <translation>¡Error en el parser de tramas!</translation>
     </message>
@@ -1465,23 +1631,23 @@ Usa los botones de la barra de herramientas de arriba para agregar un conjunto d
         <translation type="vanished">¡No se ha declarado la función parse()!</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="271"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="283"/>
         <source>The 'parse' function is not declared or is not callable!</source>
         <translation>¡La función ‘parse’ no está declarada o no es invocable!</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="291"/>
-        <location filename="../../src/JSON/FrameParser.cpp" line="315"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="303"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="327"/>
         <source>No valid 'parse' function declaration found in the script!</source>
         <translation>¡No se encontró una declaración válida de la función ‘parse’ en el script!</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="300"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="312"/>
         <source>Legacy frame parser function detected</source>
         <translation>Función de análisis de tramas obsoleta detectada</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="301"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="313"/>
         <source>The 'parse' function has two arguments ('%1', '%2'), indicating use of the old format. Please update it to the new format, which only takes the frame data as an argument.</source>
         <translation>La función ‘parse’ tiene dos argumentos (’%1’, ‘%2’), lo que indica el uso del formato antiguo. Por favor, actualícela al nuevo formato, que solo toma los datos de la trama como argumento.</translation>
     </message>
@@ -1572,122 +1738,122 @@ Usa los botones de la barra de herramientas de arriba para agregar un conjunto d
 <context>
     <name>JSON::ProjectModel</name>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="284"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="289"/>
         <source>New Project</source>
         <translation>Nuevo Proyecto</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="357"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="362"/>
         <source>Samples</source>
         <translation>Muestras</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="726"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="731"/>
         <source>Do you want to save your changes?</source>
         <translation>¿Quieres guardar los cambios?</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="727"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="732"/>
         <source>You have unsaved modifications in this project!</source>
         <translation>¡Tienes modificaciones sin guardar en este proyecto!</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="762"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="767"/>
         <source>Project error</source>
         <translation>Error del proyecto</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="763"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="768"/>
         <source>Project title cannot be empty!</source>
         <translation>¡El título del proyecto no puede estar vacío!</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="780"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="785"/>
         <source>Save JSON project</source>
         <translation>Guardar proyecto JSON</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="792"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="797"/>
         <source>File open error</source>
         <translation>Error al abrir el archivo</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="911"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2220"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="918"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2228"/>
         <source>Untitled Project</source>
         <translation>Proyecto sin título</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="955"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="962"/>
         <source>Select JSON file</source>
         <translation>Seleccionar archivo JSON</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1078"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1086"/>
         <source>Legacy frame parser function updated</source>
         <translation>Función de análisis de tramas obsoleta actualizada</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1079"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1087"/>
         <source>Your project used a legacy frame parser function with a 'separator' argument. It has been automatically migrated to the new format.</source>
         <translation>Tu proyecto usaba una función de análisis de tramas obsoleta con un argumento de ‘separador’. Se ha migrado automáticamente al nuevo formato.</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1111"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1119"/>
         <source>Switch Serial Studio to Project Mode?</source>
         <translation>¿Cambiar Serial Studio al Modo Proyecto?</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1112"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1120"/>
         <source>This operation mode is required to load and display dashboards from project files.</source>
         <translation>Este modo de operación es necesario para cargar y mostrar tableros desde archivos de proyecto.</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1140"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1148"/>
         <source>Do you want to delete group "%1"?</source>
         <translation>¿Deseas eliminar el grupo "%1"?</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1141"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1182"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1221"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1149"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1190"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1229"/>
         <source>This action cannot be undone. Do you wish to proceed?</source>
         <translation>Esta acción no se puede deshacer. ¿Deseas continuar?</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1181"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1189"/>
         <source>Do you want to delete action "%1"?</source>
         <translation>¿Quieres eliminar la acción «%1»?</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1219"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1227"/>
         <source>Do you want to delete dataset "%1"?</source>
         <translation>¿Deseas eliminar el conjunto de datos "%1"?</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1270"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1309"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1345"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1278"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1317"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1353"/>
         <source>%1 (Copy)</source>
         <translation>%1 (Copia)</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1385"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1393"/>
         <source>Group</source>
         <translation>Grupo</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1470"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1478"/>
         <source>New Dataset</source>
         <translation>Nuevo Conjunto de Datos</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1473"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1481"/>
         <source>New Plot</source>
         <translation>Nueva Gráfica</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1477"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1485"/>
         <source>New FFT Plot</source>
         <translation>Nueva Gráfica FFT</translation>
     </message>
@@ -1696,61 +1862,61 @@ Usa los botones de la barra de herramientas de arriba para agregar un conjunto d
         <translation type="vanished">Nuevo Widget de Barras</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1485"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1493"/>
         <source>New Gauge</source>
         <translation>Nuevo Medidor</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1489"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1497"/>
         <source>New Compass</source>
         <translation>Nueva Brújula</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1493"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1501"/>
         <source>New LED Indicator</source>
         <translation>Nuevo Indicador LED</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1629"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1637"/>
         <source>New Action</source>
         <translation>Nueva Acción</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1786"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1794"/>
         <source>Are you sure you want to change the group-level widget?</source>
         <translation>¿Estás seguro de que quieres cambiar el widget a nivel de grupo?</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1787"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1795"/>
         <source>Existing datasets for this group will be deleted</source>
         <translation>Los conjuntos de datos existentes para este grupo serán eliminados</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1844"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1845"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1846"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1852"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1853"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1854"/>
         <source>Accelerometer %1</source>
         <translation>Acelerómetro %1</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1890"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1891"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1892"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1898"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1899"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1900"/>
         <source>Gyro %1</source>
         <translation>Giro %1</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1933"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1941"/>
         <source>Latitude</source>
         <translation>Latitud</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1934"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1942"/>
         <source>Longitude</source>
         <translation>Longitud</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1935"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1943"/>
         <source>Altitude</source>
         <translation>Altitud</translation>
     </message>
@@ -1759,41 +1925,41 @@ Usa los botones de la barra de herramientas de arriba para agregar un conjunto d
         <translation type="vanished">Analizador de Tramas</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2218"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2378"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2442"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2594"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2226"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2401"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2465"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2664"/>
         <source>Title</source>
         <translation>Título</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2221"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2229"/>
         <source>Project name/description</source>
         <translation>Nombre/Descripción del proyecto</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2247"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2255"/>
         <source>Frame Detection</source>
         <translation>Detección de Tramas</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2249"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2257"/>
         <source>Strategy used for identifying frame data</source>
         <translation>Estrategia utilizada para identificar tramas</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2762"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2832"/>
         <source>X-Axis Source</source>
         <translation>Eje X</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2763"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2833"/>
         <source>Data series for the X-Axis</source>
         <translation>Serie de datos para el eje X</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2780"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2793"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2850"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2863"/>
         <source>Required for range widgets, optional for plots</source>
         <translation>Requerido para widgets de rango, opcional para gráficos</translation>
     </message>
@@ -1806,46 +1972,46 @@ Usa los botones de la barra de herramientas de arriba para agregar un conjunto d
         <translation type="vanished">Cadena utilizada para dividir elementos en una trama</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2266"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2274"/>
         <source>Frame Start Delimeter</source>
         <translation>Delimitador de Inicio de Trama</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2269"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2277"/>
         <source>String marking the start of a frame</source>
         <translation>Cadena que marca el inicio de una trama</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2285"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2293"/>
         <source>Frame End Delimeter</source>
         <translation>Delimitador de Fin de Trama</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2288"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2296"/>
         <source>String marking the end of a frame</source>
         <translation>Cadena que marca el fin de una trama</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2232"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2240"/>
         <source>Data Conversion Method</source>
         <translation>Método de Conversión de Datos</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2234"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2242"/>
         <source>Input data format for frame parser</source>
         <translation>Formato de datos de entrada para el analizador de tramas</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2316"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2339"/>
         <source>Thunderforest API Key</source>
         <translation>Clave API de Thunderforest</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2318"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2332"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2960"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2964"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2971"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2341"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2355"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3045"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3049"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3056"/>
         <source>None</source>
         <translation>Ninguno</translation>
     </message>
@@ -1854,195 +2020,236 @@ Usa los botones de la barra de herramientas de arriba para agregar un conjunto d
         <translation type="vanished">Requerido para el widget de mapa GPS</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2319"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2342"/>
         <source>Required for Thunderforest maps</source>
         <translation>Requerido para mapas de Thunderforest</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2330"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2353"/>
         <source>MapTiler API Key</source>
         <translation>Clave API de MapTiler</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2333"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2356"/>
         <source>Required for satellite maps</source>
         <translation>Requerido para mapas satelitales</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2380"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2403"/>
         <source>Untitled Group</source>
         <translation>Grupo Sin Título</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2381"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2404"/>
         <source>Name or description of the group</source>
         <translation>Nombre o descripción del grupo</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2409"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2672"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2432"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2742"/>
         <source>Widget</source>
         <translation>Widget</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2411"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2434"/>
         <source>Group display widget (optional)</source>
         <translation>Widget de visualización de grupo (opcional)</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2444"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2467"/>
         <source>Untitled Action</source>
         <translation>Acción sin título</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2445"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2468"/>
         <source>Name or description of the action</source>
         <translation>Nombre o descripción de la acción</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2455"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2478"/>
         <source>Icon</source>
         <translation>Icono</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2457"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2480"/>
         <source>Default Icon</source>
         <translation>Icono Predeterminado</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2458"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2481"/>
         <source>Icon to display in the dashboard</source>
         <translation>Icono para mostrar en el panel</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2500"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2523"/>
         <source>TX Data</source>
         <translation>Datos TX</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2485"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2502"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2508"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2525"/>
         <source>Command</source>
         <translation>Comando</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1481"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1489"/>
         <source>New Level Indicator</source>
         <translation>Nuevo Indicador de Nivel</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1971"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1979"/>
         <source>X</source>
         <translation>X</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1972"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1980"/>
         <source>Y</source>
         <translation>Y</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1973"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1981"/>
         <source>Z</source>
         <translation>Z</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2087"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2095"/>
         <source>Frame Parser Code</source>
         <translation>Código del Analizador de Tramas</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2302"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2310"/>
         <source>Hexadecimal Delimeters</source>
         <translation>Delimitadores Hexadecimales</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2304"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2312"/>
         <source>Use hexadecimal delimiters for data frames</source>
         <translation>Usar delimitadores hexadecimales para tramas de datos</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2467"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2326"/>
+        <source>Checksum Algorithm</source>
+        <translation>Algoritmo de suma de verificación</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2328"/>
+        <source>Checksum algorithm used for frame validation</source>
+        <translation>Algoritmo de suma de verificación utilizado para la validación del cuadro</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2490"/>
         <source>Binary Data</source>
         <translation>Datos Binarios</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2470"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2493"/>
         <source>Send binary data when the action is triggered.</source>
         <translation>Enviar datos binarios cuando se active la acción.</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2483"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2506"/>
         <source>TX Data (Hex)</source>
         <translation>Datos TX (Hex)</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2486"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2503"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2509"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2526"/>
         <source>Data to transmit when the action is triggered.</source>
         <translation>Datos a transmitir cuando se activa la acción.</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2532"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2555"/>
         <source>EOL Sequence</source>
         <translation>Secuencia EOL</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2534"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2557"/>
         <source>End-of-line (EOL) sequence to use</source>
         <translation>Secuencia de fin de línea (EOL) a utilizar</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2596"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2567"/>
+        <source>Auto Execute on Connect</source>
+        <translation>Ejecución automática al conectar</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2571"/>
+        <source>Trigger this action automatically when a device connects.</source>
+        <translation>Activar esta acción automáticamente cuando un dispositivo se conecte.</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2583"/>
+        <source>Timer Mode</source>
+        <translation>Modo de temporizador</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2585"/>
+        <source>How and when the timer should activate.</source>
+        <translation>Cómo y cuándo debe activarse el temporizador.</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2598"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2600"/>
+        <source>Timer Interval (ms)</source>
+        <translation>Intervalo del temporizador (ms)</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2602"/>
+        <source>Interval in milliseconds between each timer-triggered action.</source>
+        <translation>Intervalo en milisegundos entre cada acción activada por el temporizador.</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2666"/>
         <source>Untitled Dataset</source>
         <translation>Conjunto de Datos Sin Título</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2597"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2667"/>
         <source>Name or description of the dataset</source>
         <translation>Nombre o descripción del conjunto de datos</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2608"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2678"/>
         <source>Frame Index</source>
         <translation>Índice de Trama</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2611"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2681"/>
         <source>Position in the frame</source>
         <translation>Posición en la trama</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2621"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2691"/>
         <source>Measurement Unit</source>
         <translation>Unidad de Medida</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2623"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2693"/>
         <source>Volts, Amps, etc.</source>
         <translation>Voltios, Amperios, etc.</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2624"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2694"/>
         <source>Unit of measurement (optional)</source>
         <translation>Unidad de medida (opcional)</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2636"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2706"/>
         <source>Overview</source>
         <translation>Resumen</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2639"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2709"/>
         <source>Include widget in overview dashboard</source>
         <translation>Incluir widget en el tablero de resumen</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2674"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2744"/>
         <source>Display widget (optional)</source>
         <translation>Widget de visualización (opcional)</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2777"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2847"/>
         <source>Minimum Value</source>
         <translation>Valor Mínimo</translation>
     </message>
@@ -2051,107 +2258,127 @@ Usa los botones de la barra de herramientas de arriba para agregar un conjunto d
         <translation type="vanished">Requerido para widgets de barras/medidores</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2790"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2860"/>
         <source>Maximum Value</source>
         <translation>Valor Máximo</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2806"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2876"/>
         <source>Alarm Value</source>
         <translation>Valor de Alarma</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2809"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2879"/>
         <source>Triggers alarm in bar widgets and LED panels</source>
         <translation>Activa la alarma en widgets de barras y paneles LED</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2704"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2774"/>
         <source>Oscilloscope Plot</source>
         <translation>Gráfico de Osciloscopio</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2706"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2776"/>
         <source>Plot data in real-time</source>
         <translation>Graficar datos en tiempo real</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2715"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2785"/>
         <source>FFT Plot</source>
         <translation>Gráfico FFT</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2718"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2788"/>
         <source>Plot frequency-domain data</source>
         <translation>Graficar datos en el dominio de la frecuencia</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2831"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2901"/>
         <source>FFT Window Size</source>
         <translation>Tamaño de Ventana FFT</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2833"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2903"/>
         <source>Samples for FFT calculation</source>
         <translation>Muestras para el cálculo de FFT</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2844"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2914"/>
         <source>FFT Sampling Rate</source>
         <translation>Tasa de muestreo FFT</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2846"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2916"/>
         <source>Sampling rate (Hz) for FFT calculation</source>
         <translation>Tasa de muestreo (Hz) para el cálculo de la FFT</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2727"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2797"/>
         <source>Show in LED Panel</source>
         <translation>Mostrar en el Panel LED</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2730"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2800"/>
         <source>Quick status monitoring</source>
         <translation>Monitoreo rápido de estado</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2861"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2931"/>
         <source>LED High (On) Value</source>
         <translation>Valor Alto (Encendido) del LED</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2864"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2934"/>
         <source>Threshold for LED on</source>
         <translation>Umbral para encender el LED</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2936"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3006"/>
+        <source>Off</source>
+        <translation>Apagado</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3007"/>
+        <source>Auto Start</source>
+        <translation>Inicio automático</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3008"/>
+        <source>Start on Trigger</source>
+        <translation>Iniciar al activar</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3009"/>
+        <source>Toggle on Trigger</source>
+        <translation>Alternar al activar</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3013"/>
         <source>Plain Text (UTF8)</source>
         <translation>Texto plano (UTF8)</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2946"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3031"/>
         <source>No Delimiters</source>
         <translation>Sin delimitadores</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2974"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3059"/>
         <source>CRLF (\r\n)</source>
         <translation>CRLF (\r\n)</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="3020"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3105"/>
         <source>Save changes to frame parser code?</source>
         <translation>¿Guardar cambios en el código del analizador de tramas?</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="3021"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3106"/>
         <source>Select 'Save' to keep your changes, 'Discard' to lose them permanently, or 'Cancel' to return.</source>
         <translation>Seleccione ‘Guardar’ para conservar los cambios, ‘Descartar’ para perderlos permanentemente o ‘Cancelar’ para volver.</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="3023"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3108"/>
         <source>Save Changes</source>
         <translation>Guardar cambios</translation>
     </message>
@@ -2160,82 +2387,92 @@ Usa los botones de la barra de herramientas de arriba para agregar un conjunto d
         <translation type="vanished">Normal (UTF8)</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2937"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3014"/>
         <source>Hexadecimal</source>
         <translation>Hexadecimal</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2938"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3015"/>
         <source>Base64</source>
         <translation>Base64</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2943"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3016"/>
+        <source>Binary (Direct)</source>
+        <translation>Binario (Directo)</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3023"/>
+        <source>No Checksum</source>
+        <translation>Sin suma de verificación</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3028"/>
         <source>End Delimiter Only</source>
         <translation>Sólo delimitador de fin</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2944"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3029"/>
         <source>Start Delimiter Only</source>
         <translation>Solo Delimitador de Inicio</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2945"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3030"/>
         <source>Start + End Delimiter</source>
         <translation>Delimitador de inicio + fin</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2954"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3039"/>
         <source>Data Grid</source>
         <translation>Cuadrícula de Datos</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2955"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3040"/>
         <source>GPS Map</source>
         <translation>Mapa GPS</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2956"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3041"/>
         <source>Gyroscope</source>
         <translation>Giroscopio</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2957"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3042"/>
         <source>Multiple Plot</source>
         <translation>Gráfico Múltiple</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2958"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3043"/>
         <source>Accelerometer</source>
         <translation>Acelerómetro</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2959"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3044"/>
         <source>3D Plot</source>
         <translation>Gráfica 3D</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2965"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3050"/>
         <source>Bar</source>
         <translation>Barra</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2966"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3051"/>
         <source>Gauge</source>
         <translation>Indicador</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2967"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3052"/>
         <source>Compass</source>
         <translation>Brújula</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2972"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3057"/>
         <source>New Line (\n)</source>
         <translation>Línea Nueva (\n)</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2973"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3058"/>
         <source>Carriage Return (\r)</source>
         <translation>Retorno de Carro (\r)</translation>
     </message>
@@ -2248,12 +2485,12 @@ Usa los botones de la barra de herramientas de arriba para agregar un conjunto d
         <translation type="vanished">RC + LN (\r\n)</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2978"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3063"/>
         <source>No</source>
         <translation>No</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2979"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3064"/>
         <source>Linear Plot</source>
         <translation>Gráfico Lineal</translation>
     </message>
@@ -2291,93 +2528,93 @@ Usa los botones de la barra de herramientas de arriba para agregar un conjunto d
         <translation>Licenciamiento</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="205"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="209"/>
         <source>Please wait...</source>
         <translation>Por favor espera...</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="232"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="236"/>
         <source>Activate Serial Studio Pro</source>
         <translation>Activar Serial Studio Pro</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="242"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="246"/>
         <source>Paste your license key below to unlock Pro features like MQTT, 3D plotting, and more.</source>
         <translation>Pega tu clave de licencia abajo para desbloquear funciones Pro como MQTT, gráficos 3D y más.</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="253"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="257"/>
         <source>Your license includes 5 device activations.
 Plans include Monthly, Yearly, and Lifetime options.</source>
         <translation>Tu licencia incluye 5 activaciones de dispositivo.
 Los planes incluyen opciones Mensuales, Anuales y de Por Vida.</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="270"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="274"/>
         <source>Paste your license key here…</source>
         <translation>Pega tu clave de licencia aquí…</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="289"/>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="424"/>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="468"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="293"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="428"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="472"/>
         <source>Copy</source>
         <translation>Copiar</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="295"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="299"/>
         <source>Paste</source>
         <translation>Pegar</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="301"/>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="430"/>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="474"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="305"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="434"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="478"/>
         <source>Select All</source>
         <translation>Seleccionar todo</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="346"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="350"/>
         <source>Product</source>
         <translation>Producto</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="351"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="355"/>
         <source>Serial Studio %1</source>
         <translation>Serial Studio %1</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="359"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="363"/>
         <source>Licensee</source>
         <translation>Titular de la licencia</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="372"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="376"/>
         <source>Licensee E-Mail</source>
         <translation>Correo electrónico del titular</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="385"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="389"/>
         <source>Device Usage</source>
         <translation>Uso del dispositivo</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="391"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="395"/>
         <source>%1 devices in use (Unlimited plan)</source>
         <translation>%1 dispositivos en uso (plan ilimitado)</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="392"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="396"/>
         <source>%1 of %2 devices used</source>
         <translation>%1 de %2 dispositivos usados</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="402"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="406"/>
         <source>Device ID</source>
         <translation>ID del dispositivo</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="444"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="448"/>
         <source>License Key</source>
         <translation>Clave de licencia</translation>
     </message>
@@ -2386,22 +2623,22 @@ Los planes incluyen opciones Mensuales, Anuales y de Por Vida.</translation>
         <translation type="vanished">Para cualquier problema con el pago o la activación, contacta al soporte a través de alex@serial-studio.com</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="504"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="508"/>
         <source>Customer Portal</source>
         <translation>Portal del cliente</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="519"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="523"/>
         <source>Buy License</source>
         <translation>Comprar licencia</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="529"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="533"/>
         <source>Activate</source>
         <translation>Activar</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="542"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="546"/>
         <source>Deactivate</source>
         <translation>Desactivar</translation>
     </message>
@@ -3039,77 +3276,77 @@ Por favor, proporciona las credenciales necesarias.</translation>
         <translation>Propiedades SSL</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="327"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="331"/>
         <source>Clean Session</source>
         <translation>Sesión limpia</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="372"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="380"/>
         <source>Username</source>
         <translation>Nombre de usuario</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="447"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="459"/>
         <source>Version</source>
         <translation>Versión</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="459"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="471"/>
         <source>Mode</source>
         <translation>Modo</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="476"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="488"/>
         <source>e.g. sensors/temperature or home/+/status</source>
         <translation>p. ej. sensores/temperatura o hogar/+/estado</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="483"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="495"/>
         <source>Will Retain</source>
         <translation>Retener</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="494"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="506"/>
         <source>Will QoS</source>
         <translation>Calidad de Servicio (QoS)</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="506"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="518"/>
         <source>Will Topic</source>
         <translation>Tema</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="511"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="523"/>
         <source>e.g. device/alerts/offline</source>
         <translation>p. ej. dispositivo/alertas/desconectado</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="518"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="530"/>
         <source>Will Message</source>
         <translation>Mensaje</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="523"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="535"/>
         <source>e.g. Device unexpectedly disconnected</source>
         <translation>p. ej. Dispositivo desconectado inesperadamente</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="564"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="580"/>
         <source>Enable SSL</source>
         <translation>Habilitar SSL</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="575"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="591"/>
         <source>SSL Protocol</source>
         <translation>Protocolo SSL</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="591"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="607"/>
         <source>Verify Depth</source>
         <translation>Verificar Profundidad</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="609"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="625"/>
         <source>Verify Mode</source>
         <translation>Verificar Modo</translation>
     </message>
@@ -3118,22 +3355,22 @@ Por favor, proporciona las credenciales necesarias.</translation>
         <translation type="vanished">Nivel de QOS</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="314"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="318"/>
         <source>Keep Alive (s)</source>
         <translation>Mantener activo (s)</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="277"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="281"/>
         <source>Host</source>
         <translation>Host</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="289"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="293"/>
         <source>Port</source>
         <translation>Puerto</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="471"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="483"/>
         <source>Topic</source>
         <translation>Tema</translation>
     </message>
@@ -3154,17 +3391,17 @@ Por favor, proporciona las credenciales necesarias.</translation>
         <translation type="vanished">Usuario</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="384"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="392"/>
         <source>Password</source>
         <translation>Contraseña</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="377"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="385"/>
         <source>MQTT Username</source>
         <translation>Usuario MQTT</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="394"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="402"/>
         <source>MQTT Password</source>
         <translation>Contraseña MQTT</translation>
     </message>
@@ -3197,17 +3434,17 @@ Por favor, proporciona las credenciales necesarias.</translation>
         <translation type="vanished">Protocolo:</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="641"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="657"/>
         <source>Close</source>
         <translation>Cerrar</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="660"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="676"/>
         <source>Disconnect</source>
         <translation>Desconectar</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="660"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="676"/>
         <source>Connect</source>
         <translation>Conectar</translation>
     </message>
@@ -3999,118 +4236,218 @@ Por favor, proporciona las credenciales necesarias.</translation>
         <translation>Nuevo</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="152"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="137"/>
+        <source>Create a new JSON project</source>
+        <translation>Crear un nuevo proyecto JSON</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="153"/>
         <source>Open</source>
         <translation>Abrir</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="161"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="157"/>
+        <source>Open an existing JSON project</source>
+        <translation>Abrir un proyecto JSON existente</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="163"/>
         <source>Save</source>
         <translation>Guardar</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="171"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="166"/>
+        <source>Save the current project</source>
+        <translation>Guardar el proyecto actual</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="174"/>
         <source>Save As</source>
         <translation>Guardar Como</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="195"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="178"/>
+        <source>Save the current project under a new name</source>
+        <translation>Guardar el proyecto actual con un nuevo nombre</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="199"/>
         <source>Action</source>
         <translation>Acción</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="216"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="202"/>
+        <source>Add a new action to the project</source>
+        <translation>Agregar una nueva acción al proyecto</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="221"/>
         <source>Dataset</source>
         <translation>Conjunto de datos</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="233"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="223"/>
+        <source>Add a generic dataset</source>
+        <translation>Agregar un conjunto de datos genérico</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="239"/>
         <source>Plot</source>
         <translation>Gráfica</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="243"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="244"/>
+        <source>Add a 2D plot dataset</source>
+        <translation>Agregar un conjunto de datos de gráfico 2D</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="250"/>
         <source>FFT Plot</source>
         <translation>Gráfica FFT</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="253"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="255"/>
+        <source>Add a Fast Fourier Transform plot</source>
+        <translation>Agregar un gráfico de Transformada Rápida de Fourier</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="261"/>
         <source>Gauge</source>
         <translation>Medidor</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="263"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="266"/>
+        <source>Add a gauge widget for numeric data</source>
+        <translation>Agregar un widget de medidor para datos numéricos</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="272"/>
         <source>Level Indicator</source>
         <translation>Indicador de nivel</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="273"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="277"/>
+        <source>Add a vertical bar level indicator</source>
+        <translation>Agregar un indicador de nivel de barra vertical</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="283"/>
         <source>Compass</source>
         <translation>Brújula</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="283"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="288"/>
+        <source>Add a compass widget for directional data</source>
+        <translation>Agregar un widget de brújula para datos direccionales</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="294"/>
         <source>LED Indicator</source>
         <translation>Indicador LED</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="308"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="299"/>
+        <source>Add an LED-style status indicator</source>
+        <translation>Agregar un indicador de estado estilo LED</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="320"/>
         <source>Group</source>
         <translation>Grupo</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="311"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="322"/>
+        <source>Add a dataset container group</source>
+        <translation>Agregar un grupo contenedor de conjunto de datos</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="324"/>
         <source>Dataset Container</source>
         <translation>Contenedor de conjunto de datos</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="325"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="338"/>
         <source>Table</source>
         <translation>Tabla</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="331"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="343"/>
+        <source>Add a data table view</source>
+        <translation>Agregar una vista de tabla de datos</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="345"/>
         <source>Data Grid</source>
         <translation>Cuadrícula de datos</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="335"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="349"/>
         <source>Multi-Plot</source>
         <translation>Multi-gráfica</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="341"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="354"/>
+        <source>Add a 2D plot with multiple signals</source>
+        <translation>Agregar un gráfico 2D con múltiples señales</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="356"/>
         <source>Multiple Plot</source>
         <translation>Gráfica múltiple</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="345"/>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="351"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="360"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="367"/>
         <source>3D Plot</source>
         <translation>Gráfica 3D</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="355"/>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="361"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="365"/>
+        <source>Add a 3D plot visualization</source>
+        <translation>Agregar una visualización de gráfico 3D</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="371"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="378"/>
         <source>Accelerometer</source>
         <translation>Acelerómetro</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="365"/>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="371"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="376"/>
+        <source>Add a group for 3-axis accelerometer data</source>
+        <translation>Agregar un grupo para datos de acelerómetro de 3 ejes</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="382"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="388"/>
         <source>Gyroscope</source>
         <translation>Giroscopio</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="375"/>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="381"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="389"/>
+        <source>Add a group for 3-axis gyroscope data (angular rates are integrated into orientation automatically)</source>
+        <translation>Agregar un grupo para datos de giroscopio de 3 ejes (las tasas angulares se integran automáticamente en la orientación)</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="393"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="400"/>
         <source>GPS Map</source>
         <translation>Mapa GPS</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="400"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="398"/>
+        <source>Add a map widget for GPS data</source>
+        <translation>Agregar un widget de mapa para datos GPS</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="419"/>
         <source>Help</source>
         <translation>Ayuda</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="422"/>
+        <source>Open the online Project Editor documentation</source>
+        <translation>Abrir la documentación en línea del Editor de Proyectos</translation>
     </message>
 </context>
 <context>
@@ -4136,18 +4473,18 @@ Por favor, proporciona las credenciales necesarias.</translation>
     <message>
         <location filename="../../qml/ProjectEditor/Views/ProjectView.qml" line="112"/>
         <source>First, set up frame detection and data decoding.</source>
-        <translation>Primero, configure la detección de cuadros y la decodificación de datos.</translation>
+        <translation>Primero, configure la detección de tramas y la decodificación de datos.</translation>
     </message>
     <message>
         <location filename="../../qml/ProjectEditor/Views/ProjectView.qml" line="128"/>
         <source>Frames are parsed into arrays, and datasets link each element to a widget.</source>
-        <translation>Los cuadros se analizan en matrices, y los conjuntos de datos vinculan cada elemento a un widget.</translation>
+        <translation>Las tramas se analizan en arreglos, y los conjuntos de datos vinculan cada elemento a un widget.</translation>
     </message>
 </context>
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../../src/Misc/Translator.cpp" line="158"/>
+        <location filename="../../src/Misc/Translator.cpp" line="170"/>
         <source>Failed to load welcome text :(</source>
         <translation>Error al cargar el texto de bienvenida :(</translation>
     </message>
@@ -4324,77 +4661,82 @@ Por favor, proporciona las credenciales necesarias.</translation>
         <translation>Preferencias</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="100"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="101"/>
         <source>General</source>
         <translation>General</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="124"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="125"/>
         <source>Language</source>
         <translation>Idioma</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="141"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="142"/>
         <source>Theme</source>
         <translation>Tema</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="157"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="158"/>
         <source>Workspace Folder</source>
         <translation>Carpeta de Espacio de Trabajo</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="196"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="197"/>
         <source>Miscellaneous</source>
         <translation>Varios</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="220"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="221"/>
         <source>Enable TCP Plugins (Port 7777)</source>
         <translation>Habilitar Plugins TCP (Puerto 7777)</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="237"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="238"/>
         <source>Force Software Rendering</source>
         <translation>Forzar renderizado por software</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="253"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="254"/>
         <source>Automatically Check for Updates</source>
         <translation>Buscar actualizaciones automáticamente</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="278"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="279"/>
         <source>Dashboard</source>
         <translation>Tablero</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="302"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="303"/>
         <source>Point Count</source>
         <translation>Conteo de puntos</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="321"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="322"/>
         <source>Decimal Precision</source>
         <translation>Precisión decimal</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="340"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="341"/>
+        <source>Show Actions Panel</source>
+        <translation>Mostrar panel de acciones</translation>
+    </message>
+    <message>
+        <location filename="../../qml/Dialogs/Settings.qml" line="358"/>
         <source>Enable Console Widget</source>
         <translation>Habilitar widget de consola</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="379"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="397"/>
         <source>Reset</source>
         <translation>Restablecer</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="404"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="422"/>
         <source>Close</source>
         <translation>Cerrar</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="414"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="432"/>
         <source>Apply</source>
         <translation>Aplicar</translation>
     </message>
@@ -4558,7 +4900,7 @@ Por favor, proporciona las credenciales necesarias.</translation>
 <context>
     <name>SubMenuCombo</name>
     <message>
-        <location filename="../../qml/Widgets/SubMenuCombo.qml" line="79"/>
+        <location filename="../../qml/Widgets/SubMenuCombo.qml" line="80"/>
         <source>No Data Available</source>
         <translation>Datos No Disponibles</translation>
     </message>
@@ -4566,27 +4908,26 @@ Por favor, proporciona las credenciales necesarias.</translation>
 <context>
     <name>TableDelegate</name>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/TableDelegate.qml" line="124"/>
+        <location filename="../../qml/ProjectEditor/Views/TableDelegate.qml" line="122"/>
         <source>Parameter</source>
         <translation>Parámetro</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/TableDelegate.qml" line="144"/>
+        <location filename="../../qml/ProjectEditor/Views/TableDelegate.qml" line="142"/>
         <source>Value</source>
         <translation>Valor</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/TableDelegate.qml" line="164"/>
         <source>Parameter Description</source>
-        <translation>Descripción</translation>
+        <translation type="vanished">Descripción</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/TableDelegate.qml" line="527"/>
+        <location filename="../../qml/ProjectEditor/Views/TableDelegate.qml" line="508"/>
         <source>No</source>
         <translation>No</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/TableDelegate.qml" line="527"/>
+        <location filename="../../qml/ProjectEditor/Views/TableDelegate.qml" line="508"/>
         <source>Yes</source>
         <translation>Sí</translation>
     </message>
@@ -4602,17 +4943,17 @@ Por favor, proporciona las credenciales necesarias.</translation>
 <context>
     <name>Terminal</name>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="121"/>
+        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="122"/>
         <source>Copy</source>
         <translation>Copiar</translation>
     </message>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="128"/>
+        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="129"/>
         <source>Select all</source>
         <translation>Seleccionar todo</translation>
     </message>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="135"/>
+        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="136"/>
         <source>Clear</source>
         <translation>Limpiar</translation>
     </message>
@@ -4629,12 +4970,12 @@ Por favor, proporciona las credenciales necesarias.</translation>
         <translation type="vanished">No se han recibido datos hasta ahora</translation>
     </message>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="212"/>
+        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="213"/>
         <source>Send Data to Device</source>
         <translation>Enviar datos al dispositivo</translation>
     </message>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="352"/>
+        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="367"/>
         <source>Echo</source>
         <translation>Eco</translation>
     </message>
@@ -4643,17 +4984,17 @@ Por favor, proporciona las credenciales necesarias.</translation>
         <translation type="vanished">Desplazamiento automático</translation>
     </message>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="341"/>
+        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="356"/>
         <source>Show Timestamp</source>
         <translation>Mostrar marca de tiempo</translation>
     </message>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="363"/>
+        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="378"/>
         <source>Emulate VT-100</source>
         <translation>Emular VT-100</translation>
     </message>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="385"/>
+        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="400"/>
         <source>Display: %1</source>
         <translation>Mostrar: %1</translation>
     </message>
@@ -4666,7 +5007,7 @@ Por favor, proporciona las credenciales necesarias.</translation>
         <translation>Editor de Proyecto</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="160"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="161"/>
         <source>CSV Player</source>
         <translation>Reproductor CSV</translation>
     </message>
@@ -4687,45 +5028,100 @@ Por favor, proporciona las credenciales necesarias.</translation>
         <translation type="vanished">Tablero</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="219"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="223"/>
         <source>MQTT</source>
         <translation>MQTT</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="255"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="261"/>
         <source>Help</source>
         <translation>Ayuda</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="245"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="250"/>
         <source>Examples</source>
         <translation>Ejemplos</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="184"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="154"/>
+        <source>Open the Project Editor to create or modify your JSON layout</source>
+        <translation>Abrir el Editor de Proyectos para crear o modificar tu diseño JSON</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="166"/>
+        <source>Play a CSV file as if it were live sensor data</source>
+        <translation>Reproducir un archivo CSV como si fuera datos de sensores en vivo</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="186"/>
         <source>Devices</source>
         <translation>Dispositivos</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="194"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="190"/>
+        <source>Configure device connection via Serial, BLE, or network socket</source>
+        <translation>Configurar la conexión del dispositivo a través de Serial, BLE o socket de red</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="197"/>
         <source>Preferences</source>
         <translation>Preferencias</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="265"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="201"/>
+        <source>Open application settings and preferences</source>
+        <translation>Abrir la configuración y preferencias de la aplicación</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="230"/>
+        <source>Configure MQTT connection (publish or subscribe)</source>
+        <translation>Configurar conexión MQTT (publicar o suscribirse)</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="253"/>
+        <source>Browse example projects on GitHub</source>
+        <translation>Explorar proyectos de ejemplo en GitHub</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="264"/>
+        <source>Open the online documentation for help and guidance</source>
+        <translation>Abrir la documentación en línea para ayuda y orientación</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="272"/>
+        <source>AI Help</source>
+        <translation>Ayuda de IA</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="275"/>
+        <source>View detailed documentation and ask questions on DeepWiki</source>
+        <translation>Ver documentación detallada y hacer preguntas en DeepWiki</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="283"/>
         <source>About</source>
         <translation>Acerca de</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="290"/>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="319"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="287"/>
+        <source>Show application info and license details</source>
+        <translation>Mostrar información de la aplicación y detalles de la licencia</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="309"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="339"/>
         <source>Disconnect</source>
         <translation>Desconectar</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="290"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="309"/>
         <source>Connect</source>
         <translation>Conectar</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="312"/>
+        <source>Connect or disconnect from device or MQTT broker</source>
+        <translation>Conectar o desconectar del dispositivo o broker MQTT</translation>
     </message>
     <message>
         <source>New Project</source>
@@ -4799,42 +5195,42 @@ Por favor, proporciona las credenciales necesarias.</translation>
 <context>
     <name>UART</name>
     <message>
-        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="79"/>
+        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="78"/>
         <source>COM Port</source>
         <translation>Puerto COM</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="107"/>
+        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="106"/>
         <source>Baud Rate</source>
         <translation>Velocidad en baudios</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="145"/>
+        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="165"/>
         <source>Data Bits</source>
         <translation>Bits de datos</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="161"/>
+        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="181"/>
         <source>Parity</source>
         <translation>Paridad</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="177"/>
+        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="197"/>
         <source>Stop Bits</source>
         <translation>Bits de parada</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="193"/>
+        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="213"/>
         <source>Flow Control</source>
         <translation>Control de flujo</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="220"/>
+        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="240"/>
         <source>Auto Reconnect</source>
         <translation>Reconexión automática</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="237"/>
+        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="257"/>
         <source>Send DTR Signal</source>
         <translation>Enviar señal DTR</translation>
     </message>
@@ -4862,17 +5258,17 @@ Por favor, proporciona las credenciales necesarias.</translation>
         <translation type="vanished">Panel de estado</translation>
     </message>
     <message>
-        <location filename="../../src/UI/Dashboard.cpp" line="761"/>
+        <location filename="../../src/UI/Dashboard.cpp" line="873"/>
         <source>Console</source>
         <translation>Consola</translation>
     </message>
     <message>
-        <location filename="../../src/UI/Dashboard.cpp" line="778"/>
+        <location filename="../../src/UI/Dashboard.cpp" line="890"/>
         <source>%1 (Fallback)</source>
         <translation>%1 (Alternativa)</translation>
     </message>
     <message>
-        <location filename="../../src/UI/Dashboard.cpp" line="840"/>
+        <location filename="../../src/UI/Dashboard.cpp" line="952"/>
         <source>LED Panel (%1)</source>
         <translation>Panel LED (%1)</translation>
     </message>
@@ -5133,6 +5529,19 @@ Por favor, proporciona las credenciales necesarias.</translation>
         <location filename="../../src/UI/Widgets/Compass.cpp" line="105"/>
         <source>NW</source>
         <translation>NO</translation>
+    </message>
+</context>
+<context>
+    <name>Widgets::DataGrid</name>
+    <message>
+        <location filename="../../src/UI/Widgets/DataGrid.cpp" line="45"/>
+        <source>Title</source>
+        <translation>Título</translation>
+    </message>
+    <message>
+        <location filename="../../src/UI/Widgets/DataGrid.cpp" line="45"/>
+        <source>Value</source>
+        <translation>Valor</translation>
     </message>
 </context>
 <context>

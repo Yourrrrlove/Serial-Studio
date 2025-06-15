@@ -22,8 +22,10 @@
 #include <QFile>
 #include <QDateTime>
 
+#include "SerialStudio.h"
 #include "IO/Manager.h"
 #include "IO/Console.h"
+#include "IO/Checksum.h"
 #include "Misc/Translator.h"
 
 /**
@@ -35,6 +37,7 @@ IO::Console::Console()
   , m_displayMode(DisplayMode::DisplayPlainText)
   , m_scrollback(1000)
   , m_historyItem(0)
+  , m_checksumMethod(0)
   , m_echo(true)
   , m_showTimestamp(false)
   , m_isStartingLine(true)
@@ -81,6 +84,19 @@ bool IO::Console::showTimestamp() const
 int IO::Console::scrollback() const
 {
   return m_scrollback;
+}
+
+/**
+ * @brief Returns the index of the currently selected checksum method.
+ *
+ * The index corresponds to the position in the list returned by
+ * checksumMethods(), where 0 typically represents "None".
+ *
+ * @return The index of the active checksum method.
+ */
+int IO::Console::checksumMethod() const
+{
+  return m_checksumMethod;
 }
 
 /**
@@ -178,6 +194,29 @@ QStringList IO::Console::displayModes() const
 }
 
 /**
+ * @brief Returns a list of supported checksum methods including "None".
+ *
+ * This list is typically used for populating UI elements such as dropdowns
+ * or configuration panels. It includes a "None" option followed by all
+ * supported checksum algorithms defined in the IO namespace.
+ *
+ * @return A QStringList of available checksum method names.
+ */
+QStringList IO::Console::checksumMethods() const
+{
+  static QStringList list;
+  if (list.isEmpty())
+  {
+    list = IO::availableChecksums();
+    const int index = list.indexOf(QLatin1String(""));
+    if (index >= 0)
+      list[index] = tr("No Checksum");
+  }
+
+  return list;
+}
+
+/**
  * Validates the given @a text to ensure it contains only valid HEX characters
  * and consists of complete byte pairs (even-length string).
  * Returns true if the input is valid, otherwise false.
@@ -224,49 +263,6 @@ QString IO::Console::formatUserHex(const QString &text)
 
   // Return string
   return str;
-}
-
-/**
- * Converts the given @a data in HEX format into real binary data.
- */
-QByteArray IO::Console::hexToBytes(const QString &data)
-{
-  // Remove spaces from the input data
-  QString withoutSpaces = data;
-  withoutSpaces.replace(QStringLiteral(" "), "");
-
-  // Check if the length of the string is even
-  if (withoutSpaces.length() % 2 != 0)
-  {
-    qWarning() << data << "is not a valid hexadecimal array";
-    return QByteArray();
-  }
-
-  // Iterate over the string in steps of 2
-  bool ok;
-  QByteArray array;
-  for (int i = 0; i < withoutSpaces.length(); i += 2)
-  {
-    // Get two characters (a hex pair)
-    auto chr1 = withoutSpaces.at(i);
-    auto chr2 = withoutSpaces.at(i + 1);
-
-    // Convert the hex pair into a byte
-    QString byteStr = QStringLiteral("%1%2").arg(chr1, chr2);
-    int byte = byteStr.toInt(&ok, 16);
-
-    // If the conversion fails, return an empty array
-    if (!ok)
-    {
-      qWarning() << data << "is not a valid hexadecimal array";
-      return QByteArray();
-    }
-
-    // Append the byte to the result array
-    array.append(static_cast<char>(byte));
-  }
-
-  return array;
 }
 
 /**
@@ -347,7 +343,7 @@ void IO::Console::send(const QString &data)
   // Convert data to byte array
   QByteArray bin;
   if (dataMode() == DataMode::DataHexadecimal)
-    bin = hexToBytes(data);
+    bin = SerialStudio::hexToBytes(data);
   else
     bin = data.toUtf8();
 
@@ -367,6 +363,12 @@ void IO::Console::send(const QString &data)
       bin.append('\n');
       break;
   }
+
+  // Add checksum
+  const auto checksumName = IO::availableChecksums().at(m_checksumMethod);
+  auto checksum = IO::checksum(checksumName, bin);
+  if (!checksum.isEmpty())
+    bin.append(checksum);
 
   // Write data to device
   if (!bin.isEmpty())
@@ -406,6 +408,24 @@ void IO::Console::setScrollback(const int lines)
   {
     m_scrollback = lines;
     Q_EMIT scrollbackChanged();
+  }
+}
+
+/**
+ * @brief Sets the currently selected checksum method by index.
+ *
+ * Updates the internal checksum method if the provided index differs
+ * from the current one, and emits the checksumMethodChanged() signal.
+ *
+ * @param method The new checksum method index (from checksumMethods()).
+ */
+void IO::Console::setChecksumMethod(const int method)
+{
+  if (checksumMethod() != method && method >= 0
+      && method < availableChecksums().count())
+  {
+    m_checksumMethod = method;
+    Q_EMIT checksumMethodChanged();
   }
 }
 

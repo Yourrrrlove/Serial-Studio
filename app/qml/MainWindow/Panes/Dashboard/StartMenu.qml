@@ -54,8 +54,8 @@ Popup {
   //
   Settings {
     category: "WindowManagement"
-    property alias console: _consoleBt.checked
     property alias autoLayout: _autoLayoutBt.checked
+    property alias consoleEnabled: _consoleBt.checked
   }
 
   //
@@ -195,7 +195,7 @@ Popup {
         if (_actions.popup === null) {
           _actions.popup = _subMenuComponent.createObject(root)
           popup.valueSelected.connect((value) => {
-                                        Cpp_UI_Dashboard.activateAction(value)
+                                        Cpp_UI_Dashboard.activateAction(value, true)
                                         root.close()
                                       })
         }

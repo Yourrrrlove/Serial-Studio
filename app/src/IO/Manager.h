@@ -23,6 +23,7 @@
 
 #include <QThread>
 #include <QObject>
+#include <QPointer>
 #include <QKeyEvent>
 
 #include "SerialStudio.h"
@@ -70,6 +71,10 @@ class Manager : public QObject
              READ finishSequence
              WRITE setFinishSequence
              NOTIFY finishSequenceChanged)
+  Q_PROPERTY(QString checksumAlgorithm
+             READ checksumAlgorithm
+             WRITE setChecksumAlgorithm
+             NOTIFY checksumAlgorithmChanged)
   Q_PROPERTY(bool configurationOk
              READ configurationOk
              NOTIFY configurationChanged)
@@ -89,6 +94,7 @@ signals:
   void maxBufferSizeChanged();
   void startSequenceChanged();
   void finishSequenceChanged();
+  void checksumAlgorithmChanged();
   void dataSent(const QByteArray &data);
   void dataReceived(const QByteArray &data);
   void frameReceived(const QByteArray &frame);
@@ -114,6 +120,7 @@ public:
 
   [[nodiscard]] const QByteArray &startSequence() const;
   [[nodiscard]] const QByteArray &finishSequence() const;
+  [[nodiscard]] const QString &checksumAlgorithm() const;
 
   [[nodiscard]] QStringList availableBuses() const;
   Q_INVOKABLE qint64 writeData(const QByteArray &data);
@@ -130,6 +137,7 @@ public slots:
   void processPayload(const QByteArray &payload);
   void setStartSequence(const QByteArray &sequence);
   void setFinishSequence(const QByteArray &sequence);
+  void setChecksumAlgorithm(const QString &algorithm);
   void setBusType(const SerialStudio::BusType &driver);
 
 private slots:
@@ -147,5 +155,7 @@ private:
 
   QByteArray m_startSequence;
   QByteArray m_finishSequence;
+
+  QString m_checksumAlgorithm;
 };
 } // namespace IO

@@ -28,6 +28,11 @@ Item {
   id: root
 
   //
+  // Constants
+  //
+  property int maxButtonWidth: 128
+
+  //
   // Signals
   //
   signal clicked()
@@ -40,6 +45,7 @@ Item {
   property alias font: _label.font
   property alias text: _label.text
   property bool toolbarButton: true
+  property bool checkBgVisible: true
   property bool horizontalLayout: false
   property alias background: _background
 
@@ -53,13 +59,22 @@ Item {
   // Layout preferences
   //
   Layout.minimumWidth: implicitWidth
-  Layout.maximumWidth: implicitWidth
+  Layout.maximumWidth: maxButtonWidth
   implicitHeight: horizontalLayout ?
-                    Math.max(root.iconSize, _label.implicitHeight)  :
+                    Math.max(root.iconSize, _label.implicitHeight) :
                     root.iconSize + _label.implicitHeight + 20
-  implicitWidth: horizontalLayout ?
-                   Math.min(128, root.iconSize + Math.ceil(metrics.width + 16)) :
-                   Math.max(Math.ceil(metrics.width + 16), icon.width / 32 * 72)
+  implicitWidth: Math.min(
+                   maxButtonWidth,
+                   horizontalLayout
+                   ? root.iconSize + Math.ceil(metrics.width + 16)
+                   : Math.max(Math.ceil(metrics.width + 16), icon.width / 32 * 72)
+                   )
+
+  //
+  // Tooltip
+  //
+  ToolTip.delay: 700
+  ToolTip.visible: _mouseArea.containsMouse && ToolTip.text !== ""
 
   //
   // Animations
@@ -79,7 +94,9 @@ Item {
     visible: root.toolbarButton && !root.horizontalLayout
     color: Cpp_ThemeManager.colors["toolbar_checked_button_background"]
     border.color: Cpp_ThemeManager.colors["toolbar_checked_button_border"]
-    opacity: (root.checked || _mouseArea.pressed) ? Cpp_ThemeManager.colors["toolbar_checked_button_opacity"] : 0.0
+    opacity: (root.checked || _mouseArea.pressed)
+             ? Cpp_ThemeManager.colors["toolbar_checked_button_opacity"]
+             : 0.0
 
     Behavior on opacity { NumberAnimation {} }
   }
@@ -90,14 +107,13 @@ Item {
   ToolButton {
     checked: true
     anchors.fill: parent
-    visible: !root.toolbarButton
+    visible: !root.toolbarButton && root.checkBgVisible
     opacity: (root.checked || _mouseArea.pressed) ? 1 : 0
-
     Behavior on opacity { NumberAnimation {} }
   }
 
   //
-  // Button layout (Grid-based dynamic layout)
+  // Button layout
   //
   GridLayout {
     id: _layout
@@ -107,6 +123,7 @@ Item {
     columns: horizontalLayout ? 2 : 1
     rowSpacing: horizontalLayout ? 0 : 4
     columnSpacing: horizontalLayout ? 4 : 0
+    anchors.leftMargin: horizontalLayout ? 8 : 0
     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
 
     Item {
@@ -115,8 +132,7 @@ Item {
       Layout.column: 0
       implicitWidth: root.iconSize
       implicitHeight: root.iconSize
-      Layout.alignment: horizontalLayout ? Qt.AlignLeft | Qt.AlignVCenter :
-                                           Qt.AlignCenter
+      Layout.alignment: horizontalLayout ? Qt.AlignLeft | Qt.AlignVCenter : Qt.AlignCenter
 
       Image {
         id: _icon
@@ -143,15 +159,17 @@ Item {
       Layout.fillWidth: horizontalLayout
       Layout.row: horizontalLayout ? 0 : 1
       Layout.column: horizontalLayout ? 1 : 0
+      Layout.maximumWidth: root.maxButtonWidth - (horizontalLayout ? root.iconSize + 4 : 0)
       Layout.alignment: horizontalLayout ? Qt.AlignLeft : Qt.AlignCenter
       horizontalAlignment: horizontalLayout ? Qt.AlignLeft : Qt.AlignHCenter
-      color: root.toolbarButton ? Cpp_ThemeManager.colors["toolbar_text"] :
-                                  Cpp_ThemeManager.colors["button_text"]
+      color: root.toolbarButton
+             ? Cpp_ThemeManager.colors["toolbar_text"]
+             : Cpp_ThemeManager.colors["button_text"]
     }
   }
 
   //
-  // Button width calculation
+  // Width calculation for layout
   //
   TextMetrics {
     id: metrics
@@ -160,7 +178,7 @@ Item {
   }
 
   //
-  // Mouse Area
+  // Mouse interaction
   //
   MouseArea {
     id: _mouseArea

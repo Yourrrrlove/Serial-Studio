@@ -1,13 +1,22 @@
-# ADC Noise Analysis + FFT Visualization with Serial Studio
+# Command-Based ADC Sampling with Timers, Actions & CRC Integrity
 
 ## Overview
 
-This project demonstrates how to read and transmit analog-to-digital converter (ADC) values from six unconnected analog pins (A0 to A5) on an Arduino and analyze the noise in the signal using **Fast Fourier Transform (FFT)** for frequency domain visualization in **Serial Studio**.
+This project showcases how to integrate **binary data parsing**, **custom serial actions**, **timed execution**, and **checksum validation** in a Serial Studio workflow using Arduino. It provides a complete example of how to build a robust, command-driven interface for sensor data acquisition, suitable for real-time plotting and FFT analysis.
 
-The Arduino reads the raw ADC values from the unconnected pins (floating values), scales them to 8-bit (0-255) binary, and transmits them over the serial port. The data is parsed and visualized in Serial Studio, where the **FFT** feature is used to observe the frequency characteristics of the noise.
+The Arduino collects analog readings from six input channels (A0 to A5), processes the values, wraps them in a binary protocol frame with a **CRC-16-CCITT** checksum, and only sends data when explicitly commanded using a custom `"poll-data"` action. Serial Studio triggers this action either manually or via timer modes like auto-start or toggle-on-trigger.
+
+## Key Features
+
+- **Binary Data Parsing**: Efficient, low-overhead serial communication
+- **CRC-16 Checksums**: Ensures data integrity on each frame
+- **Action System**: Serial Studio dashboard buttons that send predefined commands
+- **Timer Modes**: AutoStart, Toggle, and Triggered transmission
+- **FFT Visualization**: Analyze analog noise or sensor signals in the frequency domain
 
 ### Compatibility
-This project works with any Arduino board that has analog input pins. Although no external sensors are required, the analog pins **A0 to A5** will generate fluctuating noise due to their unconnected state, which can be analyzed using the FFT.
+
+Works with any Arduino board featuring analog input pins. No external components required—floating analog pins generate natural noise, ideal for FFT demonstrations.
 
 ![Serial Studio FFT](doc/screenshot.png)
 
@@ -15,74 +24,72 @@ This project works with any Arduino board that has analog input pins. Although n
 
 ### Connections
 
-No external hardware is required for this project, as the analog pins (A0 to A5) are left **unconnected** to measure floating ADC values.
-
-### Optional
-If you'd like to connect external components to generate specific signals (e.g., noise, sine waves, etc.), you can connect these to the analog pins for more controlled analysis.
+- Leave A0–A5 unconnected to capture environmental noise.
+- Alternatively, attach sensors or function generators for signal injection.
 
 ## Step-by-Step Guide
 
 ### 1. Arduino Sketch ([`HexadecimalADC.ino`](HexadecimalADC.ino))
 
-This Arduino sketch reads analog values from six floating pins (A0 to A5), scales the 10-bit readings (0-1023) to 8-bit (0-255), and transmits the binary data over the serial port in frames. The data is processed by Serial Studio for FFT visualization.
+This sketch configures the ADC, listens for serial commands like `"poll-data"`, reads analog values, computes a CRC, and sends data over serial **only when asked**.
 
-- **Analog Reading**: Data is read from analog pins A0 to A5.
-- **Data Conversion**: The 10-bit ADC values are mapped to 8-bit (0-255) and sent over the serial port.
-- **Serial Output**: Data is framed by a start (`0xC0 0xDE`) and end (`0xDE 0xC0`) delimiter, and transmitted in binary format for visualization.
+**Frame Format:**
+- Start delimiter: `0xC0 0xDE`
+- Sensor data: 6 bytes (mapped 10-bit → 8-bit)
+- CRC-16-CCITT (2 bytes, big-endian)
 
-The serial output can be analyzed in **Serial Studio** using the **FFT tool** to observe the frequency spectrum of the noise or any connected signals.
+**Baud Rate:** `115200`
 
-The program runs at a baud rate of **115200**, ensuring smooth and high-speed data transmission.
+**Trigger via Serial Studio Actions**:
+- `poll-data`: Read and transmit 1 data frame
+- `enable-pull-up`: Enable pull-ups on A0–A5
+- `disable-pull-up`: Set A0–A5 to normal input mode
 
 ### 2. Serial Studio Configuration
 
-To visualize the data, Serial Studio needs to be properly configured to parse the incoming hexadecimal data:
+#### Frame Format
+- **Mode**: `Binary (direct)`
+- **Start Sequence**: `0xC0 0xDE`
+- **Checksum**: `CRC-16-CCITT`
 
-1. **Download and Install Serial Studio**:
-Visit [Serial Studio's official website](https://serial-studio.github.io/) to download and install the software.
+#### Actions
 
-2. **Open Serial Studio and Import `HexadecimalADC.json`**:
-Launch Serial Studio and load the `HexadecimalADC.json` file included in this project using the **Project Editor**. This file contains all necessary configurations for interpreting the data transmitted by the Arduino.
+You can define custom actions in your `.json` project to send:
+- `"poll-data"` on button press or toggle
+- `"poll-data"` automatically using timer
+- Other configuration commands on connect
 
-#### About the JavaScript Parser Function
-
-Since the data is transmitted in hexadecimal format, a custom JavaScript parser function is required to convert the incoming frame data into an array of decimal values that can be plotted or analyzed in Serial Studio.
-
-Here’s the custom JavaScript parser function used by this project:
+#### JavaScript Frame Parser
 
 ```javascript
 /**
- * This function parses a binary data frame (represented as a hexadecimal string),
- * and converts it into an array of decimal values (0-255).
- *
- * @param[in]  frame  The latest received frame as a hexadecimal string.
- * @return     Array of integers containing the parsed frame elements.
+ * Convert each byte (0–255) into a voltage between 0 and 5V.
  */
 function parse(frame) {
     let dataArray = [];
-    for (let i = 0; i < frame.length; i += 2) {
-        let hexByte = frame.substring(i, i + 2);
-        let decimalValue = parseInt(hexByte, 16);
-        dataArray.push(decimalValue);
+
+    for (let i = 0; i < frame.length; ++i) {
+        let byte = frame[i];
+        dataArray.push(byte * 5.0 / 255);
     }
 
     return dataArray;
 }
 ```
 
-This function reads the binary data sent from the Arduino, converts each 2-character hexadecimal byte into a decimal value (0-255), and returns an array of values that are displayed on the Serial Studio dashboard or used for FFT analysis.
+For help on the parser function, see the [Serial Studio documentation](https://github.com/Serial-Studio/Serial-Studio/wiki/Project-Editor#frame-parser-function-view).
 
-You can read more about the frame parsing function [here](https://github.com/Serial-Studio/Serial-Studio/wiki/Project-Editor#frame-parser-function-view).
+### 3. Visualize with FFT
 
-### 3. Analyzing Noise with FFT
+1. Start Serial Studio.
+2. Select the serial port.
+3. Set baud to **115200**.
+4. Click your `"poll-data"` action.
+5. Use the **FFT widget** to inspect signal frequency.
 
-Once you have configured Serial Studio and uploaded the Arduino sketch, follow these steps to analyze the noise data using FFT:
+## Troubleshooting
 
-- **Connect to the Arduino**: Ensure that Serial Studio is connected to the correct serial port and that the baud rate is set to **115200**.
-- **Visualize the Data**: The analog values from the unconnected ADC pins will be plotted in real time, showing random floating values due to the noise.
-
-### Troubleshooting Tips
-
-- **No Data in FFT Plot**: Verify that the Arduino is properly connected, and the serial port and baud rate match the configuration in Serial Studio.
-- **Flat FFT Spectrum**: Unconnected ADC pins usually generate low-amplitude noise. If the FFT spectrum appears flat, try adjusting the sample rate or adding external components (such as signal generators) to visualize more pronounced frequency components.
-- **Inconsistent Data**: If the data appears inconsistent, ensure that the **Hexadecimal Conversion** method in the Project Editor is selected, and the JavaScript parser is functioning correctly in Serial Studio.
+- **No output**: Ensure `poll-data` is being sent.
+- **Noisy values**: Normal for floating pins; connect sensors for better control.
+- **Invalid frames**: Check CRC settings and delimiters.
+- **Slow updates**: Increase timer rate or switch to manual polling.

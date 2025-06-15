@@ -114,22 +114,37 @@
         <translation>アイコンを変更</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="126"/>
+        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="106"/>
+        <source>Change the icon used for this action</source>
+        <translation>このアクションに使用するアイコンを変更</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="127"/>
         <source>Duplicate</source>
         <translation>重複</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="137"/>
+        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="129"/>
+        <source>Duplicate this action with all its settings</source>
+        <translation>設定をすべて含めてこのアクションを複製</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="139"/>
         <source>Delete</source>
         <translation>削除</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="188"/>
+        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="143"/>
+        <source>Delete this action from the project</source>
+        <translation>プロジェクトからこのアクションを削除</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="191"/>
         <source>Send commands with a button click</source>
         <translation>ボタンクリックでコマンドを送信</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="204"/>
+        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="207"/>
         <source>Actions let you send custom commands to the connected device with a single button press.</source>
         <translation>アクションにより、接続されたデバイスにカスタムコマンドをワンボタンで送信できます。</translation>
     </message>
@@ -332,6 +347,19 @@
     </message>
 </context>
 <context>
+    <name>DataGrid</name>
+    <message>
+        <location filename="../../qml/Widgets/Dashboard/DataGrid.qml" line="90"/>
+        <source>Pause</source>
+        <translation>一時停止</translation>
+    </message>
+    <message>
+        <location filename="../../qml/Widgets/Dashboard/DataGrid.qml" line="90"/>
+        <source>Resume</source>
+        <translation>再開</translation>
+    </message>
+</context>
+<context>
     <name>DatasetView</name>
     <message>
         <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="82"/>
@@ -349,39 +377,79 @@
         <translation>プロット</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="134"/>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="121"/>
+        <source>Toggle 2D plot visualization for this dataset</source>
+        <translation>このデータセットの2Dプロット可視化を切り替え</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="135"/>
         <source>FFT Plot</source>
         <translation>FFTプロット</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="151"/>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="139"/>
+        <source>Toggle FFT plot to visualize frequency content</source>
+        <translation>周波数コンテンツを可視化するためのFFTプロットを切り替え</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="153"/>
         <source>Bar/Level</source>
         <translation>バー/レベル</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="168"/>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="157"/>
+        <source>Toggle bar/level indicator for this dataset</source>
+        <translation>このデータセットのバー/レベルインジケーターを切り替え</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="171"/>
         <source>Gauge</source>
         <translation>ゲージ</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="187"/>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="176"/>
+        <source>Toggle gauge widget for analog-style display</source>
+        <translation>アナログスタイルの表示のためのゲージウィジェットを切り替え</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="191"/>
         <source>Compass</source>
         <translation>コンパス</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="204"/>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="195"/>
+        <source>Toggle compass widget for directional data</source>
+        <translation>方向データのためのコンパスウィジェットを切り替え</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="209"/>
         <source>LED</source>
         <translation>LED</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="229"/>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="213"/>
+        <source>Toggle LED indicator for binary or thresholded values</source>
+        <translation>バイナリまたはしきい値の値のためのLEDインジケーターを切り替え</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="235"/>
         <source>Duplicate</source>
         <translation>複製</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="241"/>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="239"/>
+        <source>Duplicate this dataset with the same configuration</source>
+        <translation>同じ構成でこのデータセットを複製</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="248"/>
         <source>Delete</source>
         <translation>削除</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="253"/>
+        <source>Delete this dataset from the group</source>
+        <translation>このデータセットをグループから削除する</translation>
     </message>
 </context>
 <context>
@@ -658,31 +726,31 @@
     </message>
     <message>
         <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="82"/>
-        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="235"/>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="238"/>
         <source>Undo</source>
         <translation>元に戻す</translation>
     </message>
     <message>
         <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="89"/>
-        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="248"/>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="252"/>
         <source>Redo</source>
         <translation>やり直す</translation>
     </message>
     <message>
         <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="98"/>
-        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="272"/>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="277"/>
         <source>Cut</source>
         <translation>切り取り</translation>
     </message>
     <message>
         <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="103"/>
-        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="284"/>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="290"/>
         <source>Copy</source>
         <translation>コピー</translation>
     </message>
     <message>
         <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="108"/>
-        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="296"/>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="303"/>
         <source>Paste</source>
         <translation>貼り付け</translation>
     </message>
@@ -697,19 +765,64 @@
         <translation>リセット</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="199"/>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="192"/>
+        <source>Reset to the default parsing script</source>
+        <translation>デフォルトの解析スクリプトにリセットする</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="200"/>
         <source>Import</source>
         <translation>インポート</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="212"/>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="205"/>
+        <source>Import a JavaScript file for data parsing</source>
+        <translation>データ解析用のJavaScriptファイルをインポートする</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="214"/>
         <source>Validate &amp; Save</source>
         <translation>検証して保存</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="319"/>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="219"/>
+        <source>Validate syntax and apply parsing changes</source>
+        <translation>構文を検証して解析の変更を適用する</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="244"/>
+        <source>Undo the last code edit</source>
+        <translation>最後のコード編集を元に戻す</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="258"/>
+        <source>Redo the previously undone edit</source>
+        <translation>元に戻した編集をやり直す</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="282"/>
+        <source>Cut selected code to clipboard</source>
+        <translation>選択したコードをクリップボードにカットする</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="295"/>
+        <source>Copy selected code to clipboard</source>
+        <translation>選択したコードをクリップボードにコピーする</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="308"/>
+        <source>Paste code from clipboard</source>
+        <translation>クリップボードからコードを貼り付ける</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="327"/>
         <source>Help</source>
         <translation>ヘルプ</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="332"/>
+        <source>Open help documentation for JavaScript data parsing</source>
+        <translation>JavaScriptデータ解析のヘルプドキュメントを開く</translation>
     </message>
 </context>
 <context>
@@ -738,52 +851,97 @@
         <translation>データセット</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="128"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="121"/>
+        <source>Add a generic dataset to the current group</source>
+        <translation>現在のグループに汎用データセットを追加</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="129"/>
         <source>Plot</source>
         <translation>プロット</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="142"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="135"/>
+        <source>Add a 2D plot to visualize numeric data</source>
+        <translation>数値データを視覚化するための2Dプロットを追加</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="144"/>
         <source>FFT Plot</source>
         <translation>FFTプロット</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="155"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="149"/>
+        <source>Add an FFT plot for frequency domain visualization</source>
+        <translation>周波数領域の視覚化のためのFFTプロットを追加</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="158"/>
         <source>Bar/Level</source>
         <translation>バー/レベル</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="167"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="163"/>
+        <source>Add a bar or level indicator for scaled values</source>
+        <translation>スケール値のためのバーまたはレベルインジケーターを追加</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="171"/>
         <source>Gauge</source>
         <translation>ゲージ</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="181"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="177"/>
+        <source>Add a gauge widget for analog-style visualization</source>
+        <translation>アナログスタイルの視覚化のためのゲージウィジェットを追加</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="186"/>
         <source>Compass</source>
         <translation>コンパス</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="193"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="191"/>
+        <source>Add a compass to display directional or angular data</source>
+        <translation>方向または角度データを表示するためのコンパスを追加</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="199"/>
         <source>LED</source>
         <translation>LED</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="214"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="205"/>
+        <source>Add an LED indicator for binary status signals</source>
+        <translation>バイナリステータス信号のためのLEDインジケーターを追加</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="221"/>
         <source>Duplicate</source>
         <translation>複製</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="226"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="225"/>
+        <source>Duplicate the current group and its contents</source>
+        <translation>現在のグループとその内容を複製</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="234"/>
         <source>Delete</source>
         <translation>削除</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="278"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="238"/>
+        <source>Delete the current group and all contained datasets</source>
+        <translation>現在のグループとすべての含まれるデータセットを削除</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="287"/>
         <source>Groups hold multiple datasets and organize your data.</source>
         <translation>グループは複数のデータセットを保持し、データを整理します。</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="292"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="301"/>
         <source>Use the sub-toolbar to quickly add plots, FFTs, and other dataset types to this group.</source>
         <translation>サブツールバーを使用して、このグループにプロット、FFT、その他のデータセットタイプをすばやく追加します。</translation>
     </message>
@@ -791,17 +949,22 @@
 <context>
     <name>Gyroscope</name>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Gyroscope.qml" line="279"/>
+        <location filename="../../qml/Widgets/Dashboard/Gyroscope.qml" line="99"/>
+        <source>Integrate Angles</source>
+        <translation>角度を統合</translation>
+    </message>
+    <message>
+        <location filename="../../qml/Widgets/Dashboard/Gyroscope.qml" line="343"/>
         <source>Roll: %1</source>
         <translation>ロール: %1</translation>
     </message>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Gyroscope.qml" line="297"/>
+        <location filename="../../qml/Widgets/Dashboard/Gyroscope.qml" line="361"/>
         <source>Yaw: %1</source>
         <translation>ヨー: %1</translation>
     </message>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Gyroscope.qml" line="315"/>
+        <location filename="../../qml/Widgets/Dashboard/Gyroscope.qml" line="379"/>
         <source>Pitch: %1</source>
         <translation>ピッチ: %1</translation>
     </message>
@@ -809,44 +972,49 @@
 <context>
     <name>IO::Console</name>
     <message>
-        <location filename="../../src/IO/Console.cpp" line="149"/>
+        <location filename="../../src/IO/Console.cpp" line="165"/>
         <source>ASCII</source>
         <translation>ASCII</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Console.cpp" line="150"/>
+        <location filename="../../src/IO/Console.cpp" line="166"/>
         <source>HEX</source>
         <translation>HEX</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Console.cpp" line="161"/>
+        <location filename="../../src/IO/Console.cpp" line="177"/>
         <source>No Line Ending</source>
         <translation>行末なし</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Console.cpp" line="162"/>
+        <location filename="../../src/IO/Console.cpp" line="178"/>
         <source>New Line</source>
         <translation>新しい行</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Console.cpp" line="163"/>
+        <location filename="../../src/IO/Console.cpp" line="179"/>
         <source>Carriage Return</source>
         <translation>キャリッジリターン</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Console.cpp" line="164"/>
+        <location filename="../../src/IO/Console.cpp" line="180"/>
         <source>CR + NL</source>
         <translation>CR + NL</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Console.cpp" line="175"/>
+        <location filename="../../src/IO/Console.cpp" line="191"/>
         <source>Plain Text</source>
         <translation>プレーンテキスト</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Console.cpp" line="176"/>
+        <location filename="../../src/IO/Console.cpp" line="192"/>
         <source>Hexadecimal</source>
         <translation>16進数</translation>
+    </message>
+    <message>
+        <location filename="../../src/IO/Console.cpp" line="213"/>
+        <source>No Checksum</source>
+        <translation>チェックサムなし</translation>
     </message>
 </context>
 <context>
@@ -966,131 +1134,129 @@
 <context>
     <name>IO::Drivers::UART</name>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="55"/>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="56"/>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="368"/>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="410"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="50"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="51"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="376"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="418"/>
         <source>None</source>
         <translation>なし</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="251"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="247"/>
         <source>Failed to connect to serial port device</source>
         <translation>シリアルポートデバイスへの接続に失敗しました</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="349"/>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="756"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="345"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="746"/>
         <source>Select Port</source>
         <translation>ポートを選択</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="369"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="377"/>
         <source>Even</source>
         <translation>偶数</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="370"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="378"/>
         <source>Odd</source>
         <translation>奇数</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="371"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="379"/>
         <source>Space</source>
         <translation>スペース</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="372"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="380"/>
         <source>Mark</source>
         <translation>マーク</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="411"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="419"/>
         <source>RTS/CTS</source>
         <translation>RTS/CTS</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="412"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="420"/>
         <source>XON/XOFF</source>
         <translation>XON/XOFF</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="564"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="570"/>
         <source>"%1" is not a valid path</source>
         <translation>「%1」は有効なパスではありません</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="565"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="571"/>
         <source>Please type another path to register a custom serial device</source>
         <translation>カスタムシリアルデバイスを登録するために別のパスを入力してください</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="620"/>
         <source>Baud rate registered successfully</source>
-        <translation>ボーレートが正常に登録されました</translation>
+        <translation type="vanished">ボーレートが正常に登録されました</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="621"/>
         <source>Rate "%1" has been added to baud rate list</source>
-        <translation>レート「%1」がボーレートリストに追加されました</translation>
+        <translation type="vanished">レート「%1」がボーレートリストに追加されました</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="861"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="851"/>
         <source>Critical serial port error</source>
         <translation>重大なシリアルポートエラー</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="966"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="880"/>
         <source>No error occurred.</source>
         <translation>エラーは発生しませんでした。</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="967"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="881"/>
         <source>The specified device could not be found. Please check the connection and try again.</source>
         <translation>指定されたデバイスが見つかりませんでした。接続を確認して再試行してください。</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="968"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="882"/>
         <source>Permission denied. Ensure the application has the necessary access rights to the device.</source>
         <translation>アクセスが拒否されました。アプリケーションがデバイスに必要なアクセス権を持っていることを確認してください。</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="969"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="883"/>
         <source>Failed to open the device. It may already be in use or unavailable.</source>
         <translation>デバイスを開くことができませんでした。すでに使用中か利用できない可能性があります。</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="970"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="884"/>
         <source>An error occurred while writing data to the device.</source>
         <translation>デバイスにデータを書き込む際にエラーが発生しました。</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="971"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="885"/>
         <source>An error occurred while reading data from the device.</source>
         <translation>デバイスからデータを読み取る際にエラーが発生しました。</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="972"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="886"/>
         <source>A critical resource error occurred. The device may have been disconnected or is no longer accessible.</source>
         <translation>重大なリソースエラーが発生しました。デバイスが切断されているか、もはやアクセスできない可能性があります。</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="973"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="887"/>
         <source>The requested operation is not supported on this device.</source>
         <translation>要求された操作はこのデバイスではサポートされていません。</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="974"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="888"/>
         <source>An unknown error occurred. Please check the device and try again.</source>
         <translation>不明なエラーが発生しました。デバイスを確認して再試行してください。</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="975"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="889"/>
         <source>The operation timed out. The device may not be responding.</source>
         <translation>操作がタイムアウトしました。デバイスが応答していない可能性があります。</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="976"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="890"/>
         <source>The device is not open. Please open the device before attempting this operation.</source>
         <translation>デバイスが開かれていません。この操作を試みる前にデバイスを開いてください。</translation>
     </message>
@@ -1111,17 +1277,17 @@
 <context>
     <name>IO::Manager</name>
     <message>
-        <location filename="../../src/IO/Manager.cpp" line="217"/>
+        <location filename="../../src/IO/Manager.cpp" line="231"/>
         <source>UART/COM</source>
         <translation>UART/COM</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Manager.cpp" line="218"/>
+        <location filename="../../src/IO/Manager.cpp" line="232"/>
         <source>Network Socket</source>
         <translation>ネットワークソケット</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Manager.cpp" line="219"/>
+        <location filename="../../src/IO/Manager.cpp" line="233"/>
         <source>Bluetooth LE</source>
         <translation>Bluetooth LE</translation>
     </message>
@@ -1147,52 +1313,52 @@
 <context>
     <name>JSON::FrameBuilder</name>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="121"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="135"/>
         <source>Select JSON map file</source>
         <translation>JSONマップファイルを選択</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="123"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="137"/>
         <source>JSON files</source>
         <translation>JSONファイル</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="170"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="186"/>
         <source>JSON parse error</source>
         <translation>JSON解析エラー</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="200"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="218"/>
         <source>Invalid JSON project format</source>
         <translation>無効なJSONプロジェクト形式</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="213"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="231"/>
         <source>Cannot read JSON file</source>
         <translation>JSONファイルを読み取れません</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="214"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="232"/>
         <source>Please check file permissions &amp; location</source>
         <translation>ファイルの権限と場所を確認してください</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="377"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="436"/>
         <source>Channel %1</source>
         <translation>チャンネル %1</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="387"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="446"/>
         <source>Quick Plot</source>
         <translation>クイックプロット</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="392"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="451"/>
         <source>Quick Plot Data</source>
         <translation>クイックプロットデータ</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="405"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="464"/>
         <source>Multiple Plots</source>
         <translation>複数プロット</translation>
     </message>
@@ -1200,57 +1366,57 @@
 <context>
     <name>JSON::FrameParser</name>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="230"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="242"/>
         <source>Frame parser code updated successfully!</source>
         <translation>フレームパーサーコードが正常に更新されました！</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="231"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="243"/>
         <source>No errors have been detected in the code.</source>
         <translation>コードにエラーは検出されませんでした。</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="270"/>
-        <location filename="../../src/JSON/FrameParser.cpp" line="290"/>
-        <location filename="../../src/JSON/FrameParser.cpp" line="314"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="282"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="302"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="326"/>
         <source>Frame parser error!</source>
         <translation>フレームパーサーエラー！</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="271"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="283"/>
         <source>The 'parse' function is not declared or is not callable!</source>
         <translation>'parse'関数が宣言されていないか、呼び出せません！</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="291"/>
-        <location filename="../../src/JSON/FrameParser.cpp" line="315"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="303"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="327"/>
         <source>No valid 'parse' function declaration found in the script!</source>
         <translation>スクリプト内に有効な'parse'関数の宣言が見つかりません！</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="300"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="312"/>
         <source>Legacy frame parser function detected</source>
         <translation>レガシーフレームパーサー関数が検出されました</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="301"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="313"/>
         <source>The 'parse' function has two arguments ('%1', '%2'), indicating use of the old format. Please update it to the new format, which only takes the frame data as an argument.</source>
         <translation>'parse'関数には2つの引数('%1', '%2')があり、古い形式の使用を示しています。フレームデータのみを引数とする新しい形式に更新してください。</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="408"/>
-        <location filename="../../src/JSON/FrameParser.cpp" line="429"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="420"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="441"/>
         <source>The document has been modified!</source>
         <translation>ドキュメントが変更されました！</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="409"/>
-        <location filename="../../src/JSON/FrameParser.cpp" line="430"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="421"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="442"/>
         <source>Are you sure you want to continue?</source>
         <translation>本当に続行しますか？</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="438"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="450"/>
         <source>Select Javascript file to import</source>
         <translation>インポートするJavascriptファイルを選択</translation>
     </message>
@@ -1258,652 +1424,723 @@
 <context>
     <name>JSON::ProjectModel</name>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="284"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="289"/>
         <source>New Project</source>
         <translation>新しいプロジェクト</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="357"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="362"/>
         <source>Samples</source>
         <translation>サンプル</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="726"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="731"/>
         <source>Do you want to save your changes?</source>
         <translation>変更を保存しますか？</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="727"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="732"/>
         <source>You have unsaved modifications in this project!</source>
         <translation>このプロジェクトには保存されていない変更があります！</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="762"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="767"/>
         <source>Project error</source>
         <translation>プロジェクトエラー</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="763"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="768"/>
         <source>Project title cannot be empty!</source>
         <translation>プロジェクトタイトルを空にすることはできません！</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="780"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="785"/>
         <source>Save JSON project</source>
         <translation>JSONプロジェクトを保存</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="792"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="797"/>
         <source>File open error</source>
         <translation>ファイルオープンエラー</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="911"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2220"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="918"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2228"/>
         <source>Untitled Project</source>
         <translation>無題のプロジェクト</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="955"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="962"/>
         <source>Select JSON file</source>
         <translation>JSONファイルを選択</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1078"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1086"/>
         <source>Legacy frame parser function updated</source>
         <translation>レガシーフレームパーサー関数が更新されました</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1079"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1087"/>
         <source>Your project used a legacy frame parser function with a 'separator' argument. It has been automatically migrated to the new format.</source>
         <translation>あなたのプロジェクトは「separator」引数を持つレガシーフレームパーサー関数を使用していました。新しい形式に自動的に移行されました。</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1111"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1119"/>
         <source>Switch Serial Studio to Project Mode?</source>
         <translation>Serial Studioをプロジェクトモードに切り替えますか？</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1112"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1120"/>
         <source>This operation mode is required to load and display dashboards from project files.</source>
         <translation>この操作モードは、プロジェクトファイルからダッシュボードを読み込んで表示するために必要です。</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1140"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1148"/>
         <source>Do you want to delete group "%1"?</source>
         <translation>グループ「%1」を削除しますか？</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1141"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1182"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1221"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1149"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1190"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1229"/>
         <source>This action cannot be undone. Do you wish to proceed?</source>
         <translation>この操作は元に戻せません。続行しますか？</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1181"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1189"/>
         <source>Do you want to delete action "%1"?</source>
         <translation>アクション「%1」を削除しますか？</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1219"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1227"/>
         <source>Do you want to delete dataset "%1"?</source>
         <translation>データセット「%1」を削除しますか？</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1270"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1309"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1345"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1278"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1317"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1353"/>
         <source>%1 (Copy)</source>
         <translation>%1（コピー）</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1385"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1393"/>
         <source>Group</source>
         <translation>グループ</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1470"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1478"/>
         <source>New Dataset</source>
         <translation>新しいデータセット</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1473"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1481"/>
         <source>New Plot</source>
         <translation>新しいプロット</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1477"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1485"/>
         <source>New FFT Plot</source>
         <translation>新しいFFTプロット</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1481"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1489"/>
         <source>New Level Indicator</source>
         <translation>新しいレベルインジケーター</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1485"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1493"/>
         <source>New Gauge</source>
         <translation>新しいゲージ</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1489"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1497"/>
         <source>New Compass</source>
         <translation>新しいコンパス</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1493"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1501"/>
         <source>New LED Indicator</source>
         <translation>新しいLEDインジケーター</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1629"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1637"/>
         <source>New Action</source>
         <translation>新しいアクション</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1786"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1794"/>
         <source>Are you sure you want to change the group-level widget?</source>
         <translation>グループレベルのウィジェットを変更してもよろしいですか？</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1787"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1795"/>
         <source>Existing datasets for this group will be deleted</source>
         <translation>このグループの既存のデータセットは削除されます</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1844"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1845"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1846"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1852"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1853"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1854"/>
         <source>Accelerometer %1</source>
         <translation>加速度計 %1</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1890"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1891"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1892"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1898"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1899"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1900"/>
         <source>Gyro %1</source>
         <translation>ジャイロ %1</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1933"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1941"/>
         <source>Latitude</source>
         <translation>緯度</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1934"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1942"/>
         <source>Longitude</source>
         <translation>経度</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1935"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1943"/>
         <source>Altitude</source>
         <translation>高度</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1971"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1979"/>
         <source>X</source>
         <translation>X</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1972"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1980"/>
         <source>Y</source>
         <translation>Y</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1973"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1981"/>
         <source>Z</source>
         <translation>Z</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2087"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2095"/>
         <source>Frame Parser Code</source>
         <translation>フレームパーサーコード</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2218"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2378"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2442"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2594"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2226"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2401"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2465"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2664"/>
         <source>Title</source>
         <translation>タイトル</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2221"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2229"/>
         <source>Project name/description</source>
         <translation>プロジェクト名/説明</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2232"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2240"/>
         <source>Data Conversion Method</source>
         <translation>データ変換方法</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2234"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2242"/>
         <source>Input data format for frame parser</source>
         <translation>フレームパーサーの入力データ形式</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2247"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2255"/>
         <source>Frame Detection</source>
         <translation>フレーム検出</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2249"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2257"/>
         <source>Strategy used for identifying frame data</source>
         <translation>フレームデータを識別するために使用される戦略</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2266"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2274"/>
         <source>Frame Start Delimeter</source>
         <translation>フレーム開始デリミタ</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2269"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2277"/>
         <source>String marking the start of a frame</source>
         <translation>フレームの開始を示す文字列</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2285"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2293"/>
         <source>Frame End Delimeter</source>
         <translation>フレーム終了デリミタ</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2288"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2296"/>
         <source>String marking the end of a frame</source>
         <translation>フレームの終了を示す文字列</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2302"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2310"/>
         <source>Hexadecimal Delimeters</source>
         <translation>16進デリミタ</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2304"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2312"/>
         <source>Use hexadecimal delimiters for data frames</source>
         <translation>データフレームに16進デリミタを使用</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2316"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2326"/>
+        <source>Checksum Algorithm</source>
+        <translation>チェックサムアルゴリズム</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2328"/>
+        <source>Checksum algorithm used for frame validation</source>
+        <translation>フレーム検証に使用されるチェックサムアルゴリズム</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2339"/>
         <source>Thunderforest API Key</source>
         <translation>Thunderforest APIキー</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2318"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2332"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2960"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2964"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2971"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2341"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2355"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3045"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3049"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3056"/>
         <source>None</source>
         <translation>なし</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2319"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2342"/>
         <source>Required for Thunderforest maps</source>
         <translation>Thunderforestマップに必要</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2330"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2353"/>
         <source>MapTiler API Key</source>
         <translation>MapTiler APIキー</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2333"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2356"/>
         <source>Required for satellite maps</source>
         <translation>衛星マップに必要</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2380"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2403"/>
         <source>Untitled Group</source>
         <translation>無題のグループ</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2381"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2404"/>
         <source>Name or description of the group</source>
         <translation>グループの名前または説明</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2409"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2672"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2432"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2742"/>
         <source>Widget</source>
         <translation>ウィジェット</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2411"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2434"/>
         <source>Group display widget (optional)</source>
         <translation>グループ表示ウィジェット（オプション）</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2444"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2467"/>
         <source>Untitled Action</source>
         <translation>無題のアクション</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2445"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2468"/>
         <source>Name or description of the action</source>
         <translation>アクションの名前または説明</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2455"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2478"/>
         <source>Icon</source>
         <translation>アイコン</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2457"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2480"/>
         <source>Default Icon</source>
         <translation>デフォルトアイコン</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2458"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2481"/>
         <source>Icon to display in the dashboard</source>
         <translation>ダッシュボードに表示するアイコン</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2467"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2490"/>
         <source>Binary Data</source>
         <translation>バイナリデータ</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2470"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2493"/>
         <source>Send binary data when the action is triggered.</source>
         <translation>アクションがトリガーされたときにバイナリデータを送信します。</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2483"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2506"/>
         <source>TX Data (Hex)</source>
         <translation>TXデータ（16進数）</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2485"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2502"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2508"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2525"/>
         <source>Command</source>
         <translation>コマンド</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2486"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2503"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2509"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2526"/>
         <source>Data to transmit when the action is triggered.</source>
         <translation>アクションがトリガーされたときに送信するデータ。</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2500"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2523"/>
         <source>TX Data</source>
         <translation>TXデータ</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2532"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2555"/>
         <source>EOL Sequence</source>
         <translation>EOLシーケンス</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2534"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2557"/>
         <source>End-of-line (EOL) sequence to use</source>
         <translation>使用する行末（EOL）シーケンス</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2596"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2567"/>
+        <source>Auto Execute on Connect</source>
+        <translation>接続時に自動実行</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2571"/>
+        <source>Trigger this action automatically when a device connects.</source>
+        <translation>デバイスが接続されたときにこのアクションを自動的にトリガーします。</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2583"/>
+        <source>Timer Mode</source>
+        <translation>タイマーモード</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2585"/>
+        <source>How and when the timer should activate.</source>
+        <translation>タイマーがどのように、いつ起動するか。</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2598"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2600"/>
+        <source>Timer Interval (ms)</source>
+        <translation>タイマー間隔 (ms)</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2602"/>
+        <source>Interval in milliseconds between each timer-triggered action.</source>
+        <translation>各タイマー起動アクション間の間隔（ミリ秒）。</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2666"/>
         <source>Untitled Dataset</source>
         <translation>無題のデータセット</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2597"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2667"/>
         <source>Name or description of the dataset</source>
         <translation>データセットの名前または説明</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2608"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2678"/>
         <source>Frame Index</source>
         <translation>フレームインデックス</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2611"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2681"/>
         <source>Position in the frame</source>
         <translation>フレーム内の位置</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2621"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2691"/>
         <source>Measurement Unit</source>
         <translation>測定単位</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2623"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2693"/>
         <source>Volts, Amps, etc.</source>
         <translation>ボルト、アンペアなど</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2624"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2694"/>
         <source>Unit of measurement (optional)</source>
         <translation>測定単位 (任意)</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2636"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2706"/>
         <source>Overview</source>
         <translation>概要</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2639"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2709"/>
         <source>Include widget in overview dashboard</source>
         <translation>概要ダッシュボードにウィジェットを含める</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2674"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2744"/>
         <source>Display widget (optional)</source>
         <translation>ウィジェットを表示 (任意)</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2704"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2774"/>
         <source>Oscilloscope Plot</source>
         <translation>オシロスコーププロット</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2706"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2776"/>
         <source>Plot data in real-time</source>
         <translation>リアルタイムでデータをプロット</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2715"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2785"/>
         <source>FFT Plot</source>
         <translation>FFTプロット</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2718"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2788"/>
         <source>Plot frequency-domain data</source>
         <translation>周波数領域データをプロット</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2727"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2797"/>
         <source>Show in LED Panel</source>
         <translation>LEDパネルに表示</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2730"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2800"/>
         <source>Quick status monitoring</source>
         <translation>クイックステータスモニタリング</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2762"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2832"/>
         <source>X-Axis Source</source>
         <translation>X軸ソース</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2763"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2833"/>
         <source>Data series for the X-Axis</source>
         <translation>X軸のデータシリーズ</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2777"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2847"/>
         <source>Minimum Value</source>
         <translation>最小値</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2780"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2793"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2850"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2863"/>
         <source>Required for range widgets, optional for plots</source>
         <translation>範囲ウィジェットに必要、プロットにはオプション</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2790"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2860"/>
         <source>Maximum Value</source>
         <translation>最大値</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2806"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2876"/>
         <source>Alarm Value</source>
         <translation>アラーム値</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2809"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2879"/>
         <source>Triggers alarm in bar widgets and LED panels</source>
         <translation>バーウィジェットとLEDパネルでアラームをトリガー</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2831"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2901"/>
         <source>FFT Window Size</source>
         <translation>FFTウィンドウサイズ</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2833"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2903"/>
         <source>Samples for FFT calculation</source>
         <translation>FFT計算用のサンプル数</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2844"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2914"/>
         <source>FFT Sampling Rate</source>
         <translation>FFTサンプリングレート</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2846"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2916"/>
         <source>Sampling rate (Hz) for FFT calculation</source>
         <translation>FFT計算用のサンプリングレート（Hz）</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2861"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2931"/>
         <source>LED High (On) Value</source>
         <translation>LED高（オン）値</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2864"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2934"/>
         <source>Threshold for LED on</source>
         <translation>LEDオンのしきい値</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2936"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3006"/>
+        <source>Off</source>
+        <translation>オフ</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3007"/>
+        <source>Auto Start</source>
+        <translation>自動開始</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3008"/>
+        <source>Start on Trigger</source>
+        <translation>トリガー時に開始</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3009"/>
+        <source>Toggle on Trigger</source>
+        <translation>トリガー時に切り替え</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3013"/>
         <source>Plain Text (UTF8)</source>
         <translation>プレーンテキスト（UTF8）</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2937"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3014"/>
         <source>Hexadecimal</source>
         <translation>16進数</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2938"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3015"/>
         <source>Base64</source>
         <translation>Base64</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2943"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3016"/>
+        <source>Binary (Direct)</source>
+        <translation>バイナリ（直接）</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3023"/>
+        <source>No Checksum</source>
+        <translation>チェックサムなし</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3028"/>
         <source>End Delimiter Only</source>
         <translation>終了デリミタのみ</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2944"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3029"/>
         <source>Start Delimiter Only</source>
         <translation>開始デリミタのみ</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2945"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3030"/>
         <source>Start + End Delimiter</source>
         <translation>開始 + 終了デリミタ</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2946"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3031"/>
         <source>No Delimiters</source>
         <translation>デリミタなし</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2954"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3039"/>
         <source>Data Grid</source>
         <translation>データグリッド</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2955"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3040"/>
         <source>GPS Map</source>
         <translation>GPSマップ</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2956"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3041"/>
         <source>Gyroscope</source>
         <translation>ジャイロスコープ</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2957"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3042"/>
         <source>Multiple Plot</source>
         <translation>複数プロット</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2958"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3043"/>
         <source>Accelerometer</source>
         <translation>加速度計</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2959"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3044"/>
         <source>3D Plot</source>
         <translation>3Dプロット</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2965"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3050"/>
         <source>Bar</source>
         <translation>バー</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2966"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3051"/>
         <source>Gauge</source>
         <translation>ゲージ</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2967"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3052"/>
         <source>Compass</source>
         <translation>コンパス</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2972"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3057"/>
         <source>New Line (\n)</source>
         <translation>改行 (\n)</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2973"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3058"/>
         <source>Carriage Return (\r)</source>
         <translation>復帰 (\r)</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2974"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3059"/>
         <source>CRLF (\r\n)</source>
         <translation>CRLF (\r\n)</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2978"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3063"/>
         <source>No</source>
         <translation>いいえ</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2979"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3064"/>
         <source>Linear Plot</source>
         <translation>線形プロット</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="3020"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3105"/>
         <source>Save changes to frame parser code?</source>
         <translation>フレームパーサーコードの変更を保存しますか？</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="3021"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3106"/>
         <source>Select 'Save' to keep your changes, 'Discard' to lose them permanently, or 'Cancel' to return.</source>
         <translation>変更を保持するには「保存」を選択し、永久に失うには「破棄」を選択、または戻るには「キャンセル」を選択してください。</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="3023"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3108"/>
         <source>Save Changes</source>
         <translation>変更を保存</translation>
     </message>
@@ -1924,93 +2161,93 @@
         <translation>ライセンス</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="205"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="209"/>
         <source>Please wait...</source>
         <translation>しばらくお待ちください...</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="232"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="236"/>
         <source>Activate Serial Studio Pro</source>
         <translation>Serial Studio Proを有効化</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="242"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="246"/>
         <source>Paste your license key below to unlock Pro features like MQTT, 3D plotting, and more.</source>
         <translation>下にライセンスキーを貼り付けて、MQTTや3DプロットなどのPro機能をアンロックしてください。</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="253"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="257"/>
         <source>Your license includes 5 device activations.
 Plans include Monthly, Yearly, and Lifetime options.</source>
         <translation>あなたのライセンスには5台のデバイスアクティベーションが含まれています。
 プランには月間、年間、そしてライフタイムオプションがあります。</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="270"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="274"/>
         <source>Paste your license key here…</source>
         <translation>ここにライセンスキーを貼り付けてください…</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="289"/>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="424"/>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="468"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="293"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="428"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="472"/>
         <source>Copy</source>
         <translation>コピー</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="295"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="299"/>
         <source>Paste</source>
         <translation>貼り付け</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="301"/>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="430"/>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="474"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="305"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="434"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="478"/>
         <source>Select All</source>
         <translation>すべて選択</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="346"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="350"/>
         <source>Product</source>
         <translation>製品</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="351"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="355"/>
         <source>Serial Studio %1</source>
         <translation>シリアルスタジオ %1</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="359"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="363"/>
         <source>Licensee</source>
         <translation>ライセンシー</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="372"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="376"/>
         <source>Licensee E-Mail</source>
         <translation>ライセンシー Eメール</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="385"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="389"/>
         <source>Device Usage</source>
         <translation>デバイス使用状況</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="391"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="395"/>
         <source>%1 devices in use (Unlimited plan)</source>
         <translation>%1 台のデバイスが使用中（無制限プラン）</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="392"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="396"/>
         <source>%1 of %2 devices used</source>
         <translation>%2 台中 %1 台のデバイスが使用中</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="402"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="406"/>
         <source>Device ID</source>
         <translation>デバイスID</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="444"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="448"/>
         <source>License Key</source>
         <translation>ライセンスキー</translation>
     </message>
@@ -2019,22 +2256,22 @@ Plans include Monthly, Yearly, and Lifetime options.</source>
         <translation type="vanished">支払いまたはアクティベーションに関する問題は、alex@serial-studio.com を通じてサポートに連絡してください。</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="504"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="508"/>
         <source>Customer Portal</source>
         <translation>カスタマーポータル</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="519"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="523"/>
         <source>Buy License</source>
         <translation>ライセンスを購入</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="529"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="533"/>
         <source>Activate</source>
         <translation>アクティベート</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="542"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="546"/>
         <source>Deactivate</source>
         <translation>非アクティベート</translation>
     </message>
@@ -2508,127 +2745,127 @@ Please provide the necessary credentials.</source>
         <translation>SSLプロパティ</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="277"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="281"/>
         <source>Host</source>
         <translation>ホスト</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="289"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="293"/>
         <source>Port</source>
         <translation>ポート</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="314"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="318"/>
         <source>Keep Alive (s)</source>
         <translation>キープアライブ (秒)</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="327"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="331"/>
         <source>Clean Session</source>
         <translation>クリーンセッション</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="372"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="380"/>
         <source>Username</source>
         <translation>ユーザー名</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="377"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="385"/>
         <source>MQTT Username</source>
         <translation>MQTTユーザー名</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="384"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="392"/>
         <source>Password</source>
         <translation>パスワード</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="394"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="402"/>
         <source>MQTT Password</source>
         <translation>MQTTパスワード</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="447"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="459"/>
         <source>Version</source>
         <translation>バージョン</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="459"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="471"/>
         <source>Mode</source>
         <translation>モード</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="471"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="483"/>
         <source>Topic</source>
         <translation>トピック</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="476"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="488"/>
         <source>e.g. sensors/temperature or home/+/status</source>
         <translation>例: センサー/温度 または ホーム/+/ステータス</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="483"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="495"/>
         <source>Will Retain</source>
         <translation>Will Retain</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="494"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="506"/>
         <source>Will QoS</source>
         <translation>Will QoS</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="506"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="518"/>
         <source>Will Topic</source>
         <translation>Will トピック</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="511"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="523"/>
         <source>e.g. device/alerts/offline</source>
         <translation>例: デバイス/アラート/オフライン</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="518"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="530"/>
         <source>Will Message</source>
         <translation>Will メッセージ</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="523"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="535"/>
         <source>e.g. Device unexpectedly disconnected</source>
         <translation>例: デバイスが予期せず切断されました</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="564"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="580"/>
         <source>Enable SSL</source>
         <translation>SSLを有効にする</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="575"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="591"/>
         <source>SSL Protocol</source>
         <translation>SSLプロトコル</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="591"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="607"/>
         <source>Verify Depth</source>
         <translation>検証深度</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="609"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="625"/>
         <source>Verify Mode</source>
         <translation>検証モード</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="641"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="657"/>
         <source>Close</source>
         <translation>閉じる</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="660"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="676"/>
         <source>Disconnect</source>
         <translation>切断</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="660"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="676"/>
         <source>Connect</source>
         <translation>接続</translation>
     </message>
@@ -2911,118 +3148,218 @@ Please provide the necessary credentials.</source>
         <translation>新規</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="152"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="137"/>
+        <source>Create a new JSON project</source>
+        <translation>新しいJSONプロジェクトを作成</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="153"/>
         <source>Open</source>
         <translation>開く</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="161"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="157"/>
+        <source>Open an existing JSON project</source>
+        <translation>既存のJSONプロジェクトを開く</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="163"/>
         <source>Save</source>
         <translation>保存</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="171"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="166"/>
+        <source>Save the current project</source>
+        <translation>現在のプロジェクトを保存</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="174"/>
         <source>Save As</source>
         <translation>名前を付けて保存</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="195"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="178"/>
+        <source>Save the current project under a new name</source>
+        <translation>現在のプロジェクトを新しい名前で保存</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="199"/>
         <source>Action</source>
         <translation>アクション</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="216"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="202"/>
+        <source>Add a new action to the project</source>
+        <translation>プロジェクトに新しいアクションを追加</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="221"/>
         <source>Dataset</source>
         <translation>データセット</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="233"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="223"/>
+        <source>Add a generic dataset</source>
+        <translation>一般的なデータセットを追加</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="239"/>
         <source>Plot</source>
         <translation>プロット</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="243"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="244"/>
+        <source>Add a 2D plot dataset</source>
+        <translation>2Dプロットデータセットを追加</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="250"/>
         <source>FFT Plot</source>
         <translation>FFTプロット</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="253"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="255"/>
+        <source>Add a Fast Fourier Transform plot</source>
+        <translation>高速フーリエ変換プロットを追加</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="261"/>
         <source>Gauge</source>
         <translation>ゲージ</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="263"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="266"/>
+        <source>Add a gauge widget for numeric data</source>
+        <translation>数値データ用のゲージウィジェットを追加</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="272"/>
         <source>Level Indicator</source>
         <translation>レベルインジケータ</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="273"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="277"/>
+        <source>Add a vertical bar level indicator</source>
+        <translation>縦棒レベルインジケーターを追加</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="283"/>
         <source>Compass</source>
         <translation>コンパス</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="283"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="288"/>
+        <source>Add a compass widget for directional data</source>
+        <translation>方向データ用のコンパスウィジェットを追加</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="294"/>
         <source>LED Indicator</source>
         <translation>LEDインジケータ</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="308"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="299"/>
+        <source>Add an LED-style status indicator</source>
+        <translation>LEDスタイルのステータスインジケーターを追加</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="320"/>
         <source>Group</source>
         <translation>グループ</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="311"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="322"/>
+        <source>Add a dataset container group</source>
+        <translation>データセットコンテナグループを追加</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="324"/>
         <source>Dataset Container</source>
         <translation>データセットコンテナ</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="325"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="338"/>
         <source>Table</source>
         <translation>テーブル</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="331"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="343"/>
+        <source>Add a data table view</source>
+        <translation>データテーブルビューを追加</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="345"/>
         <source>Data Grid</source>
         <translation>データグリッド</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="335"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="349"/>
         <source>Multi-Plot</source>
         <translation>マルチプロット</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="341"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="354"/>
+        <source>Add a 2D plot with multiple signals</source>
+        <translation>複数の信号を持つ2Dプロットを追加</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="356"/>
         <source>Multiple Plot</source>
         <translation>複数プロット</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="345"/>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="351"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="360"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="367"/>
         <source>3D Plot</source>
         <translation>3Dプロット</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="355"/>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="361"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="365"/>
+        <source>Add a 3D plot visualization</source>
+        <translation>3Dプロットビジュアライゼーションを追加</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="371"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="378"/>
         <source>Accelerometer</source>
         <translation>加速度計</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="365"/>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="371"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="376"/>
+        <source>Add a group for 3-axis accelerometer data</source>
+        <translation>3軸加速度計データのグループを追加</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="382"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="388"/>
         <source>Gyroscope</source>
         <translation>ジャイロスコープ</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="375"/>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="381"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="389"/>
+        <source>Add a group for 3-axis gyroscope data (angular rates are integrated into orientation automatically)</source>
+        <translation>3軸ジャイロスコープデータのグループを追加（角速度は自動的に方向に統合されます）</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="393"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="400"/>
         <source>GPS Map</source>
         <translation>GPSマップ</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="400"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="398"/>
+        <source>Add a map widget for GPS data</source>
+        <translation>GPSデータ用のマップウィジェットを追加</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="419"/>
         <source>Help</source>
         <translation>ヘルプ</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="422"/>
+        <source>Open the online Project Editor documentation</source>
+        <translation>オンラインのプロジェクトエディタドキュメントを開く</translation>
     </message>
 </context>
 <context>
@@ -3051,7 +3388,7 @@ Please provide the necessary credentials.</source>
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../../src/Misc/Translator.cpp" line="158"/>
+        <location filename="../../src/Misc/Translator.cpp" line="170"/>
         <source>Failed to load welcome text :(</source>
         <translation>ウェルカムテキストの読み込みに失敗しました :(</translation>
     </message>
@@ -3132,77 +3469,82 @@ Please provide the necessary credentials.</source>
         <translation>設定</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="100"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="101"/>
         <source>General</source>
         <translation>一般</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="124"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="125"/>
         <source>Language</source>
         <translation>言語</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="141"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="142"/>
         <source>Theme</source>
         <translation>テーマ</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="157"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="158"/>
         <source>Workspace Folder</source>
         <translation>ワークスペースフォルダ</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="196"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="197"/>
         <source>Miscellaneous</source>
         <translation>その他</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="220"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="221"/>
         <source>Enable TCP Plugins (Port 7777)</source>
         <translation>TCPプラグインを有効にする (ポート 7777)</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="237"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="238"/>
         <source>Force Software Rendering</source>
         <translation>ソフトウェアレンダリングを強制する</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="253"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="254"/>
         <source>Automatically Check for Updates</source>
         <translation>自動的に更新を確認する</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="278"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="279"/>
         <source>Dashboard</source>
         <translation>ダッシュボード</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="302"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="303"/>
         <source>Point Count</source>
         <translation>ポイント数</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="321"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="322"/>
         <source>Decimal Precision</source>
         <translation>小数点の精度</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="340"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="341"/>
+        <source>Show Actions Panel</source>
+        <translation>アクションパネルを表示</translation>
+    </message>
+    <message>
+        <location filename="../../qml/Dialogs/Settings.qml" line="358"/>
         <source>Enable Console Widget</source>
         <translation>コンソールウィジェットを有効にする</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="379"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="397"/>
         <source>Reset</source>
         <translation>リセット</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="404"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="422"/>
         <source>Close</source>
         <translation>閉じる</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="414"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="432"/>
         <source>Apply</source>
         <translation>適用</translation>
     </message>
@@ -3342,7 +3684,7 @@ Please provide the necessary credentials.</source>
 <context>
     <name>SubMenuCombo</name>
     <message>
-        <location filename="../../qml/Widgets/SubMenuCombo.qml" line="79"/>
+        <location filename="../../qml/Widgets/SubMenuCombo.qml" line="80"/>
         <source>No Data Available</source>
         <translation>データがありません</translation>
     </message>
@@ -3350,27 +3692,26 @@ Please provide the necessary credentials.</source>
 <context>
     <name>TableDelegate</name>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/TableDelegate.qml" line="124"/>
+        <location filename="../../qml/ProjectEditor/Views/TableDelegate.qml" line="122"/>
         <source>Parameter</source>
         <translation>パラメータ</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/TableDelegate.qml" line="144"/>
+        <location filename="../../qml/ProjectEditor/Views/TableDelegate.qml" line="142"/>
         <source>Value</source>
         <translation>値</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/TableDelegate.qml" line="164"/>
         <source>Parameter Description</source>
-        <translation>パラメータの説明</translation>
+        <translation type="vanished">パラメータの説明</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/TableDelegate.qml" line="527"/>
+        <location filename="../../qml/ProjectEditor/Views/TableDelegate.qml" line="508"/>
         <source>No</source>
         <translation>いいえ</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/TableDelegate.qml" line="527"/>
+        <location filename="../../qml/ProjectEditor/Views/TableDelegate.qml" line="508"/>
         <source>Yes</source>
         <translation>はい</translation>
     </message>
@@ -3386,42 +3727,42 @@ Please provide the necessary credentials.</source>
 <context>
     <name>Terminal</name>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="121"/>
+        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="122"/>
         <source>Copy</source>
         <translation>コピー</translation>
     </message>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="128"/>
+        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="129"/>
         <source>Select all</source>
         <translation>すべて選択</translation>
     </message>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="135"/>
+        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="136"/>
         <source>Clear</source>
         <translation>クリア</translation>
     </message>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="212"/>
+        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="213"/>
         <source>Send Data to Device</source>
         <translation>データをデバイスに送信</translation>
     </message>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="341"/>
+        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="356"/>
         <source>Show Timestamp</source>
         <translation>タイムスタンプを表示</translation>
     </message>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="352"/>
+        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="367"/>
         <source>Echo</source>
         <translation>エコー</translation>
     </message>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="363"/>
+        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="378"/>
         <source>Emulate VT-100</source>
         <translation>VT-100をエミュレート</translation>
     </message>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="385"/>
+        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="400"/>
         <source>Display: %1</source>
         <translation>表示: %1</translation>
     </message>
@@ -3434,91 +3775,146 @@ Please provide the necessary credentials.</source>
         <translation>プロジェクトエディター</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="160"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="154"/>
+        <source>Open the Project Editor to create or modify your JSON layout</source>
+        <translation>プロジェクトエディタを開いてJSONレイアウトを作成または変更する</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="161"/>
         <source>CSV Player</source>
         <translation>CSVプレーヤー</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="184"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="166"/>
+        <source>Play a CSV file as if it were live sensor data</source>
+        <translation>CSVファイルをライブセンサーデータのように再生する</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="186"/>
         <source>Devices</source>
         <translation>デバイス</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="194"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="190"/>
+        <source>Configure device connection via Serial, BLE, or network socket</source>
+        <translation>シリアル、BLE、またはネットワークソケットを介してデバイス接続を設定する</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="197"/>
         <source>Preferences</source>
         <translation>設定</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="219"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="201"/>
+        <source>Open application settings and preferences</source>
+        <translation>アプリケーションの設定と環境設定を開く</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="223"/>
         <source>MQTT</source>
         <translation>MQTT</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="245"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="230"/>
+        <source>Configure MQTT connection (publish or subscribe)</source>
+        <translation>MQTT接続を設定する（パブリッシュまたはサブスクライブ）</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="250"/>
         <source>Examples</source>
         <translation>例</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="255"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="253"/>
+        <source>Browse example projects on GitHub</source>
+        <translation>GitHubでサンプルプロジェクトを閲覧する</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="261"/>
         <source>Help</source>
         <translation>ヘルプ</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="265"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="264"/>
+        <source>Open the online documentation for help and guidance</source>
+        <translation>ヘルプとガイダンスのためにオンラインドキュメントを開く</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="272"/>
+        <source>AI Help</source>
+        <translation>AIヘルプ</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="275"/>
+        <source>View detailed documentation and ask questions on DeepWiki</source>
+        <translation>詳細なドキュメントを閲覧し、DeepWikiで質問する</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="283"/>
         <source>About</source>
         <translation>情報</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="290"/>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="319"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="287"/>
+        <source>Show application info and license details</source>
+        <translation>アプリケーション情報とライセンス詳細を表示する</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="309"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="339"/>
         <source>Disconnect</source>
         <translation>切断</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="290"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="309"/>
         <source>Connect</source>
         <translation>接続</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="312"/>
+        <source>Connect or disconnect from device or MQTT broker</source>
+        <translation>デバイスまたはMQTTブローカーへの接続または切断を行う</translation>
     </message>
 </context>
 <context>
     <name>UART</name>
     <message>
-        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="79"/>
+        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="78"/>
         <source>COM Port</source>
         <translation>COMポート</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="107"/>
+        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="106"/>
         <source>Baud Rate</source>
         <translation>ボーレート</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="145"/>
+        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="165"/>
         <source>Data Bits</source>
         <translation>データビット</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="161"/>
+        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="181"/>
         <source>Parity</source>
         <translation>パリティ</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="177"/>
+        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="197"/>
         <source>Stop Bits</source>
         <translation>ストップビット</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="193"/>
+        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="213"/>
         <source>Flow Control</source>
         <translation>フロー制御</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="220"/>
+        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="240"/>
         <source>Auto Reconnect</source>
         <translation>自動再接続</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="237"/>
+        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="257"/>
         <source>Send DTR Signal</source>
         <translation>DTR信号を送信</translation>
     </message>
@@ -3526,17 +3922,17 @@ Please provide the necessary credentials.</source>
 <context>
     <name>UI::Dashboard</name>
     <message>
-        <location filename="../../src/UI/Dashboard.cpp" line="761"/>
+        <location filename="../../src/UI/Dashboard.cpp" line="873"/>
         <source>Console</source>
         <translation>コンソール</translation>
     </message>
     <message>
-        <location filename="../../src/UI/Dashboard.cpp" line="778"/>
+        <location filename="../../src/UI/Dashboard.cpp" line="890"/>
         <source>%1 (Fallback)</source>
         <translation>%1（フォールバック）</translation>
     </message>
     <message>
-        <location filename="../../src/UI/Dashboard.cpp" line="840"/>
+        <location filename="../../src/UI/Dashboard.cpp" line="952"/>
         <source>LED Panel (%1)</source>
         <translation>LEDパネル（%1）</translation>
     </message>
@@ -3644,6 +4040,19 @@ Please provide the necessary credentials.</source>
         <location filename="../../src/UI/Widgets/Compass.cpp" line="105"/>
         <source>NW</source>
         <translation>北西</translation>
+    </message>
+</context>
+<context>
+    <name>Widgets::DataGrid</name>
+    <message>
+        <location filename="../../src/UI/Widgets/DataGrid.cpp" line="45"/>
+        <source>Title</source>
+        <translation>タイトル</translation>
+    </message>
+    <message>
+        <location filename="../../src/UI/Widgets/DataGrid.cpp" line="45"/>
+        <source>Value</source>
+        <translation>値</translation>
     </message>
 </context>
 <context>

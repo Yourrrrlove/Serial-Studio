@@ -31,13 +31,13 @@
  * @typedef PlotDataX
  * @brief Represents the unique X-axis data points for a plot.
  */
-typedef std::vector<qreal> PlotDataX;
+typedef std::vector<double> PlotDataX;
 
 /**
  * @typedef PlotDataY
  * @brief Represents the Y-axis data points for a single curve.
  */
-typedef std::vector<qreal> PlotDataY;
+typedef std::vector<double> PlotDataY;
 
 #ifdef USE_QT_COMMERCIAL
 /**
@@ -141,7 +141,8 @@ public:
   {
     PlainText,   /**< Standard decoding, interprets data as plain text. */
     Hexadecimal, /**< Decodes data assuming a hexadecimal-encoded format. */
-    Base64       /**< Decodes data assuming a Base64-encoded format. */
+    Base64,      /**< Decodes data assuming a Base64-encoded format. */
+    Binary,      /**< Decodes raw data directly. */
     /* IMPORTANT: When adding other modes, please don't modify the order of the
      *            enums to ensure backward compatiblity with previous project
      *            files!! */
@@ -342,6 +343,7 @@ public:
   //
   [[nodiscard]] static QString hexToString(const QString &hex);
   [[nodiscard]] static QString stringToHex(const QString &str);
+  [[nodiscard]] static QByteArray hexToBytes(const QString &data);
   [[nodiscard]] static QString resolveEscapeSequences(const QString &str);
   [[nodiscard]] static QString escapeControlCharacters(const QString &str);
 };

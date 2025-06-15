@@ -114,22 +114,37 @@
         <translation>아이콘 변경</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="126"/>
+        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="106"/>
+        <source>Change the icon used for this action</source>
+        <translation>이 작업에 사용된 아이콘 변경</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="127"/>
         <source>Duplicate</source>
         <translation>중복</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="137"/>
+        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="129"/>
+        <source>Duplicate this action with all its settings</source>
+        <translation>모든 설정과 함께 이 작업 복제</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="139"/>
         <source>Delete</source>
         <translation>삭제</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="188"/>
+        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="143"/>
+        <source>Delete this action from the project</source>
+        <translation>프로젝트에서 이 작업 삭제</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="191"/>
         <source>Send commands with a button click</source>
         <translation>버튼 클릭으로 명령 보내기</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="204"/>
+        <location filename="../../qml/ProjectEditor/Views/ActionView.qml" line="207"/>
         <source>Actions let you send custom commands to the connected device with a single button press.</source>
         <translation>작업을 통해 연결된 장치에 사용자 지정 명령을 단일 버튼 누름으로 보낼 수 있습니다.</translation>
     </message>
@@ -332,6 +347,19 @@
     </message>
 </context>
 <context>
+    <name>DataGrid</name>
+    <message>
+        <location filename="../../qml/Widgets/Dashboard/DataGrid.qml" line="90"/>
+        <source>Pause</source>
+        <translation>일시 정지</translation>
+    </message>
+    <message>
+        <location filename="../../qml/Widgets/Dashboard/DataGrid.qml" line="90"/>
+        <source>Resume</source>
+        <translation>재개</translation>
+    </message>
+</context>
+<context>
     <name>DatasetView</name>
     <message>
         <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="82"/>
@@ -349,39 +377,79 @@
         <translation>플롯</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="134"/>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="121"/>
+        <source>Toggle 2D plot visualization for this dataset</source>
+        <translation>이 데이터셋의 2D 플롯 시각화 전환</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="135"/>
         <source>FFT Plot</source>
         <translation>FFT 플롯</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="151"/>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="139"/>
+        <source>Toggle FFT plot to visualize frequency content</source>
+        <translation>주파수 내용을 시각화하기 위한 FFT 플롯 전환</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="153"/>
         <source>Bar/Level</source>
         <translation>막대/레벨</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="168"/>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="157"/>
+        <source>Toggle bar/level indicator for this dataset</source>
+        <translation>이 데이터셋의 바/레벨 표시기 전환</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="171"/>
         <source>Gauge</source>
         <translation>게이지</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="187"/>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="176"/>
+        <source>Toggle gauge widget for analog-style display</source>
+        <translation>아날로그 스타일 디스플레이를 위한 게이지 위젯 전환</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="191"/>
         <source>Compass</source>
         <translation>나침반</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="204"/>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="195"/>
+        <source>Toggle compass widget for directional data</source>
+        <translation>방향 데이터를 위한 나침반 위젯 전환</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="209"/>
         <source>LED</source>
         <translation>LED</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="229"/>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="213"/>
+        <source>Toggle LED indicator for binary or thresholded values</source>
+        <translation>이진 또는 임계값 값을 위한 LED 표시기 전환</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="235"/>
         <source>Duplicate</source>
         <translation>복제</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="241"/>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="239"/>
+        <source>Duplicate this dataset with the same configuration</source>
+        <translation>동일한 구성으로 이 데이터셋 복제</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="248"/>
         <source>Delete</source>
         <translation>삭제</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/DatasetView.qml" line="253"/>
+        <source>Delete this dataset from the group</source>
+        <translation>이 데이터셋을 그룹에서 삭제</translation>
     </message>
 </context>
 <context>
@@ -658,31 +726,31 @@
     </message>
     <message>
         <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="82"/>
-        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="235"/>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="238"/>
         <source>Undo</source>
         <translation>실행 취소</translation>
     </message>
     <message>
         <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="89"/>
-        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="248"/>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="252"/>
         <source>Redo</source>
         <translation>다시 실행</translation>
     </message>
     <message>
         <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="98"/>
-        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="272"/>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="277"/>
         <source>Cut</source>
         <translation>잘라내기</translation>
     </message>
     <message>
         <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="103"/>
-        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="284"/>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="290"/>
         <source>Copy</source>
         <translation>복사</translation>
     </message>
     <message>
         <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="108"/>
-        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="296"/>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="303"/>
         <source>Paste</source>
         <translation>붙여넣기</translation>
     </message>
@@ -697,19 +765,64 @@
         <translation>재설정</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="199"/>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="192"/>
+        <source>Reset to the default parsing script</source>
+        <translation>기본 파싱 스크립트로 재설정</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="200"/>
         <source>Import</source>
         <translation>가져오기</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="212"/>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="205"/>
+        <source>Import a JavaScript file for data parsing</source>
+        <translation>데이터 파싱을 위한 JavaScript 파일 가져오기</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="214"/>
         <source>Validate &amp; Save</source>
         <translation>검증 및 저장</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="319"/>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="219"/>
+        <source>Validate syntax and apply parsing changes</source>
+        <translation>구문을 검증하고 파싱 변경 사항 적용</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="244"/>
+        <source>Undo the last code edit</source>
+        <translation>마지막 코드 편집 실행 취소</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="258"/>
+        <source>Redo the previously undone edit</source>
+        <translation>이전에 실행 취소한 편집 다시 실행</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="282"/>
+        <source>Cut selected code to clipboard</source>
+        <translation>선택한 코드를 클립보드로 잘라내기</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="295"/>
+        <source>Copy selected code to clipboard</source>
+        <translation>선택한 코드를 클립보드로 복사</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="308"/>
+        <source>Paste code from clipboard</source>
+        <translation>클립보드에서 코드 붙여넣기</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="327"/>
         <source>Help</source>
         <translation>도움말</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/FrameParserView.qml" line="332"/>
+        <source>Open help documentation for JavaScript data parsing</source>
+        <translation>JavaScript 데이터 파싱에 대한 도움말 문서 열기</translation>
     </message>
 </context>
 <context>
@@ -738,52 +851,97 @@
         <translation>데이터셋</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="128"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="121"/>
+        <source>Add a generic dataset to the current group</source>
+        <translation>현재 그룹에 일반 데이터셋 추가</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="129"/>
         <source>Plot</source>
         <translation>플롯</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="142"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="135"/>
+        <source>Add a 2D plot to visualize numeric data</source>
+        <translation>숫자 데이터를 시각화하기 위한 2D 플롯 추가</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="144"/>
         <source>FFT Plot</source>
         <translation>FFT 플롯</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="155"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="149"/>
+        <source>Add an FFT plot for frequency domain visualization</source>
+        <translation>주파수 영역 시각화를 위한 FFT 플롯 추가</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="158"/>
         <source>Bar/Level</source>
         <translation>막대/레벨</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="167"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="163"/>
+        <source>Add a bar or level indicator for scaled values</source>
+        <translation>스케일된 값을 위한 막대 또는 레벨 표시기 추가</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="171"/>
         <source>Gauge</source>
         <translation>게이지</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="181"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="177"/>
+        <source>Add a gauge widget for analog-style visualization</source>
+        <translation>아날로그 스타일 시각화를 위한 게이지 위젯 추가</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="186"/>
         <source>Compass</source>
         <translation>나침반</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="193"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="191"/>
+        <source>Add a compass to display directional or angular data</source>
+        <translation>방향 또는 각도 데이터를 표시하기 위한 나침반 추가</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="199"/>
         <source>LED</source>
         <translation>LED</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="214"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="205"/>
+        <source>Add an LED indicator for binary status signals</source>
+        <translation>이진 상태 신호를 위한 LED 표시기 추가</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="221"/>
         <source>Duplicate</source>
         <translation>복제</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="226"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="225"/>
+        <source>Duplicate the current group and its contents</source>
+        <translation>현재 그룹과 그 내용을 복제</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="234"/>
         <source>Delete</source>
         <translation>삭제</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="278"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="238"/>
+        <source>Delete the current group and all contained datasets</source>
+        <translation>현재 그룹과 포함된 모든 데이터셋 삭제</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="287"/>
         <source>Groups hold multiple datasets and organize your data.</source>
         <translation>그룹은 여러 데이터 세트를 보유하고 데이터를 구성합니다.</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="292"/>
+        <location filename="../../qml/ProjectEditor/Views/GroupView.qml" line="301"/>
         <source>Use the sub-toolbar to quickly add plots, FFTs, and other dataset types to this group.</source>
         <translation>하위 도구 모음을 사용하여 이 그룹에 플롯, FFT 및 기타 데이터 세트 유형을 빠르게 추가하십시오.</translation>
     </message>
@@ -791,17 +949,22 @@
 <context>
     <name>Gyroscope</name>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Gyroscope.qml" line="279"/>
+        <location filename="../../qml/Widgets/Dashboard/Gyroscope.qml" line="99"/>
+        <source>Integrate Angles</source>
+        <translation>각도 통합</translation>
+    </message>
+    <message>
+        <location filename="../../qml/Widgets/Dashboard/Gyroscope.qml" line="343"/>
         <source>Roll: %1</source>
         <translation>롤: %1</translation>
     </message>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Gyroscope.qml" line="297"/>
+        <location filename="../../qml/Widgets/Dashboard/Gyroscope.qml" line="361"/>
         <source>Yaw: %1</source>
         <translation>요: %1</translation>
     </message>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Gyroscope.qml" line="315"/>
+        <location filename="../../qml/Widgets/Dashboard/Gyroscope.qml" line="379"/>
         <source>Pitch: %1</source>
         <translation>피치: %1</translation>
     </message>
@@ -809,44 +972,49 @@
 <context>
     <name>IO::Console</name>
     <message>
-        <location filename="../../src/IO/Console.cpp" line="149"/>
+        <location filename="../../src/IO/Console.cpp" line="165"/>
         <source>ASCII</source>
         <translation>ASCII</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Console.cpp" line="150"/>
+        <location filename="../../src/IO/Console.cpp" line="166"/>
         <source>HEX</source>
         <translation>HEX</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Console.cpp" line="161"/>
+        <location filename="../../src/IO/Console.cpp" line="177"/>
         <source>No Line Ending</source>
         <translation>줄 끝 없음</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Console.cpp" line="162"/>
+        <location filename="../../src/IO/Console.cpp" line="178"/>
         <source>New Line</source>
         <translation>새 줄</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Console.cpp" line="163"/>
+        <location filename="../../src/IO/Console.cpp" line="179"/>
         <source>Carriage Return</source>
         <translation>캐리지 리턴</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Console.cpp" line="164"/>
+        <location filename="../../src/IO/Console.cpp" line="180"/>
         <source>CR + NL</source>
         <translation>CR + NL</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Console.cpp" line="175"/>
+        <location filename="../../src/IO/Console.cpp" line="191"/>
         <source>Plain Text</source>
         <translation>일반 텍스트</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Console.cpp" line="176"/>
+        <location filename="../../src/IO/Console.cpp" line="192"/>
         <source>Hexadecimal</source>
         <translation>16진수</translation>
+    </message>
+    <message>
+        <location filename="../../src/IO/Console.cpp" line="213"/>
+        <source>No Checksum</source>
+        <translation>체크섬 없음</translation>
     </message>
 </context>
 <context>
@@ -966,131 +1134,129 @@
 <context>
     <name>IO::Drivers::UART</name>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="55"/>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="56"/>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="368"/>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="410"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="50"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="51"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="376"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="418"/>
         <source>None</source>
         <translation>없음</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="251"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="247"/>
         <source>Failed to connect to serial port device</source>
         <translation>직렬 포트 장치에 연결 실패</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="349"/>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="756"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="345"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="746"/>
         <source>Select Port</source>
         <translation>포트 선택</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="369"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="377"/>
         <source>Even</source>
         <translation>짝수</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="370"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="378"/>
         <source>Odd</source>
         <translation>홀수</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="371"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="379"/>
         <source>Space</source>
         <translation>스페이스</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="372"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="380"/>
         <source>Mark</source>
         <translation>마크</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="411"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="419"/>
         <source>RTS/CTS</source>
         <translation>RTS/CTS</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="412"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="420"/>
         <source>XON/XOFF</source>
         <translation>XON/XOFF</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="564"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="570"/>
         <source>"%1" is not a valid path</source>
         <translation>"%1"은(는) 유효한 경로가 아닙니다</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="565"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="571"/>
         <source>Please type another path to register a custom serial device</source>
         <translation>사용자 지정 시리얼 장치를 등록하려면 다른 경로를 입력하세요</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="620"/>
         <source>Baud rate registered successfully</source>
-        <translation>전송 속도가 성공적으로 등록되었습니다</translation>
+        <translation type="vanished">전송 속도가 성공적으로 등록되었습니다</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="621"/>
         <source>Rate "%1" has been added to baud rate list</source>
-        <translation>속도 "%1"이(가) 전송 속도 목록에 추가되었습니다</translation>
+        <translation type="vanished">속도 "%1"이(가) 전송 속도 목록에 추가되었습니다</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="861"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="851"/>
         <source>Critical serial port error</source>
         <translation>중대한 시리얼 포트 오류</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="966"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="880"/>
         <source>No error occurred.</source>
         <translation>오류가 발생하지 않았습니다.</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="967"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="881"/>
         <source>The specified device could not be found. Please check the connection and try again.</source>
         <translation>지정된 장치를 찾을 수 없습니다. 연결을 확인하고 다시 시도하세요.</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="968"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="882"/>
         <source>Permission denied. Ensure the application has the necessary access rights to the device.</source>
         <translation>권한이 거부되었습니다. 애플리케이션이 장치에 필요한 접근 권한을 가지고 있는지 확인하십시오.</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="969"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="883"/>
         <source>Failed to open the device. It may already be in use or unavailable.</source>
         <translation>장치를 열지 못했습니다. 이미 사용 중이거나 사용할 수 없을 수 있습니다.</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="970"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="884"/>
         <source>An error occurred while writing data to the device.</source>
         <translation>장치에 데이터를 쓰는 중 오류가 발생했습니다.</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="971"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="885"/>
         <source>An error occurred while reading data from the device.</source>
         <translation>장치에서 데이터를 읽는 중 오류가 발생했습니다.</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="972"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="886"/>
         <source>A critical resource error occurred. The device may have been disconnected or is no longer accessible.</source>
         <translation>중대한 리소스 오류가 발생했습니다. 장치가 연결 해제되었거나 더 이상 접근할 수 없을 수 있습니다.</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="973"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="887"/>
         <source>The requested operation is not supported on this device.</source>
         <translation>요청한 작업은 이 장치에서 지원되지 않습니다.</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="974"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="888"/>
         <source>An unknown error occurred. Please check the device and try again.</source>
         <translation>알 수 없는 오류가 발생했습니다. 장치를 확인하고 다시 시도하십시오.</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="975"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="889"/>
         <source>The operation timed out. The device may not be responding.</source>
         <translation>작업이 시간 초과되었습니다. 장치가 응답하지 않을 수 있습니다.</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Drivers/UART.cpp" line="976"/>
+        <location filename="../../src/IO/Drivers/UART.cpp" line="890"/>
         <source>The device is not open. Please open the device before attempting this operation.</source>
         <translation>장치가 열려 있지 않습니다. 이 작업을 시도하기 전에 장치를 여십시오.</translation>
     </message>
@@ -1111,17 +1277,17 @@
 <context>
     <name>IO::Manager</name>
     <message>
-        <location filename="../../src/IO/Manager.cpp" line="217"/>
+        <location filename="../../src/IO/Manager.cpp" line="231"/>
         <source>UART/COM</source>
         <translation>UART/COM</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Manager.cpp" line="218"/>
+        <location filename="../../src/IO/Manager.cpp" line="232"/>
         <source>Network Socket</source>
         <translation>네트워크 소켓</translation>
     </message>
     <message>
-        <location filename="../../src/IO/Manager.cpp" line="219"/>
+        <location filename="../../src/IO/Manager.cpp" line="233"/>
         <source>Bluetooth LE</source>
         <translation>Bluetooth LE</translation>
     </message>
@@ -1147,52 +1313,52 @@
 <context>
     <name>JSON::FrameBuilder</name>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="121"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="135"/>
         <source>Select JSON map file</source>
         <translation>JSON 맵 파일 선택</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="123"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="137"/>
         <source>JSON files</source>
         <translation>JSON 파일</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="170"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="186"/>
         <source>JSON parse error</source>
         <translation>JSON 구문 오류</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="200"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="218"/>
         <source>Invalid JSON project format</source>
         <translation>잘못된 JSON 프로젝트 형식</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="213"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="231"/>
         <source>Cannot read JSON file</source>
         <translation>JSON 파일을 읽을 수 없습니다</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="214"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="232"/>
         <source>Please check file permissions &amp; location</source>
         <translation>파일 권한 및 위치를 확인하세요</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="377"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="436"/>
         <source>Channel %1</source>
         <translation>채널 %1</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="387"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="446"/>
         <source>Quick Plot</source>
         <translation>빠른 플롯</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="392"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="451"/>
         <source>Quick Plot Data</source>
         <translation>빠른 플롯 데이터</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameBuilder.cpp" line="405"/>
+        <location filename="../../src/JSON/FrameBuilder.cpp" line="464"/>
         <source>Multiple Plots</source>
         <translation>다중 플롯</translation>
     </message>
@@ -1200,57 +1366,57 @@
 <context>
     <name>JSON::FrameParser</name>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="230"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="242"/>
         <source>Frame parser code updated successfully!</source>
         <translation>프레임 파서 코드가 성공적으로 업데이트되었습니다!</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="231"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="243"/>
         <source>No errors have been detected in the code.</source>
         <translation>코드에서 오류가 감지되지 않았습니다.</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="270"/>
-        <location filename="../../src/JSON/FrameParser.cpp" line="290"/>
-        <location filename="../../src/JSON/FrameParser.cpp" line="314"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="282"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="302"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="326"/>
         <source>Frame parser error!</source>
         <translation>프레임 파서 오류!</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="271"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="283"/>
         <source>The 'parse' function is not declared or is not callable!</source>
         <translation>'parse' 함수가 선언되지 않았거나 호출할 수 없습니다!</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="291"/>
-        <location filename="../../src/JSON/FrameParser.cpp" line="315"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="303"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="327"/>
         <source>No valid 'parse' function declaration found in the script!</source>
         <translation>스크립트에서 유효한 'parse' 함수 선언을 찾을 수 없습니다!</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="300"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="312"/>
         <source>Legacy frame parser function detected</source>
         <translation>레거시 프레임 파서 함수가 감지되었습니다</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="301"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="313"/>
         <source>The 'parse' function has two arguments ('%1', '%2'), indicating use of the old format. Please update it to the new format, which only takes the frame data as an argument.</source>
         <translation>'parse' 함수에 두 개의 인수('%1', '%2')가 있습니다. 이는 오래된 형식의 사용을 나타냅니다. 프레임 데이터만 인수로 받는 새로운 형식으로 업데이트하십시오.</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="408"/>
-        <location filename="../../src/JSON/FrameParser.cpp" line="429"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="420"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="441"/>
         <source>The document has been modified!</source>
         <translation>문서가 수정되었습니다!</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="409"/>
-        <location filename="../../src/JSON/FrameParser.cpp" line="430"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="421"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="442"/>
         <source>Are you sure you want to continue?</source>
         <translation>계속하시겠습니까?</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/FrameParser.cpp" line="438"/>
+        <location filename="../../src/JSON/FrameParser.cpp" line="450"/>
         <source>Select Javascript file to import</source>
         <translation>가져올 Javascript 파일 선택</translation>
     </message>
@@ -1258,652 +1424,723 @@
 <context>
     <name>JSON::ProjectModel</name>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="284"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="289"/>
         <source>New Project</source>
         <translation>새 프로젝트</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="357"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="362"/>
         <source>Samples</source>
         <translation>샘플</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="726"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="731"/>
         <source>Do you want to save your changes?</source>
         <translation>변경 사항을 저장하시겠습니까?</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="727"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="732"/>
         <source>You have unsaved modifications in this project!</source>
         <translation>이 프로젝트에 저장되지 않은 수정 사항이 있습니다!</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="762"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="767"/>
         <source>Project error</source>
         <translation>프로젝트 오류</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="763"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="768"/>
         <source>Project title cannot be empty!</source>
         <translation>프로젝트 제목은 비워 둘 수 없습니다!</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="780"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="785"/>
         <source>Save JSON project</source>
         <translation>JSON 프로젝트 저장</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="792"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="797"/>
         <source>File open error</source>
         <translation>파일 열기 오류</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="911"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2220"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="918"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2228"/>
         <source>Untitled Project</source>
         <translation>제목 없는 프로젝트</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="955"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="962"/>
         <source>Select JSON file</source>
         <translation>JSON 파일 선택</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1078"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1086"/>
         <source>Legacy frame parser function updated</source>
         <translation>레거시 프레임 파서 기능 업데이트됨</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1079"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1087"/>
         <source>Your project used a legacy frame parser function with a 'separator' argument. It has been automatically migrated to the new format.</source>
         <translation>귀하의 프로젝트는 '구분자' 인수가 있는 레거시 프레임 파서 기능을 사용했습니다. 새 형식으로 자동으로 마이그레이션되었습니다.</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1111"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1119"/>
         <source>Switch Serial Studio to Project Mode?</source>
         <translation>Serial Studio를 프로젝트 모드로 전환하시겠습니까?</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1112"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1120"/>
         <source>This operation mode is required to load and display dashboards from project files.</source>
         <translation>이 작업 모드는 프로젝트 파일에서 대시보드를 로드하고 표시하는 데 필요합니다.</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1140"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1148"/>
         <source>Do you want to delete group "%1"?</source>
         <translation>그룹 "%1"을(를) 삭제하시겠습니까?</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1141"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1182"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1221"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1149"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1190"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1229"/>
         <source>This action cannot be undone. Do you wish to proceed?</source>
         <translation>이 작업은 실행 취소할 수 없습니다. 계속하시겠습니까?</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1181"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1189"/>
         <source>Do you want to delete action "%1"?</source>
         <translation>작업 "%1"을(를) 삭제하시겠습니까?</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1219"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1227"/>
         <source>Do you want to delete dataset "%1"?</source>
         <translation>데이터셋 "%1"을(를) 삭제하시겠습니까?</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1270"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1309"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1345"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1278"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1317"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1353"/>
         <source>%1 (Copy)</source>
         <translation>%1 (복사)</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1385"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1393"/>
         <source>Group</source>
         <translation>그룹</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1470"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1478"/>
         <source>New Dataset</source>
         <translation>새 데이터셋</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1473"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1481"/>
         <source>New Plot</source>
         <translation>새 플롯</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1477"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1485"/>
         <source>New FFT Plot</source>
         <translation>새 FFT 플롯</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1481"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1489"/>
         <source>New Level Indicator</source>
         <translation>새 레벨 표시기</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1485"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1493"/>
         <source>New Gauge</source>
         <translation>새 게이지</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1489"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1497"/>
         <source>New Compass</source>
         <translation>새 나침반</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1493"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1501"/>
         <source>New LED Indicator</source>
         <translation>새 LED 표시기</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1629"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1637"/>
         <source>New Action</source>
         <translation>새 동작</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1786"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1794"/>
         <source>Are you sure you want to change the group-level widget?</source>
         <translation>그룹 수준의 위젯을 변경하시겠습니까?</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1787"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1795"/>
         <source>Existing datasets for this group will be deleted</source>
         <translation>이 그룹의 기존 데이터 세트가 삭제됩니다</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1844"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1845"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1846"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1852"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1853"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1854"/>
         <source>Accelerometer %1</source>
         <translation>가속도계 %1</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1890"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1891"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1892"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1898"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1899"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1900"/>
         <source>Gyro %1</source>
         <translation>자이로 %1</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1933"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1941"/>
         <source>Latitude</source>
         <translation>위도</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1934"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1942"/>
         <source>Longitude</source>
         <translation>경도</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1935"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1943"/>
         <source>Altitude</source>
         <translation>고도</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1971"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1979"/>
         <source>X</source>
         <translation>X</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1972"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1980"/>
         <source>Y</source>
         <translation>Y</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="1973"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="1981"/>
         <source>Z</source>
         <translation>Z</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2087"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2095"/>
         <source>Frame Parser Code</source>
         <translation>프레임 파서 코드</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2218"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2378"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2442"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2594"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2226"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2401"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2465"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2664"/>
         <source>Title</source>
         <translation>제목</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2221"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2229"/>
         <source>Project name/description</source>
         <translation>프로젝트 이름/설명</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2232"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2240"/>
         <source>Data Conversion Method</source>
         <translation>데이터 변환 방법</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2234"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2242"/>
         <source>Input data format for frame parser</source>
         <translation>프레임 파서를 위한 입력 데이터 형식</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2247"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2255"/>
         <source>Frame Detection</source>
         <translation>프레임 감지</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2249"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2257"/>
         <source>Strategy used for identifying frame data</source>
         <translation>프레임 데이터를 식별하는 데 사용되는 전략</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2266"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2274"/>
         <source>Frame Start Delimeter</source>
         <translation>프레임 시작 구분자</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2269"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2277"/>
         <source>String marking the start of a frame</source>
         <translation>프레임의 시작을 표시하는 문자열</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2285"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2293"/>
         <source>Frame End Delimeter</source>
         <translation>프레임 종료 구분자</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2288"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2296"/>
         <source>String marking the end of a frame</source>
         <translation>프레임의 끝을 표시하는 문자열</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2302"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2310"/>
         <source>Hexadecimal Delimeters</source>
         <translation>16진수 구분자</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2304"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2312"/>
         <source>Use hexadecimal delimiters for data frames</source>
         <translation>데이터 프레임에 16진수 구분자 사용</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2316"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2326"/>
+        <source>Checksum Algorithm</source>
+        <translation>체크섬 알고리즘</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2328"/>
+        <source>Checksum algorithm used for frame validation</source>
+        <translation>프레임 검증에 사용된 체크섬 알고리즘</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2339"/>
         <source>Thunderforest API Key</source>
         <translation>Thunderforest API 키</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2318"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2332"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2960"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2964"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2971"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2341"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2355"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3045"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3049"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3056"/>
         <source>None</source>
         <translation>없음</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2319"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2342"/>
         <source>Required for Thunderforest maps</source>
         <translation>Thunderforest 지도에 필요</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2330"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2353"/>
         <source>MapTiler API Key</source>
         <translation>MapTiler API 키</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2333"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2356"/>
         <source>Required for satellite maps</source>
         <translation>위성 지도에 필요</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2380"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2403"/>
         <source>Untitled Group</source>
         <translation>제목 없는 그룹</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2381"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2404"/>
         <source>Name or description of the group</source>
         <translation>그룹의 이름 또는 설명</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2409"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2672"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2432"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2742"/>
         <source>Widget</source>
         <translation>위젯</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2411"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2434"/>
         <source>Group display widget (optional)</source>
         <translation>그룹 표시 위젯 (선택 사항)</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2444"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2467"/>
         <source>Untitled Action</source>
         <translation>제목 없는 작업</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2445"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2468"/>
         <source>Name or description of the action</source>
         <translation>작업의 이름 또는 설명</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2455"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2478"/>
         <source>Icon</source>
         <translation>아이콘</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2457"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2480"/>
         <source>Default Icon</source>
         <translation>기본 아이콘</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2458"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2481"/>
         <source>Icon to display in the dashboard</source>
         <translation>대시보드에 표시할 아이콘</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2467"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2490"/>
         <source>Binary Data</source>
         <translation>이진 데이터</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2470"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2493"/>
         <source>Send binary data when the action is triggered.</source>
         <translation>작동이 트리거될 때 이진 데이터를 전송합니다.</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2483"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2506"/>
         <source>TX Data (Hex)</source>
         <translation>TX 데이터 (16진수)</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2485"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2502"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2508"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2525"/>
         <source>Command</source>
         <translation>명령</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2486"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2503"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2509"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2526"/>
         <source>Data to transmit when the action is triggered.</source>
         <translation>작동이 트리거될 때 전송할 데이터</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2500"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2523"/>
         <source>TX Data</source>
         <translation>TX 데이터</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2532"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2555"/>
         <source>EOL Sequence</source>
         <translation>EOL 시퀀스</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2534"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2557"/>
         <source>End-of-line (EOL) sequence to use</source>
         <translation>사용할 줄 끝(EOL) 시퀀스</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2596"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2567"/>
+        <source>Auto Execute on Connect</source>
+        <translation>연결 시 자동 실행</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2571"/>
+        <source>Trigger this action automatically when a device connects.</source>
+        <translation>장치가 연결될 때 이 작업을 자동으로 실행합니다.</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2583"/>
+        <source>Timer Mode</source>
+        <translation>타이머 모드</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2585"/>
+        <source>How and when the timer should activate.</source>
+        <translation>타이머가 어떻게 그리고 언제 활성화되어야 하는지.</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2598"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2600"/>
+        <source>Timer Interval (ms)</source>
+        <translation>타이머 간격 (ms)</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2602"/>
+        <source>Interval in milliseconds between each timer-triggered action.</source>
+        <translation>각 타이머 트리거 작업 간의 밀리초 간격.</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2666"/>
         <source>Untitled Dataset</source>
         <translation>제목 없는 데이터셋</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2597"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2667"/>
         <source>Name or description of the dataset</source>
         <translation>데이터셋의 이름 또는 설명</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2608"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2678"/>
         <source>Frame Index</source>
         <translation>프레임 인덱스</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2611"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2681"/>
         <source>Position in the frame</source>
         <translation>프레임 내 위치</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2621"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2691"/>
         <source>Measurement Unit</source>
         <translation>측정 단위</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2623"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2693"/>
         <source>Volts, Amps, etc.</source>
         <translation>볼트, 암페어 등</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2624"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2694"/>
         <source>Unit of measurement (optional)</source>
         <translation>측정 단위 (선택 사항)</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2636"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2706"/>
         <source>Overview</source>
         <translation>개요</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2639"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2709"/>
         <source>Include widget in overview dashboard</source>
         <translation>개요 대시보드에 위젯 포함</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2674"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2744"/>
         <source>Display widget (optional)</source>
         <translation>위젯 표시 (선택 사항)</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2704"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2774"/>
         <source>Oscilloscope Plot</source>
         <translation>오실로스코프 플롯</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2706"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2776"/>
         <source>Plot data in real-time</source>
         <translation>실시간 데이터 플롯</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2715"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2785"/>
         <source>FFT Plot</source>
         <translation>FFT 플롯</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2718"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2788"/>
         <source>Plot frequency-domain data</source>
         <translation>주파수 영역 데이터 플롯</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2727"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2797"/>
         <source>Show in LED Panel</source>
         <translation>LED 패널에 표시</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2730"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2800"/>
         <source>Quick status monitoring</source>
         <translation>빠른 상태 모니터링</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2762"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2832"/>
         <source>X-Axis Source</source>
         <translation>X-축 소스</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2763"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2833"/>
         <source>Data series for the X-Axis</source>
         <translation>X-축 데이터 시리즈</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2777"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2847"/>
         <source>Minimum Value</source>
         <translation>최소값</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2780"/>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2793"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2850"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2863"/>
         <source>Required for range widgets, optional for plots</source>
         <translation>범위 위젯에 필요, 플롯에는 선택 사항</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2790"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2860"/>
         <source>Maximum Value</source>
         <translation>최대 값</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2806"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2876"/>
         <source>Alarm Value</source>
         <translation>알람 값</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2809"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2879"/>
         <source>Triggers alarm in bar widgets and LED panels</source>
         <translation>바 위젯 및 LED 패널에서 알람을 트리거합니다</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2831"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2901"/>
         <source>FFT Window Size</source>
         <translation>FFT 윈도우 크기</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2833"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2903"/>
         <source>Samples for FFT calculation</source>
         <translation>FFT 계산을 위한 샘플</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2844"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2914"/>
         <source>FFT Sampling Rate</source>
         <translation>FFT 샘플링 속도</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2846"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2916"/>
         <source>Sampling rate (Hz) for FFT calculation</source>
         <translation>FFT 계산을 위한 샘플링 속도 (Hz)</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2861"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2931"/>
         <source>LED High (On) Value</source>
         <translation>LED 높은 (켜짐) 값</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2864"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="2934"/>
         <source>Threshold for LED on</source>
         <translation>LED 켜짐 임계값</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2936"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3006"/>
+        <source>Off</source>
+        <translation>끄기</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3007"/>
+        <source>Auto Start</source>
+        <translation>자동 시작</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3008"/>
+        <source>Start on Trigger</source>
+        <translation>트리거 시 시작</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3009"/>
+        <source>Toggle on Trigger</source>
+        <translation>트리거 시 전환</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3013"/>
         <source>Plain Text (UTF8)</source>
         <translation>일반 텍스트 (UTF8)</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2937"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3014"/>
         <source>Hexadecimal</source>
         <translation>16진수</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2938"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3015"/>
         <source>Base64</source>
         <translation>Base64</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2943"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3016"/>
+        <source>Binary (Direct)</source>
+        <translation>바이너리(직접)</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3023"/>
+        <source>No Checksum</source>
+        <translation>체크섬 없음</translation>
+    </message>
+    <message>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3028"/>
         <source>End Delimiter Only</source>
         <translation>종료 구분자만</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2944"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3029"/>
         <source>Start Delimiter Only</source>
         <translation>시작 구분자만</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2945"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3030"/>
         <source>Start + End Delimiter</source>
         <translation>시작 + 종료 구분자</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2946"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3031"/>
         <source>No Delimiters</source>
         <translation>구분자 없음</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2954"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3039"/>
         <source>Data Grid</source>
         <translation>데이터 그리드</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2955"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3040"/>
         <source>GPS Map</source>
         <translation>GPS 지도</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2956"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3041"/>
         <source>Gyroscope</source>
         <translation>자이로스코프</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2957"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3042"/>
         <source>Multiple Plot</source>
         <translation>다중 플롯</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2958"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3043"/>
         <source>Accelerometer</source>
         <translation>가속도계</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2959"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3044"/>
         <source>3D Plot</source>
         <translation>3D 도표</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2965"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3050"/>
         <source>Bar</source>
         <translation>막대</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2966"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3051"/>
         <source>Gauge</source>
         <translation>게이지</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2967"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3052"/>
         <source>Compass</source>
         <translation>나침반</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2972"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3057"/>
         <source>New Line (\n)</source>
         <translation>새 줄 (\n)</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2973"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3058"/>
         <source>Carriage Return (\r)</source>
         <translation>캐리지 리턴 (\r)</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2974"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3059"/>
         <source>CRLF (\r\n)</source>
         <translation>CRLF (\r\n)</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2978"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3063"/>
         <source>No</source>
         <translation>아니오</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="2979"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3064"/>
         <source>Linear Plot</source>
         <translation>선형 도표</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="3020"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3105"/>
         <source>Save changes to frame parser code?</source>
         <translation>프레임 파서 코드를 저장하시겠습니까?</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="3021"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3106"/>
         <source>Select 'Save' to keep your changes, 'Discard' to lose them permanently, or 'Cancel' to return.</source>
         <translation>변경 사항을 유지하려면 '저장', 영구적으로 삭제하려면 '삭제', 돌아가려면 '취소'를 선택하세요.</translation>
     </message>
     <message>
-        <location filename="../../src/JSON/ProjectModel.cpp" line="3023"/>
+        <location filename="../../src/JSON/ProjectModel.cpp" line="3108"/>
         <source>Save Changes</source>
         <translation>변경 사항 저장</translation>
     </message>
@@ -1924,93 +2161,93 @@
         <translation>라이선스</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="205"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="209"/>
         <source>Please wait...</source>
         <translation>잠시만 기다려 주세요...</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="232"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="236"/>
         <source>Activate Serial Studio Pro</source>
         <translation>Serial Studio Pro 활성화</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="242"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="246"/>
         <source>Paste your license key below to unlock Pro features like MQTT, 3D plotting, and more.</source>
         <translation>Pro 기능인 MQTT, 3D 플로팅 등을 잠금 해제하려면 아래에 라이선스 키를 붙여넣으세요.</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="253"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="257"/>
         <source>Your license includes 5 device activations.
 Plans include Monthly, Yearly, and Lifetime options.</source>
         <translation>귀하의 라이선스에는 5개의 기기 활성화가 포함되어 있습니다.
 계획에는 월간, 연간 및 평생 옵션이 포함됩니다.</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="270"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="274"/>
         <source>Paste your license key here…</source>
         <translation>여기에 라이선스 키를 붙여넣으세요…</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="289"/>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="424"/>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="468"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="293"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="428"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="472"/>
         <source>Copy</source>
         <translation>복사</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="295"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="299"/>
         <source>Paste</source>
         <translation>붙여넣기</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="301"/>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="430"/>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="474"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="305"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="434"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="478"/>
         <source>Select All</source>
         <translation>모두 선택</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="346"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="350"/>
         <source>Product</source>
         <translation>제품</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="351"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="355"/>
         <source>Serial Studio %1</source>
         <translation>Serial Studio %1</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="359"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="363"/>
         <source>Licensee</source>
         <translation>라이선스 사용자</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="372"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="376"/>
         <source>Licensee E-Mail</source>
         <translation>라이선스 사용자 이메일</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="385"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="389"/>
         <source>Device Usage</source>
         <translation>기기 사용</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="391"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="395"/>
         <source>%1 devices in use (Unlimited plan)</source>
         <translation>%1대의 기기 사용 중 (무제한 플랜)</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="392"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="396"/>
         <source>%1 of %2 devices used</source>
         <translation>%1/%2대의 기기 사용 중</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="402"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="406"/>
         <source>Device ID</source>
         <translation>기기 ID</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="444"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="448"/>
         <source>License Key</source>
         <translation>라이선스 키</translation>
     </message>
@@ -2019,22 +2256,22 @@ Plans include Monthly, Yearly, and Lifetime options.</source>
         <translation type="vanished">결제 또는 활성화 관련 문제는 alex@serial-studio.com으로 지원팀에 문의하십시오.</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="504"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="508"/>
         <source>Customer Portal</source>
         <translation>고객 포털</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="519"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="523"/>
         <source>Buy License</source>
         <translation>라이선스 구매</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="529"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="533"/>
         <source>Activate</source>
         <translation>활성화</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="542"/>
+        <location filename="../../qml/Dialogs/LicenseManagement.qml" line="546"/>
         <source>Deactivate</source>
         <translation>비활성화</translation>
     </message>
@@ -2508,127 +2745,127 @@ Please provide the necessary credentials.</source>
         <translation>SSL 속성</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="277"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="281"/>
         <source>Host</source>
         <translation>호스트</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="289"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="293"/>
         <source>Port</source>
         <translation>포트</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="314"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="318"/>
         <source>Keep Alive (s)</source>
         <translation>유지 시간 (초)</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="327"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="331"/>
         <source>Clean Session</source>
         <translation>클린 세션</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="372"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="380"/>
         <source>Username</source>
         <translation>사용자 이름</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="377"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="385"/>
         <source>MQTT Username</source>
         <translation>MQTT 사용자 이름</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="384"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="392"/>
         <source>Password</source>
         <translation>비밀번호</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="394"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="402"/>
         <source>MQTT Password</source>
         <translation>MQTT 비밀번호</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="447"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="459"/>
         <source>Version</source>
         <translation>버전</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="459"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="471"/>
         <source>Mode</source>
         <translation>모드</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="471"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="483"/>
         <source>Topic</source>
         <translation>주제</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="476"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="488"/>
         <source>e.g. sensors/temperature or home/+/status</source>
         <translation>예: sensors/temperature 또는 home/+/status</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="483"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="495"/>
         <source>Will Retain</source>
         <translation>유지 설정</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="494"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="506"/>
         <source>Will QoS</source>
         <translation>QoS 설정</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="506"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="518"/>
         <source>Will Topic</source>
         <translation>주제 설정</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="511"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="523"/>
         <source>e.g. device/alerts/offline</source>
         <translation>예: device/alerts/offline</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="518"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="530"/>
         <source>Will Message</source>
         <translation>메시지 설정</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="523"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="535"/>
         <source>e.g. Device unexpectedly disconnected</source>
         <translation>예: 장치가 예기치 않게 연결이 끊어짐</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="564"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="580"/>
         <source>Enable SSL</source>
         <translation>SSL 사용</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="575"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="591"/>
         <source>SSL Protocol</source>
         <translation>SSL 프로토콜</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="591"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="607"/>
         <source>Verify Depth</source>
         <translation>검증 깊이</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="609"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="625"/>
         <source>Verify Mode</source>
         <translation>검증 모드</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="641"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="657"/>
         <source>Close</source>
         <translation>닫기</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="660"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="676"/>
         <source>Disconnect</source>
         <translation>연결 끊기</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="660"/>
+        <location filename="../../qml/Dialogs/MQTTConfiguration.qml" line="676"/>
         <source>Connect</source>
         <translation>연결</translation>
     </message>
@@ -2911,118 +3148,218 @@ Please provide the necessary credentials.</source>
         <translation>새로 만들기</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="152"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="137"/>
+        <source>Create a new JSON project</source>
+        <translation>새 JSON 프로젝트 생성</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="153"/>
         <source>Open</source>
         <translation>열기</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="161"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="157"/>
+        <source>Open an existing JSON project</source>
+        <translation>기존 JSON 프로젝트 열기</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="163"/>
         <source>Save</source>
         <translation>저장</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="171"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="166"/>
+        <source>Save the current project</source>
+        <translation>현재 프로젝트 저장</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="174"/>
         <source>Save As</source>
         <translation>다른 이름으로 저장</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="195"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="178"/>
+        <source>Save the current project under a new name</source>
+        <translation>현재 프로젝트를 새 이름으로 저장</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="199"/>
         <source>Action</source>
         <translation>작업</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="216"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="202"/>
+        <source>Add a new action to the project</source>
+        <translation>프로젝트에 새 작업 추가</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="221"/>
         <source>Dataset</source>
         <translation>데이터셋</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="233"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="223"/>
+        <source>Add a generic dataset</source>
+        <translation>일반 데이터셋 추가</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="239"/>
         <source>Plot</source>
         <translation>플롯</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="243"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="244"/>
+        <source>Add a 2D plot dataset</source>
+        <translation>2D 플롯 데이터셋 추가</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="250"/>
         <source>FFT Plot</source>
         <translation>FFT 플롯</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="253"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="255"/>
+        <source>Add a Fast Fourier Transform plot</source>
+        <translation>고속 푸리에 변환 플롯 추가</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="261"/>
         <source>Gauge</source>
         <translation>게이지</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="263"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="266"/>
+        <source>Add a gauge widget for numeric data</source>
+        <translation>숫자 데이터를 위한 게이지 위젯 추가</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="272"/>
         <source>Level Indicator</source>
         <translation>레벨 표시기</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="273"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="277"/>
+        <source>Add a vertical bar level indicator</source>
+        <translation>수직 막대 레벨 표시기 추가</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="283"/>
         <source>Compass</source>
         <translation>나침반</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="283"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="288"/>
+        <source>Add a compass widget for directional data</source>
+        <translation>방향 데이터를 위한 나침반 위젯 추가</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="294"/>
         <source>LED Indicator</source>
         <translation>LED 표시기</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="308"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="299"/>
+        <source>Add an LED-style status indicator</source>
+        <translation>LED 스타일 상태 표시기를 추가</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="320"/>
         <source>Group</source>
         <translation>그룹</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="311"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="322"/>
+        <source>Add a dataset container group</source>
+        <translation>데이터셋 컨테이너 그룹 추가</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="324"/>
         <source>Dataset Container</source>
         <translation>데이터셋 컨테이너</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="325"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="338"/>
         <source>Table</source>
         <translation>테이블</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="331"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="343"/>
+        <source>Add a data table view</source>
+        <translation>데이터 테이블 뷰 추가</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="345"/>
         <source>Data Grid</source>
         <translation>데이터 그리드</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="335"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="349"/>
         <source>Multi-Plot</source>
         <translation>멀티 플롯</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="341"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="354"/>
+        <source>Add a 2D plot with multiple signals</source>
+        <translation>다중 신호를 포함한 2D 플롯 추가</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="356"/>
         <source>Multiple Plot</source>
         <translation>다중 플롯</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="345"/>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="351"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="360"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="367"/>
         <source>3D Plot</source>
         <translation>3D 플롯</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="355"/>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="361"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="365"/>
+        <source>Add a 3D plot visualization</source>
+        <translation>3D 플롯 시각화 추가</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="371"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="378"/>
         <source>Accelerometer</source>
         <translation>가속도계</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="365"/>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="371"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="376"/>
+        <source>Add a group for 3-axis accelerometer data</source>
+        <translation>3축 가속도계 데이터를 위한 그룹 추가</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="382"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="388"/>
         <source>Gyroscope</source>
         <translation>자이로스코프</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="375"/>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="381"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="389"/>
+        <source>Add a group for 3-axis gyroscope data (angular rates are integrated into orientation automatically)</source>
+        <translation>3축 자이로스코프 데이터를 위한 그룹 추가 (각속도는 자동으로 방향에 통합됨)</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="393"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="400"/>
         <source>GPS Map</source>
         <translation>GPS 지도</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="400"/>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="398"/>
+        <source>Add a map widget for GPS data</source>
+        <translation>GPS 데이터를 위한 지도 위젯 추가</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="419"/>
         <source>Help</source>
         <translation>도움말</translation>
+    </message>
+    <message>
+        <location filename="../../qml/ProjectEditor/Sections/ProjectToolbar.qml" line="422"/>
+        <source>Open the online Project Editor documentation</source>
+        <translation>온라인 프로젝트 편집기 문서 열기</translation>
     </message>
 </context>
 <context>
@@ -3051,7 +3388,7 @@ Please provide the necessary credentials.</source>
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../../src/Misc/Translator.cpp" line="158"/>
+        <location filename="../../src/Misc/Translator.cpp" line="170"/>
         <source>Failed to load welcome text :(</source>
         <translation>환영 메시지를 불러오지 못했습니다 :(</translation>
     </message>
@@ -3132,77 +3469,82 @@ Please provide the necessary credentials.</source>
         <translation>환경 설정</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="100"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="101"/>
         <source>General</source>
         <translation>일반</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="124"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="125"/>
         <source>Language</source>
         <translation>언어</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="141"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="142"/>
         <source>Theme</source>
         <translation>테마</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="157"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="158"/>
         <source>Workspace Folder</source>
         <translation>작업 공간 폴더</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="196"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="197"/>
         <source>Miscellaneous</source>
         <translation>기타</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="220"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="221"/>
         <source>Enable TCP Plugins (Port 7777)</source>
         <translation>TCP 플러그인 활성화 (포트 7777)</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="237"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="238"/>
         <source>Force Software Rendering</source>
         <translation>소프트웨어 렌더링 강제</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="253"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="254"/>
         <source>Automatically Check for Updates</source>
         <translation>자동 업데이트 확인</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="278"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="279"/>
         <source>Dashboard</source>
         <translation>대시보드</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="302"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="303"/>
         <source>Point Count</source>
         <translation>점 개수</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="321"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="322"/>
         <source>Decimal Precision</source>
         <translation>소수점 정밀도</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="340"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="341"/>
+        <source>Show Actions Panel</source>
+        <translation>작업 패널 표시</translation>
+    </message>
+    <message>
+        <location filename="../../qml/Dialogs/Settings.qml" line="358"/>
         <source>Enable Console Widget</source>
         <translation>콘솔 위젯 활성화</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="379"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="397"/>
         <source>Reset</source>
         <translation>초기화</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="404"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="422"/>
         <source>Close</source>
         <translation>닫기</translation>
     </message>
     <message>
-        <location filename="../../qml/Dialogs/Settings.qml" line="414"/>
+        <location filename="../../qml/Dialogs/Settings.qml" line="432"/>
         <source>Apply</source>
         <translation>적용</translation>
     </message>
@@ -3342,7 +3684,7 @@ Please provide the necessary credentials.</source>
 <context>
     <name>SubMenuCombo</name>
     <message>
-        <location filename="../../qml/Widgets/SubMenuCombo.qml" line="79"/>
+        <location filename="../../qml/Widgets/SubMenuCombo.qml" line="80"/>
         <source>No Data Available</source>
         <translation>사용 가능한 데이터 없음</translation>
     </message>
@@ -3350,27 +3692,26 @@ Please provide the necessary credentials.</source>
 <context>
     <name>TableDelegate</name>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/TableDelegate.qml" line="124"/>
+        <location filename="../../qml/ProjectEditor/Views/TableDelegate.qml" line="122"/>
         <source>Parameter</source>
         <translation>매개변수</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/TableDelegate.qml" line="144"/>
+        <location filename="../../qml/ProjectEditor/Views/TableDelegate.qml" line="142"/>
         <source>Value</source>
         <translation>값</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/TableDelegate.qml" line="164"/>
         <source>Parameter Description</source>
-        <translation>매개변수 설명</translation>
+        <translation type="vanished">매개변수 설명</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/TableDelegate.qml" line="527"/>
+        <location filename="../../qml/ProjectEditor/Views/TableDelegate.qml" line="508"/>
         <source>No</source>
         <translation>아니요</translation>
     </message>
     <message>
-        <location filename="../../qml/ProjectEditor/Views/TableDelegate.qml" line="527"/>
+        <location filename="../../qml/ProjectEditor/Views/TableDelegate.qml" line="508"/>
         <source>Yes</source>
         <translation>예</translation>
     </message>
@@ -3386,42 +3727,42 @@ Please provide the necessary credentials.</source>
 <context>
     <name>Terminal</name>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="121"/>
+        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="122"/>
         <source>Copy</source>
         <translation>복사</translation>
     </message>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="128"/>
+        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="129"/>
         <source>Select all</source>
         <translation>모두 선택</translation>
     </message>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="135"/>
+        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="136"/>
         <source>Clear</source>
         <translation>지우기</translation>
     </message>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="212"/>
+        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="213"/>
         <source>Send Data to Device</source>
         <translation>장치로 데이터 전송</translation>
     </message>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="341"/>
+        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="356"/>
         <source>Show Timestamp</source>
         <translation>타임스탬프 표시</translation>
     </message>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="352"/>
+        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="367"/>
         <source>Echo</source>
         <translation>에코</translation>
     </message>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="363"/>
+        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="378"/>
         <source>Emulate VT-100</source>
         <translation>VT-100 에뮬레이트</translation>
     </message>
     <message>
-        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="385"/>
+        <location filename="../../qml/Widgets/Dashboard/Terminal.qml" line="400"/>
         <source>Display: %1</source>
         <translation>디스플레이: %1</translation>
     </message>
@@ -3434,91 +3775,146 @@ Please provide the necessary credentials.</source>
         <translation>프로젝트 편집기</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="160"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="154"/>
+        <source>Open the Project Editor to create or modify your JSON layout</source>
+        <translation>JSON 레이아웃을 생성하거나 수정하기 위해 프로젝트 편집기 열기</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="161"/>
         <source>CSV Player</source>
         <translation>CSV 플레이어</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="184"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="166"/>
+        <source>Play a CSV file as if it were live sensor data</source>
+        <translation>CSV 파일을 실시간 센서 데이터처럼 재생</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="186"/>
         <source>Devices</source>
         <translation>장치</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="194"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="190"/>
+        <source>Configure device connection via Serial, BLE, or network socket</source>
+        <translation>시리얼, BLE 또는 네트워크 소켓을 통한 장치 연결 구성</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="197"/>
         <source>Preferences</source>
         <translation>환경 설정</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="219"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="201"/>
+        <source>Open application settings and preferences</source>
+        <translation>애플리케이션 설정 및 환경 설정 열기</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="223"/>
         <source>MQTT</source>
         <translation>MQTT</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="245"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="230"/>
+        <source>Configure MQTT connection (publish or subscribe)</source>
+        <translation>MQTT 연결 구성 (발행 또는 구독)</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="250"/>
         <source>Examples</source>
         <translation>예제</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="255"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="253"/>
+        <source>Browse example projects on GitHub</source>
+        <translation>GitHub에서 예제 프로젝트 둘러보기</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="261"/>
         <source>Help</source>
         <translation>도움말</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="265"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="264"/>
+        <source>Open the online documentation for help and guidance</source>
+        <translation>도움말 및 안내를 위한 온라인 문서 열기</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="272"/>
+        <source>AI Help</source>
+        <translation>AI 도움말</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="275"/>
+        <source>View detailed documentation and ask questions on DeepWiki</source>
+        <translation>자세한 문서를 보고 DeepWiki에서 질문하기</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="283"/>
         <source>About</source>
         <translation>정보</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="290"/>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="319"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="287"/>
+        <source>Show application info and license details</source>
+        <translation>애플리케이션 정보 및 라이선스 세부 정보 표시</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="309"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="339"/>
         <source>Disconnect</source>
         <translation>연결 해제</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="290"/>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="309"/>
         <source>Connect</source>
         <translation>연결</translation>
+    </message>
+    <message>
+        <location filename="../../qml/MainWindow/Panes/Toolbar.qml" line="312"/>
+        <source>Connect or disconnect from device or MQTT broker</source>
+        <translation>장치 또는 MQTT 브로커에 연결 또는 연결 해제</translation>
     </message>
 </context>
 <context>
     <name>UART</name>
     <message>
-        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="79"/>
+        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="78"/>
         <source>COM Port</source>
         <translation>COM 포트</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="107"/>
+        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="106"/>
         <source>Baud Rate</source>
         <translation>전송 속도</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="145"/>
+        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="165"/>
         <source>Data Bits</source>
         <translation>데이터 비트</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="161"/>
+        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="181"/>
         <source>Parity</source>
         <translation>패리티</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="177"/>
+        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="197"/>
         <source>Stop Bits</source>
         <translation>정지 비트</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="193"/>
+        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="213"/>
         <source>Flow Control</source>
         <translation>흐름 제어</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="220"/>
+        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="240"/>
         <source>Auto Reconnect</source>
         <translation>자동 재연결</translation>
     </message>
     <message>
-        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="237"/>
+        <location filename="../../qml/MainWindow/Panes/SetupPanes/Drivers/UART.qml" line="257"/>
         <source>Send DTR Signal</source>
         <translation>DTR 신호 전송</translation>
     </message>
@@ -3526,17 +3922,17 @@ Please provide the necessary credentials.</source>
 <context>
     <name>UI::Dashboard</name>
     <message>
-        <location filename="../../src/UI/Dashboard.cpp" line="761"/>
+        <location filename="../../src/UI/Dashboard.cpp" line="873"/>
         <source>Console</source>
         <translation>콘솔</translation>
     </message>
     <message>
-        <location filename="../../src/UI/Dashboard.cpp" line="778"/>
+        <location filename="../../src/UI/Dashboard.cpp" line="890"/>
         <source>%1 (Fallback)</source>
         <translation>%1 (대체)</translation>
     </message>
     <message>
-        <location filename="../../src/UI/Dashboard.cpp" line="840"/>
+        <location filename="../../src/UI/Dashboard.cpp" line="952"/>
         <source>LED Panel (%1)</source>
         <translation>LED 패널 (%1)</translation>
     </message>
@@ -3644,6 +4040,19 @@ Please provide the necessary credentials.</source>
         <location filename="../../src/UI/Widgets/Compass.cpp" line="105"/>
         <source>NW</source>
         <translation>북서</translation>
+    </message>
+</context>
+<context>
+    <name>Widgets::DataGrid</name>
+    <message>
+        <location filename="../../src/UI/Widgets/DataGrid.cpp" line="45"/>
+        <source>Title</source>
+        <translation>제목</translation>
+    </message>
+    <message>
+        <location filename="../../src/UI/Widgets/DataGrid.cpp" line="45"/>
+        <source>Value</source>
+        <translation>값</translation>
     </message>
 </context>
 <context>

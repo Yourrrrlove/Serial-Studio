@@ -97,6 +97,20 @@ QString JSON::FrameBuilder::jsonMapFilename() const
 }
 
 /**
+ * @brief Returns the currently loaded JSON frame.
+ *
+ * The frame contains the structure of all groups, datasets, and actions
+ * parsed from the active JSON project file. It represents the complete
+ * configuration used to build the dashboard and manage data parsing.
+ *
+ * @return A constant reference to the current JSON::Frame.
+ */
+const JSON::Frame &JSON::FrameBuilder::frame() const
+{
+  return m_frame;
+}
+
+/**
  * Returns a pointer to the currently loaded frame parser editor.
  */
 JSON::FrameParser *JSON::FrameBuilder::frameParser() const
@@ -132,6 +146,8 @@ void JSON::FrameBuilder::loadJsonMap()
  */
 void JSON::FrameBuilder::setupExternalConnections()
 {
+  connect(&IO::Manager::instance(), &IO::Manager::connectedChanged, this,
+          &JSON::FrameBuilder::onConnectedChanged);
   connect(&IO::Manager::instance(), &IO::Manager::frameReceived, this,
           &JSON::FrameBuilder::readData);
 }
@@ -187,6 +203,8 @@ void JSON::FrameBuilder::loadJsonMap(const QString &path)
         {
           IO::Manager::instance().setFinishSequence(m_frame.frameEnd());
           IO::Manager::instance().setStartSequence(m_frame.frameStart());
+          IO::Manager::instance().setChecksumAlgorithm(m_frame.checksum());
+
           IO::Manager::instance().resetFrameReader();
         }
       }
@@ -251,14 +269,17 @@ void JSON::FrameBuilder::setOperationMode(
     case SerialStudio::DeviceSendsJSON:
       IO::Manager::instance().setStartSequence("");
       IO::Manager::instance().setFinishSequence("");
+      IO::Manager::instance().setChecksumAlgorithm("");
       break;
     case SerialStudio::ProjectFile:
       IO::Manager::instance().setFinishSequence(m_frame.frameEnd());
       IO::Manager::instance().setStartSequence(m_frame.frameStart());
+      IO::Manager::instance().setChecksumAlgorithm(m_frame.checksum());
       break;
     case SerialStudio::QuickPlot:
       IO::Manager::instance().setStartSequence("");
       IO::Manager::instance().setFinishSequence("");
+      IO::Manager::instance().setChecksumAlgorithm("");
       break;
     default:
       qWarning() << "Invalid operation mode selected" << mode;
@@ -275,6 +296,49 @@ void JSON::FrameBuilder::setOperationMode(
 void JSON::FrameBuilder::setJsonPathSetting(const QString &path)
 {
   m_settings.setValue(QStringLiteral("json_map_location"), path);
+}
+
+/**
+ * @brief Handles device connection events and triggers auto-execute actions.
+ *
+ * This slot is called when the connection state of the serial device changes.
+ * If the device has just connected and the application is in project mode
+ * (SerialStudio::ProjectFile), this method scans all defined actions in the
+ * loaded JSON frame and immediately transmits those marked with the
+ * `autoExecuteOnConnect` flag.
+ *
+ * This is useful for scenarios where a device must receive a command
+ * (e.g. "start streaming") before it begins sending data frames.
+ *
+ * Binary and text-based actions are handled accordingly based on the
+ * `binaryData()` flag, and the data is sent via IO::Manager.
+ */
+void JSON::FrameBuilder::onConnectedChanged()
+{
+  // Validate that the device is connected
+  if (!IO::Manager::instance().isConnected())
+    return;
+
+  // Validate that we are in project mode
+  if (m_opMode != SerialStudio::ProjectFile)
+    return;
+
+  // Auto-execute actions if required
+  const auto actions = m_frame.actions();
+  for (const auto &action : actions)
+  {
+    if (action.autoExecuteOnConnect())
+    {
+      QByteArray bin;
+
+      if (action.binaryData())
+        bin = SerialStudio::hexToBytes(action.txData());
+      else
+        bin = QString(action.txData() + action.eolSequence()).toUtf8();
+
+      IO::Manager::instance().writeData(bin);
+    }
+  }
 }
 
 /**
@@ -317,26 +381,24 @@ void JSON::FrameBuilder::readData(const QByteArray &data)
     QStringList fields;
     if (!csvPlaying)
     {
-      // Convert binary frame data to a string
-      QString frameData;
       switch (JSON::ProjectModel::instance().decoderMethod())
       {
         case SerialStudio::PlainText:
-          frameData = QString::fromUtf8(data);
+          fields = m_frameParser->parse(QString::fromUtf8(data));
           break;
         case SerialStudio::Hexadecimal:
-          frameData = QString::fromUtf8(data.toHex());
+          fields = m_frameParser->parse(QString::fromUtf8(data.toHex()));
           break;
         case SerialStudio::Base64:
-          frameData = QString::fromUtf8(data.toBase64());
+          fields = m_frameParser->parse(QString::fromUtf8(data.toBase64()));
+          break;
+        case SerialStudio::Binary:
+          fields = m_frameParser->parse(data);
           break;
         default:
-          frameData = QString::fromUtf8(data);
+          fields = m_frameParser->parse(QString::fromUtf8(data));
           break;
       }
-
-      // Get fields from frame parser function
-      fields = m_frameParser->parse(frameData);
     }
 
     // CSV data, no need to perform conversions or use frame parser

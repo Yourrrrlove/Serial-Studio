@@ -28,6 +28,7 @@
 #include <QJsonDocument>
 
 #include "AppInfo.h"
+#include "IO/Checksum.h"
 #include "Misc/Utilities.h"
 #include "Misc/Translator.h"
 #include "Misc/WorkspaceManager.h"
@@ -64,7 +65,8 @@ typedef enum
   kProjectView_HexadecimalSequence, /**< Represents the frame sequence format */
   kProjectView_FrameDetection,      /**< Represents the frame detection item */
   kProjectView_ThunderforestApiKey, /**< Represents the Thunderforest API key */
-  kProjectView_MapTilerApiKey       /**< Represents the MapTiler API key */
+  kProjectView_MapTilerApiKey,      /**< Represents the MapTiler API key */
+  kProjectView_ChecksumFunction     /**< Represents the frame checksum item */
 } ProjectItem;
 // clang-format on
 
@@ -98,11 +100,14 @@ typedef enum
 // clang-format off
 typedef enum
 {
-  kActionView_Title,   /**< Represents the action title item. */
-  kActionView_Icon,    /**< Represents the icon item. */
-  kActionView_EOL,     /**< Represents the EOL (end of line) item. */
-  kActionView_Data,    /**< Represents the TX data item. */
-  kActionView_Binary,  /**< Represents the binary data transmision status */
+  kActionView_Title,        /**< The action title item. */
+  kActionView_Icon,         /**< The icon item. */
+  kActionView_EOL,          /**< The EOL (end of line) item. */
+  kActionView_Data,         /**< The TX data item. */
+  kActionView_Binary,       /**< The binary data transmission status. */
+  kActionView_AutoExecute,  /**< Whether the action executes on connect. */
+  kActionView_TimerMode,    /**< The timer behavior mode. */
+  kActionView_TimerInterval /**< The timer interval in milliseconds. */
 } ActionItem;
 // clang-format on
 
@@ -800,6 +805,7 @@ bool JSON::ProjectModel::saveJsonFile(const bool askPath)
   json.insert("decoder", m_frameDecoder);
   json.insert("frameEnd", m_frameEndSequence);
   json.insert("frameParser", m_frameParserCode);
+  json.insert("checksum", m_checksumAlgorithm);
   json.insert("frameDetection", m_frameDetection);
   json.insert("frameStart", m_frameStartSequence);
   json.insert("mapTilerApiKey", m_mapTilerApiKey);
@@ -905,6 +911,7 @@ void JSON::ProjectModel::newJsonFile()
   m_frameDetection = SerialStudio::EndDelimiterOnly;
   m_frameEndSequence = "\\n";
   m_mapTilerApiKey = "";
+  m_checksumAlgorithm = "";
   m_thunderforestApiKey = "";
   m_frameStartSequence = "$";
   m_hexadecimalDelimiters = false;
@@ -1004,6 +1011,7 @@ void JSON::ProjectModel::openJsonFile(const QString &path)
   auto json = document.object();
   m_title = json.value("title").toString();
   m_frameEndSequence = json.value("frameEnd").toString();
+  m_checksumAlgorithm = json.value("checksum").toString();
   m_frameParserCode = json.value("frameParser").toString();
   m_frameStartSequence = json.value("frameStart").toString();
   m_mapTilerApiKey = json.value("mapTilerApiKey").toString();
@@ -2308,6 +2316,21 @@ void JSON::ProjectModel::buildProjectModel()
     m_projectModel->appendRow(sequence);
   }
 
+  // Add checksum
+  auto checksum = new QStandardItem();
+  auto checksumAlgo = IO::availableChecksums().indexOf(m_checksumAlgorithm);
+  checksum->setEditable(true);
+  checksum->setData(ComboBox, WidgetType);
+  checksum->setData(checksumAlgo, EditableValue);
+  checksum->setData(m_checksumMethods, ComboBoxData);
+  checksum->setData(tr("Checksum Algorithm"), ParameterName);
+  checksum->setData(kProjectView_ChecksumFunction, ParameterType);
+  checksum->setData(tr("Checksum algorithm used for frame validation"),
+                    ParameterDescription);
+  checksum->setData("qrc:/rcc/icons/project-editor/model/checksum.svg",
+                    ParameterIcon);
+  m_projectModel->appendRow(checksum);
+
   // Add Thunderforest API Key
   auto thunderforest = new QStandardItem();
   thunderforest->setEditable(true);
@@ -2534,6 +2557,53 @@ void JSON::ProjectModel::buildActionModel(const JSON::Action &action)
     eol->setData(tr("End-of-line (EOL) sequence to use"), ParameterDescription);
     eol->setData("qrc:/rcc/icons/project-editor/model/eol.svg", ParameterIcon);
     m_actionModel->appendRow(eol);
+  }
+
+  // Auto-execute on connect
+  auto autoExecute = new QStandardItem();
+  autoExecute->setEditable(true);
+  autoExecute->setData(CheckBox, WidgetType);
+  autoExecute->setData(action.autoExecuteOnConnect(), EditableValue);
+  autoExecute->setData(tr("Auto Execute on Connect"), ParameterName);
+  autoExecute->setData(kActionView_AutoExecute, ParameterType);
+  autoExecute->setData(0, PlaceholderValue);
+  autoExecute->setData(
+      tr("Trigger this action automatically when a device connects."),
+      ParameterDescription);
+  autoExecute->setData("qrc:/rcc/icons/project-editor/model/auto-execute.svg",
+                       ParameterIcon);
+  m_actionModel->appendRow(autoExecute);
+
+  // Timer mode
+  auto timerMode = new QStandardItem();
+  timerMode->setEditable(true);
+  timerMode->setData(ComboBox, WidgetType);
+  timerMode->setData(m_timerModes, ComboBoxData);
+  timerMode->setData(static_cast<int>(action.timerMode()), EditableValue);
+  timerMode->setData(tr("Timer Mode"), ParameterName);
+  timerMode->setData(kActionView_TimerMode, ParameterType);
+  timerMode->setData(tr("How and when the timer should activate."),
+                     ParameterDescription);
+  timerMode->setData("qrc:/rcc/icons/project-editor/model/timer.svg",
+                     ParameterIcon);
+  m_actionModel->appendRow(timerMode);
+
+  // Timer interval
+  if (action.timerMode() != JSON::Action::TimerMode::Off)
+  {
+    auto timerInterval = new QStandardItem();
+    timerInterval->setEditable(true);
+    timerInterval->setData(IntField, WidgetType);
+    timerInterval->setData(action.timerIntervalMs(), EditableValue);
+    timerInterval->setData(tr("Timer Interval (ms)"), ParameterName);
+    timerInterval->setData(kActionView_TimerInterval, ParameterType);
+    timerInterval->setData(tr("Timer Interval (ms)"), PlaceholderValue);
+    timerInterval->setData(
+        tr("Interval in milliseconds between each timer-triggered action."),
+        ParameterDescription);
+    timerInterval->setData("qrc:/rcc/icons/project-editor/model/interval.svg",
+                           ParameterIcon);
+    m_actionModel->appendRow(timerInterval);
   }
 
   // Handle edits
@@ -2931,11 +3001,26 @@ void JSON::ProjectModel::generateComboBoxModels()
   m_fftSamples.append("8192");
   m_fftSamples.append("16384");
 
+  // Initialize timer modes
+  m_timerModes.clear();
+  m_timerModes.append(tr("Off"));
+  m_timerModes.append(tr("Auto Start"));
+  m_timerModes.append(tr("Start on Trigger"));
+  m_timerModes.append(tr("Toggle on Trigger"));
+
   // Initialize decoder options
   m_decoderOptions.clear();
   m_decoderOptions.append(tr("Plain Text (UTF8)"));
   m_decoderOptions.append(tr("Hexadecimal"));
   m_decoderOptions.append(tr("Base64"));
+  m_decoderOptions.append(tr("Binary (Direct)"));
+
+  // Initialize checksum options
+  m_checksumMethods.clear();
+  m_checksumMethods = IO::availableChecksums();
+  const int index = m_checksumMethods.indexOf(QLatin1String(""));
+  if (index >= 0)
+    m_checksumMethods[index] = tr("No Checksum");
 
   // Initialize frame detection methods
   m_frameDetectionMethods.clear();
@@ -3191,6 +3276,17 @@ void JSON::ProjectModel::onActionItemChanged(QStandardItem *item)
       m_selectedAction.m_binaryData = value.toBool();
       buildActionModel(m_selectedAction);
       break;
+    case kActionView_AutoExecute:
+      m_selectedAction.m_autoExecuteOnConnect = value.toBool();
+      break;
+    case kActionView_TimerMode:
+      m_selectedAction.m_timerMode
+          = static_cast<JSON::Action::TimerMode>(value.toInt());
+      buildActionModel(m_selectedAction);
+      break;
+    case kActionView_TimerInterval:
+      m_selectedAction.m_timerIntervalMs = value.toInt();
+      break;
     default:
       break;
   }
@@ -3242,6 +3338,9 @@ void JSON::ProjectModel::onProjectItemChanged(QStandardItem *item)
       break;
     case kProjectView_FrameDecoder:
       m_frameDecoder = static_cast<SerialStudio::DecoderMethod>(value.toInt());
+      break;
+    case kProjectView_ChecksumFunction:
+      m_checksumAlgorithm = IO::availableChecksums()[value.toInt()];
       break;
     case kProjectView_HexadecimalSequence: {
       bool changed = m_hexadecimalDelimiters != value.toBool();
