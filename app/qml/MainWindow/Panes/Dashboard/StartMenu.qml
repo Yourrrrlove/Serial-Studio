@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * SPDX-License-Identifier: GPL-3.0-only
  */
 
 import QtCore
@@ -54,8 +54,8 @@ Popup {
   //
   Settings {
     category: "WindowManagement"
-    property alias console: _consoleBt.checked
     property alias autoLayout: _autoLayoutBt.checked
+    property alias consoleEnabled: _consoleBt.checked
   }
 
   //
@@ -195,7 +195,7 @@ Popup {
         if (_actions.popup === null) {
           _actions.popup = _subMenuComponent.createObject(root)
           popup.valueSelected.connect((value) => {
-                                        Cpp_UI_Dashboard.activateAction(value)
+                                        Cpp_UI_Dashboard.activateAction(value, true)
                                         root.close()
                                       })
         }

@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * SPDX-License-Identifier: GPL-3.0-only
  */
 
 #pragma once
@@ -62,8 +62,8 @@ public:
   [[nodiscard]] const QFont &monoFont() const;
   [[nodiscard]] const QFont &boldUiFont() const;
 
-  Q_INVOKABLE QFont customUiFont(qreal fraction = 1, bool bold = false);
-  Q_INVOKABLE QFont customMonoFont(qreal fraction = 1);
+  Q_INVOKABLE QFont customUiFont(double fraction = 1, bool bold = false);
+  Q_INVOKABLE QFont customMonoFont(double fraction = 1, bool bold = false);
 
 private:
   QFont m_uiFont;

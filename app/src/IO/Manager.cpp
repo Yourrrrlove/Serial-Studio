@@ -16,13 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * SPDX-License-Identifier: GPL-3.0-only
  */
 
 #include "IO/Manager.h"
 #include "IO/Drivers/UART.h"
 #include "IO/Drivers/Network.h"
 #include "IO/Drivers/BluetoothLE.h"
+
 #include "Misc/Translator.h"
 
 #include <QApplication>
@@ -199,6 +200,19 @@ const QByteArray &IO::Manager::finishSequence() const
   return m_finishSequence;
 }
 
+/**
+ * @brief Returns the name of the currently selected checksum algorithm.
+ *
+ * The returned value matches one of the entries from IO::availableChecksums().
+ * An empty string indicates that no checksum is applied.
+ *
+ * @return Reference to the selected checksum algorithm name.
+ */
+const QString &IO::Manager::checksumAlgorithm() const
+{
+  return m_checksumAlgorithm;
+}
+
 //------------------------------------------------------------------------------
 // Bus/Driver UI list helper
 //------------------------------------------------------------------------------
@@ -217,10 +231,8 @@ QStringList IO::Manager::availableBuses() const
   list.append(tr("UART/COM"));
   list.append(tr("Network Socket"));
   list.append(tr("Bluetooth LE"));
-#ifdef USE_QT_COMMERCIAL
-  // Comment these ports for v3.0.7 release...I will add support for these
-  // IO modules later, right now I need testing data to not drown in issues
-  // and get the FlatHub publishing done ASAP.
+#ifdef BUILD_COMMERCIAL
+  // Comment these ports for the future
   // list.append(tr("Modbus"));
   // list.append(tr("CAN Bus"));
 #endif
@@ -335,6 +347,13 @@ void IO::Manager::disconnectDevice()
   }
 }
 
+/**
+ * @brief Restarts the frame reader if the device is currently connected.
+ *
+ * This function stops and reinitializes the frame reader. Useful for applying
+ * updated settings such as checksum algorithm or parsing configuration without
+ * disconnecting the serial device.
+ */
 void IO::Manager::resetFrameReader()
 {
   if (isConnected())
@@ -419,15 +438,7 @@ void IO::Manager::setStartSequence(const QByteArray &sequence)
     m_startSequence = QString("/*").toUtf8();
 
   if (m_frameReader)
-  {
-    QMetaObject::invokeMethod(
-        m_frameReader,
-        [reader = m_frameReader, sequence = m_startSequence] {
-          if (reader)
-            reader->setStartSequence(sequence);
-        },
-        Qt::QueuedConnection);
-  }
+    resetFrameReader();
 
   Q_EMIT startSequenceChanged();
 }
@@ -448,17 +459,30 @@ void IO::Manager::setFinishSequence(const QByteArray &sequence)
     m_finishSequence = QString("*/").toUtf8();
 
   if (m_frameReader)
-  {
-    QMetaObject::invokeMethod(
-        m_frameReader,
-        [reader = m_frameReader, sequence = m_startSequence] {
-          if (reader)
-            reader->setFinishSequence(sequence);
-        },
-        Qt::QueuedConnection);
-  }
+    resetFrameReader();
 
   Q_EMIT finishSequenceChanged();
+}
+
+/**
+ * @brief Sets the active checksum algorithm used for frame validation.
+ *
+ * Updates the internal checksum algorithm and notifies the frame reader,
+ * if available, via a queued connection. Also emits the
+ * checksumAlgorithmChanged() signal.
+ *
+ * @param algorithm The new checksum algorithm name. Must match an entry
+ *                  in IO::availableChecksums(). An empty string disables
+ *                  checksum validation.
+ */
+void IO::Manager::setChecksumAlgorithm(const QString &algorithm)
+{
+  m_checksumAlgorithm = algorithm;
+
+  if (m_frameReader)
+    resetFrameReader();
+
+  Q_EMIT checksumAlgorithmChanged();
 }
 
 //------------------------------------------------------------------------------
@@ -599,7 +623,7 @@ void IO::Manager::killFrameReader()
 void IO::Manager::startFrameReader()
 {
   // Ensure driver is set and driver is open
-  Q_ASSERT(driver() != nullptr && driver()->isOpen());
+  Q_ASSERT(driver() != nullptr);
 
   // Stop the frame reader thread if needed
   killFrameReader();
@@ -614,14 +638,9 @@ void IO::Manager::startFrameReader()
   // Configure initial state for the frame reader
   QMetaObject::invokeMethod(
       m_frameReader,
-      [reader = m_frameReader, startSeq = m_startSequence,
-       finishSeq = m_finishSequence, drv = driver()] {
+      [reader = m_frameReader, drv = driver()] {
         if (reader && drv)
         {
-          reader->setStartSequence(startSeq);
-          reader->setFinishSequence(finishSeq);
-          reader->setupExternalConnections();
-
           QObject::connect(drv, &IO::HAL_Driver::dataReceived, reader,
                            &IO::FrameReader::processData, Qt::QueuedConnection);
         }

@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * SPDX-License-Identifier: GPL-3.0-only
  */
 
 #include <QApplication>
@@ -168,7 +168,7 @@ QString Misc::Translator::welcomeConsoleText() const
 
   // Define fallback text & default message path
   QString text = QObject::tr("Failed to load welcome text :(");
-#ifdef USE_QT_COMMERCIAL
+#ifdef BUILD_COMMERCIAL
   QString path = ":/rcc/messages/free/Welcome_" + lang + ".txt";
   if (SerialStudio::activated())
     path = ":/rcc/messages/pro/Welcome_" + lang + ".txt";

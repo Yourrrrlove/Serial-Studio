@@ -39,8 +39,7 @@ on:
 #-------------------------------------------------------------------------------
 
 env:
-  VERSION: "3.0.6"
-  INSTALL_QT: false
+  VERSION: "3.1.5"
   QT_VERSION_LINUX: 6.9.1
   QT_VERSION_MACOS: 6.9.1
   QT_VERSION_WINDOWS: 6.9.1
@@ -49,6 +48,10 @@ env:
   UNIXNAME: "serial-studio"
   QML_DIR: "../../app/qml"
   PUBLISHER: "Alex Spataru"
+  INSTALL_QT_MACOS: false
+  INSTALL_QT_WINDOWS: false
+  INSTALL_QT_LINUX_INTEL: false
+  INSTALL_QT_LINUX_ARM64: false
   QTFRAMEWORK_BYPASS_LICENSE_CHECK: "true"
   DESCRIPTION: "Multi-purpose serial data visualization & processing program"
 
@@ -111,16 +114,16 @@ jobs:
 
     - name: '⚙️ Restore Qt Cache'
       uses: actions/cache/restore@v3
-      if: env.INSTALL_QT == 'false'
+      if: env.INSTALL_QT_LINUX_INTEL == 'false'
       with:
         path: |
           ${{github.workspace}}/Qt-${{env.QT_VERSION_LINUX}}-${{runner.os}}-x64
           ${{env.USERPROFILE}}/.qt-license
-        key: qt-${{runner.os}}-${{env.QT_VERSION_LINUX}}-x64-v2
+        key: qt-${{runner.os}}-${{env.QT_VERSION_LINUX}}-x64
 
     - name: '⚙️ Install Qt'
       shell: bash
-      if: env.INSTALL_QT == 'true'
+      if: env.INSTALL_QT_LINUX_INTEL == 'true'
       env:
         QT_VERSION: ${{env.QT_VERSION_LINUX}}
         QT_ARCH: x64
@@ -132,13 +135,13 @@ jobs:
         ./scripts/install-qt.sh
 
     - name: '⚙️ Save Qt Cache'
-      if: env.INSTALL_QT == 'true'
+      if: env.INSTALL_QT_LINUX_INTEL == 'true'
       uses: actions/cache/save@v3
       with:
         path: |
           ${{github.workspace}}/Qt-${{env.QT_VERSION_LINUX}}-${{runner.os}}-x64
           ${{env.USERPROFILE}}/.qt-license
-        key: qt-${{runner.os}}-${{env.QT_VERSION_LINUX}}-x64-v2
+        key: qt-${{runner.os}}-${{env.QT_VERSION_LINUX}}-x64
 
     - name: '⚙️ Add Qt to PATH'
       shell: bash
@@ -160,10 +163,13 @@ jobs:
         useLocalCache: true
 
     - name: '🚧 Configure with CMake'
+      env:
+        SERIAL_STUDIO_LICENSE_KEY: ${{secrets.SERIAL_STUDIO_LICENSE_KEY}}
+        SERIAL_STUDIO_INSTANCE_ID: ${{secrets.SERIAL_STUDIO_INSTANCE_ID}}
       run: |
         mkdir build
         cd build
-        cmake ../ -DPRODUCTION_OPTIMIZATION=ON -DCMAKE_BUILD_TYPE=Release
+        cmake ../ -DPRODUCTION_OPTIMIZATION=ON -DCMAKE_BUILD_TYPE=Release -DBUILD_COMMERCIAL=ON -DBUILD_GPL3=OFF
 
     - name: '🚧 Build application'
       run: |
@@ -181,47 +187,18 @@ jobs:
 
         export QML_SOURCES_PATHS="${{env.QML_DIR}}"
 
-        ./linuxdeploy-x86_64.AppImage --appdir AppDir -e ${{env.UNIXNAME}} -i ../../app/deploy/linux/${{env.UNIXNAME}}.svg -d ../../app/deploy/linux/${{env.UNIXNAME}}.desktop --plugin qt --output appimage
+        ./linuxdeploy-x86_64.AppImage --appdir AppDir -e ${{env.UNIXNAME}} -i ../../app/deploy/linux/${{env.UNIXNAME}}.png -d ../../app/deploy/linux/${{env.UNIXNAME}}.desktop --plugin qt --output appimage
 
         rm linuxdeploy-x86_64.AppImage
         rm linuxdeploy-plugin-qt-x86_64.AppImage
 
         mv *.AppImage ../../${{env.EXECUTABLE}}-${{env.VERSION}}-Linux-x86_64.AppImage
 
-    - name: '📦 Create Native Packages'
-      run: |
-        cd "build/app"
-
-        export LDNP_DESCRIPTION="${{env.DESCRIPTION}}"
-        wget https://github.com/linuxdeploy/linuxdeploy-plugin-native_packages/releases/download/continuous/linuxdeploy-plugin-native_packages-x86_64.AppImage
-        chmod +x linuxdeploy-plugin-native_packages-x86_64.AppImage
-
-        fakeroot ./linuxdeploy-plugin-native_packages-x86_64.AppImage --appdir AppDir --build deb
-        #fakeroot ./linuxdeploy-plugin-native_packages-x86_64.AppImage --appdir AppDir --build rpm
-
-        rm -rf AppDir
-        rm linuxdeploy-plugin-native_packages-x86_64.AppImage
-
-        mv *.deb ../../${{env.EXECUTABLE}}-${{env.VERSION}}-Linux-x86_64.deb
-        #mv *.rpm ../../${{env.EXECUTABLE}}-${{env.VERSION}}-Linux-x86_64.rpm
-
     - name: '📤 Upload artifact: AppImage'
       uses: actions/upload-artifact@v4
       with:
         name: ${{env.EXECUTABLE}}-${{env.VERSION}}-Linux-x86_64.AppImage
         path: ${{env.EXECUTABLE}}-${{env.VERSION}}-Linux-x86_64.AppImage
-
-    - name: '📤 Upload artifact: Debian Package'
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{env.EXECUTABLE}}-${{env.VERSION}}-Linux-x86_64.deb
-        path: ${{env.EXECUTABLE}}-${{env.VERSION}}-Linux-x86_64.deb
-
-    #- name: '📤 Upload artifact: RPM Package'
-    #  uses: actions/upload-artifact@v4
-    #  with:
-    #    name: ${{env.EXECUTABLE}}-${{env.VERSION}}-Linux-x86_64.rpm
-    #    path: ${{env.EXECUTABLE}}-${{env.VERSION}}-Linux-x86_64.rpm
 
 #-------------------------------------------------------------------------------
 # GNU/Linux build (aarch64)
@@ -276,15 +253,15 @@ jobs:
 
     - name: '⚙️ Restore Qt Cache'
       uses: actions/cache/restore@v3
-      if: env.INSTALL_QT == 'false'
+      if: env.INSTALL_QT_LINUX_ARM64 == 'false'
       with:
         path: |
           ${{github.workspace}}/Qt-${{env.QT_VERSION_LINUX}}-${{runner.os}}-arm64
-        key: qt-${{runner.os}}-${{env.QT_VERSION_LINUX}}-arm64-v2
+        key: qt-${{runner.os}}-${{env.QT_VERSION_LINUX}}-arm64
 
     - name: '⚙️ Install Qt'
       shell: bash
-      if: env.INSTALL_QT == 'true'
+      if: env.INSTALL_QT_LINUX_ARM64 == 'true'
       env:
         QT_VERSION: ${{env.QT_VERSION_LINUX}}
         QT_ARCH: arm64
@@ -297,11 +274,11 @@ jobs:
 
     - name: '⚙️ Save Qt Cache'
       uses: actions/cache/save@v3
-      if: env.INSTALL_QT == 'true'
+      if: env.INSTALL_QT_LINUX_ARM64 == 'true'
       with:
         path: |
           ${{github.workspace}}/Qt-${{env.QT_VERSION_LINUX}}-${{runner.os}}-arm64
-        key: qt-${{runner.os}}-${{env.QT_VERSION_LINUX}}-arm64-v2
+        key: qt-${{runner.os}}-${{env.QT_VERSION_LINUX}}-arm64
 
     - name: '⚙️ Add Qt to PATH'
       shell: bash
@@ -323,10 +300,13 @@ jobs:
         useLocalCache: true
 
     - name: '🚧 Configure with CMake'
+      env:
+        SERIAL_STUDIO_LICENSE_KEY: ${{secrets.SERIAL_STUDIO_LICENSE_KEY}}
+        SERIAL_STUDIO_INSTANCE_ID: ${{secrets.SERIAL_STUDIO_INSTANCE_ID}}
       run: |
         mkdir build
         cd build
-        cmake ../ -DPRODUCTION_OPTIMIZATION=ON -DCMAKE_BUILD_TYPE=Release
+        cmake ../ -DPRODUCTION_OPTIMIZATION=ON -DCMAKE_BUILD_TYPE=Release -DBUILD_COMMERCIAL=ON -DBUILD_GPL3=OFF
 
     - name: '🚧 Build application'
       run: |
@@ -344,7 +324,7 @@ jobs:
 
         export QML_SOURCES_PATHS="${{env.QML_DIR}}"
 
-        ./linuxdeploy-aarch64.AppImage --appdir AppDir -e ${{env.UNIXNAME}} -i ../../app/deploy/linux/${{env.UNIXNAME}}.svg -d ../../app/deploy/linux/${{env.UNIXNAME}}.desktop --plugin qt --output appimage
+        ./linuxdeploy-aarch64.AppImage --appdir AppDir -e ${{env.UNIXNAME}} -i ../../app/deploy/linux/${{env.UNIXNAME}}.png -d ../../app/deploy/linux/${{env.UNIXNAME}}.desktop --plugin qt --output appimage
 
         rm linuxdeploy-aarch64.AppImage
         rm linuxdeploy-plugin-qt-aarch64.AppImage
@@ -370,16 +350,16 @@ jobs:
 
     - name: '⚙️ Restore Qt Cache'
       uses: actions/cache/restore@v3
-      if: env.INSTALL_QT == 'false'
+      if: env.INSTALL_QT_MACOS == 'false'
       with:
         path: |
           ${{github.workspace}}/Qt-${{env.QT_VERSION_MACOS}}-${{runner.os}}-x64
           ${{env.USERPROFILE}}/.qt-license
-        key: qt-${{runner.os}}-${{env.QT_VERSION_MACOS}}-x64-v2
+        key: qt-${{runner.os}}-${{env.QT_VERSION_MACOS}}-x64
 
     - name: '⚙️ Install Qt'
       shell: bash
-      if: env.INSTALL_QT == 'true'
+      if: env.INSTALL_QT_MACOS == 'true'
       env:
         QT_VERSION: ${{env.QT_VERSION_MACOS}}
         QT_ARCH: x64
@@ -391,13 +371,13 @@ jobs:
         ./scripts/install-qt.sh
 
     - name: '⚙️ Save Qt Cache'
-      if: env.INSTALL_QT == 'true'
+      if: env.INSTALL_QT_MACOS == 'true'
       uses: actions/cache/save@v3
       with:
         path: |
           ${{github.workspace}}/Qt-${{env.QT_VERSION_MACOS}}-${{runner.os}}-x64
           ${{env.USERPROFILE}}/.qt-license
-        key: qt-${{runner.os}}-${{env.QT_VERSION_MACOS}}-x64-v2
+        key: qt-${{runner.os}}-${{env.QT_VERSION_MACOS}}-x64
 
     - name: '⚙️ Add Qt to PATH'
       shell: bash
@@ -424,10 +404,13 @@ jobs:
         node-version: 20
 
     - name: '🚧 Configure with CMake'
+      env:
+        SERIAL_STUDIO_LICENSE_KEY: ${{secrets.SERIAL_STUDIO_LICENSE_KEY}}
+        SERIAL_STUDIO_INSTANCE_ID: ${{secrets.SERIAL_STUDIO_INSTANCE_ID}}
       run: |
         mkdir build
         cd build
-        cmake ../ -DPRODUCTION_OPTIMIZATION=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0 -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+        cmake ../ -DPRODUCTION_OPTIMIZATION=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0 -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" -DBUILD_COMMERCIAL=ON -DBUILD_GPL3=OFF
 
     - name: '🚧 Build application'
       run: |
@@ -504,16 +487,16 @@ jobs:
 
     - name: '⚙️ Restore Qt Cache'
       uses: actions/cache/restore@v3
-      if: env.INSTALL_QT == 'false'
+      if: env.INSTALL_QT_WINDOWS == 'false'
       with:
         path: |
           ${{github.workspace}}/Qt-${{env.QT_VERSION_WINDOWS}}-${{runner.os}}-x64
           ${{env.USERPROFILE}}/.qt-license
-        key: qt-${{runner.os}}-${{env.QT_VERSION_WINDOWS}}-x64-msvc2022_64-v2
+        key: qt-${{runner.os}}-${{env.QT_VERSION_WINDOWS}}-x64-msvc2022_64
 
     - name: '⚙️ Install Qt'
       shell: pwsh
-      if: env.INSTALL_QT == 'true'
+      if: env.INSTALL_QT_WINDOWS == 'true'
       env:
         QT_VERSION: ${{env.QT_VERSION_WINDOWS}}
         QT_ARCH: x64
@@ -524,13 +507,13 @@ jobs:
         ./scripts/install-qt.ps1
 
     - name: '⚙️ Save Qt Cache'
-      if: env.INSTALL_QT == 'true'
+      if: env.INSTALL_QT_WINDOWS == 'true'
       uses: actions/cache/save@v3
       with:
         path: |
           ${{github.workspace}}/Qt-${{env.QT_VERSION_WINDOWS}}-${{runner.os}}-x64
           ${{env.USERPROFILE}}/.qt-license
-        key: qt-${{runner.os}}-${{env.QT_VERSION_WINDOWS}}-x64-msvc2022_64-v2
+        key: qt-${{runner.os}}-${{env.QT_VERSION_WINDOWS}}-x64-msvc2022_64
 
     - name: '⚙️ Add Qt to PATH'
       shell: pwsh
@@ -557,10 +540,13 @@ jobs:
         arch: x64
 
     - name: '🚧 Configure with CMake'
+      env:
+        SERIAL_STUDIO_LICENSE_KEY: ${{secrets.SERIAL_STUDIO_LICENSE_KEY}}
+        SERIAL_STUDIO_INSTANCE_ID: ${{secrets.SERIAL_STUDIO_INSTANCE_ID}}
       run: |
         mkdir build
         cd build
-        cmake ../ -DCMAKE_CXX_COMPILER=cl -DCMAKE_C_COMPILER=cl -DPRODUCTION_OPTIMIZATION=ON -DCMAKE_BUILD_TYPE=Release
+        cmake ../ -DCMAKE_CXX_COMPILER=cl -DCMAKE_C_COMPILER=cl -DPRODUCTION_OPTIMIZATION=ON -DCMAKE_BUILD_TYPE=Release -DBUILD_COMMERCIAL=ON -DBUILD_GPL3=OFF
 
     - name: '🚧 Build application'
       run: |
@@ -587,7 +573,7 @@ jobs:
         path: ${{env.EXECUTABLE}}-${{env.VERSION}}-Windows-x86_64.msi
 
 #-------------------------------------------------------------------------------
-# Create continous release
+# Create release
 #-------------------------------------------------------------------------------
 
   upload:
@@ -600,7 +586,7 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      RELEASE_TAG: continuous
+      RELEASE_TAG: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && github.ref_name || 'continuous' }}
 
     steps:
       - name: '📥 Download artifacts'
@@ -628,8 +614,8 @@ jobs:
           find ./artifacts -type f \( -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" -o -name "*.dmg" -o -name "*.exe" -o -name "*.msi" \) | sort | while read -r file; do
             hash=$(sha256sum "$file" | awk '{print $1}')
             filename=$(basename "$file")
-            echo "| \`$filename\` | \`$hash\` |"
-          done >> release-body.md
+            echo "| \`$filename\` | \`$hash\` |" >> release-body.md
+          done
 
       - name: '🚀 Create Release'
         uses: ncipollo/release-action@v1
@@ -641,9 +627,6 @@ jobs:
           name: 'Continuous Build'
           bodyFile: release-body.md
           artifacts: |
-            artifacts/*.deb,
-            artifacts/*.rpm,
-            artifacts/*.AppImage,
-            artifacts/*.dmg,
-            artifacts/*.exe,
+            artifacts/*.AppImage
+            artifacts/*.dmg
             artifacts/*.msi

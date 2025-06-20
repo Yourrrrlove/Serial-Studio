@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * SPDX-License-Identifier: GPL-3.0-only
  */
 
 #include "Taskbar.h"
@@ -281,6 +281,25 @@ UI::WindowManager *UI::Taskbar::windowManager() const
 }
 
 /**
+ * @brief Checks if any tracked window is maximized.
+ *
+ * Iterates through all window IDs and returns true if at least one
+ * window is in the "maximized" state.
+ *
+ * @return true if a maximized window exists, false otherwise.
+ */
+bool UI::Taskbar::hasMaximizedWindow() const
+{
+  for (auto it = m_windowIDs.begin(); it != m_windowIDs.end(); ++it)
+  {
+    if (it.key()->state() == QStringLiteral("maximized"))
+      return true;
+  }
+
+  return false;
+}
+
+/**
  * @brief Returns the QML window (QQuickItem) for a given window ID.
  *
  * Looks up the internal window ID → QQuickItem map to retrieve the actual
@@ -440,11 +459,11 @@ void UI::Taskbar::setActiveGroupId(int groupId)
     }
   }
 
-  // Focus the last window
+  // Focus the first window
   if (m_taskbarButtons->rowCount() > 0)
   {
-    auto lastGroup = m_taskbarButtons->item(m_taskbarButtons->rowCount() - 1);
-    auto windowId = lastGroup->data(TaskbarModel::WindowIdRole).toInt();
+    auto firstGroup = m_taskbarButtons->item(0);
+    auto windowId = firstGroup->data(TaskbarModel::WindowIdRole).toInt();
     for (auto it = m_windowIDs.begin(); it != m_windowIDs.end(); ++it)
     {
       if (it.value() == windowId)
@@ -580,6 +599,7 @@ void UI::Taskbar::unregisterWindow(QQuickItem *window)
 {
   if (m_windowIDs.contains(window))
   {
+    disconnect(window);
     m_windowIDs.remove(window);
     if (m_windowManager)
       m_windowManager->unregisterWindow(window);
@@ -617,6 +637,10 @@ void UI::Taskbar::registerWindow(const int id, QQuickItem *window)
   m_windowIDs.insert(window, id);
   m_windowManager->registerWindow(id, window);
   Q_EMIT registeredWindowsChanged();
+
+  // Keep track of window state
+  connect(window, &QQuickItem::stateChanged, this,
+          [=] { Q_EMIT statesChanged(); });
 
   // Trigger a layout update when the QML code created all the windows
   if (m_windowIDs.count() >= m_taskbarButtons->rowCount() && m_windowManager)

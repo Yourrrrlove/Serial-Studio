@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * SPDX-License-Identifier: GPL-3.0-only
  */
 
 import QtQuick
@@ -30,6 +30,7 @@ import "../../../Widgets" as Widgets
 
 Widgets.MiniWindow {
   id: root
+  visible: false
   implicitWidth: minimumWidth
   implicitHeight: minimumHeight
   focused: taskBar.activeWindow === root
@@ -193,7 +194,9 @@ Widgets.MiniWindow {
   // Embedded contents
   //
   Item {
+    clip: true
     id: container
+    anchors.margins: 1
     anchors.fill: parent
     anchors.topMargin: root.captionHeight
     Component.onCompleted: widgetLoader.createObject(container, {windowRoot: root})
@@ -215,7 +218,7 @@ Widgets.MiniWindow {
         width: 640
         height: 480
         visible: true
-        flags: Qt.Window
+        transientParent: null
         minimumWidth: root.minimumWidth
         minimumHeight: root.minimumHeight
         onClosing: externalWindowLoader.active = false

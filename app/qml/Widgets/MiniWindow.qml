@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * SPDX-License-Identifier: GPL-3.0-only
  */
 
 import QtQuick
@@ -124,8 +124,9 @@ Item {
   }
 
   //
-  // Disable the window when opacity falls below 1
+  // Enable/disable window when state changes
   //
+  state: "normal"
   enabled: root.state === "normal" || root.state === "maximized"
 
   //

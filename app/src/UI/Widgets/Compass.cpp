@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * SPDX-License-Identifier: GPL-3.0-only
  */
 
 #include "UI/Dashboard.h"
@@ -41,7 +41,7 @@ Widgets::Compass::Compass(const int index, QQuickItem *parent)
  * @brief Returns the current value of the compass.
  * @return The current value of the compass.
  */
-qreal Widgets::Compass::value() const
+double Widgets::Compass::value() const
 {
   return m_value;
 }

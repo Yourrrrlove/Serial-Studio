@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * SPDX-License-Identifier: GPL-3.0-only
  */
 
 #include "JSON/Frame.h"
@@ -74,6 +74,7 @@ void JSON::Frame::clear()
 {
   m_title = "";
   m_frameEnd = "";
+  m_checksum = "";
   m_frameStart = "";
   m_containsCommercialFeatures = false;
 
@@ -201,6 +202,9 @@ bool JSON::Frame::read(const QJsonObject &object)
     auto fStartStr = SAFE_READ(object, "frameStart", "").toString();
     auto isHex = SAFE_READ(object, "hexadecimalDelimiters", false).toBool();
 
+    // Read checksum method
+    m_checksum = SAFE_READ(object, "checksum", "").toString();
+
     // Convert hex + escape strings (e.g. "0A 0D", or "\\n0D") to raw bytes
     if (isHex)
     {
@@ -271,6 +275,14 @@ bool JSON::Frame::containsCommercialFeatures() const
 const QString &JSON::Frame::title() const
 {
   return m_title;
+}
+
+/**
+ * Returns the name of the checksum method to use (optional)
+ */
+const QString &JSON::Frame::checksum() const
+{
+  return m_checksum;
 }
 
 /**

@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * SPDX-License-Identifier: GPL-3.0-only
  */
 
 #include <QPainter>
@@ -32,7 +32,7 @@
 #include "Misc/ThemeManager.h"
 #include "UI/Widgets/Terminal.h"
 
-#ifdef USE_QT_COMMERCIAL
+#ifdef BUILD_COMMERCIAL
 #  include "Licensing/LemonSqueezy.h"
 #endif
 
@@ -89,8 +89,7 @@ Widgets::Terminal::Terminal(QQuickItem *parent)
   setAcceptedMouseButtons(Qt::AllButtons);
 
   // Set rendering hints
-  setMipmap(false);
-  setAntialiasing(true);
+  setMipmap(true);
   setOpaquePainting(true);
 
   // Load the welcome guide
@@ -125,7 +124,7 @@ Widgets::Terminal::Terminal(QQuickItem *parent)
   });
 
   // Update welcome guide when Serial Studio changes its activation status
-#ifdef USE_QT_COMMERCIAL
+#ifdef BUILD_COMMERCIAL
   connect(&Licensing::LemonSqueezy::instance(),
           &Licensing::LemonSqueezy::activatedChanged, this,
           &Widgets::Terminal::loadWelcomeGuide);

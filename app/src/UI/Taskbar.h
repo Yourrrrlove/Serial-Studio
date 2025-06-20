@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * SPDX-License-Identifier: GPL-3.0-only
  */
 
 #pragma once
@@ -135,9 +135,13 @@ class Taskbar : public QQuickItem
              READ windowManager
              WRITE setWindowManager
              NOTIFY windowManagerChanged)
+  Q_PROPERTY(bool hasMaximizedWindow
+             READ hasMaximizedWindow
+             NOTIFY statesChanged)
   // clang-format on
 
 signals:
+  void statesChanged();
   void fullModelChanged();
   void activeWindowChanged();
   void windowStatesChanged();
@@ -157,6 +161,8 @@ public:
   [[nodiscard]] TaskbarModel *fullModel() const;
   [[nodiscard]] TaskbarModel *taskbarButtons() const;
   [[nodiscard]] WindowManager *windowManager() const;
+
+  [[nodiscard]] bool hasMaximizedWindow() const;
 
   Q_INVOKABLE QQuickItem *windowData(const int id) const;
   Q_INVOKABLE TaskbarModel::WindowState windowState(QQuickItem *window) const;

@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * SPDX-License-Identifier: GPL-3.0-only
  */
 
 import QtQuick
@@ -103,6 +103,7 @@ Widgets.Pane {
           toolbarButton: false
           text: qsTr("Change Icon")
           Layout.alignment: Qt.AlignVCenter
+          ToolTip.text: qsTr("Change the icon used for this action")
           icon.source: "qrc:/rcc/actions/" + Cpp_JSON_ProjectModel.actionIcon + ".svg"
           onClicked: {
             actionIconPicker.selectedIcon = Cpp_JSON_ProjectModel.actionIcon
@@ -125,6 +126,7 @@ Widgets.Pane {
           toolbarButton: false
           text: qsTr("Duplicate")
           Layout.alignment: Qt.AlignVCenter
+          ToolTip.text: qsTr("Duplicate this action with all its settings")
           onClicked: Cpp_JSON_ProjectModel.duplicateCurrentAction()
           icon.source: "qrc:/rcc/icons/project-editor/actions/duplicate.svg"
         }
@@ -138,6 +140,7 @@ Widgets.Pane {
           toolbarButton: false
           Layout.alignment: Qt.AlignVCenter
           onClicked: Cpp_JSON_ProjectModel.deleteCurrentAction()
+          ToolTip.text: qsTr("Delete this action from the project")
           icon.source: "qrc:/rcc/icons/project-editor/actions/delete.svg"
         }
       }
@@ -169,41 +172,6 @@ Widgets.Pane {
         id: delegate
         width: parent.width
         modelPointer: Cpp_JSON_ProjectModel.actionModel
-
-        footerItem: ColumnLayout {
-          spacing: 0
-
-          Image {
-            sourceSize: Qt.size(128, 128)
-            Layout.alignment: Qt.AlignHCenter
-            source: "qrc:/rcc/images/action.svg"
-          }
-
-          Item {
-            implicitHeight: 16
-          }
-
-          Label {
-            Layout.alignment: Qt.AlignHCenter
-            text: qsTr("Send commands with a button click")
-            horizontalAlignment: Label.AlignHCenter
-            font: Cpp_Misc_CommonFonts.customUiFont(2, true)
-          }
-
-          Item {
-            implicitHeight: 8
-          }
-
-          Label {
-            opacity: 0.8
-            Layout.alignment: Qt.AlignHCenter
-            horizontalAlignment: Label.AlignHCenter
-            Layout.maximumWidth: delegate.width * 0.9
-            wrapMode: Label.WrapAtWordBoundaryOrAnywhere
-            font: Cpp_Misc_CommonFonts.customUiFont(1.5, false)
-            text: qsTr("Actions let you send custom commands to the connected device with a single button press.")
-          }
-        }
       }
     }
   }

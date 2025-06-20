@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * SPDX-License-Identifier: GPL-3.0-only
  */
 
 #include <iostream>
@@ -72,7 +72,7 @@
 #include "UI/Widgets/MultiPlot.h"
 #include "UI/Widgets/Accelerometer.h"
 
-#ifdef USE_QT_COMMERCIAL
+#ifdef BUILD_COMMERCIAL
 #  include "MQTT/Client.h"
 #  include "UI/Widgets/Plot3D.h"
 #  include "Licensing/LemonSqueezy.h"
@@ -156,6 +156,18 @@ Misc::ModuleManager::ModuleManager()
   m_softwareRendering = m_settings.value("SoftwareRendering", false).toBool();
   if (m_softwareRendering)
     QQuickWindow::setGraphicsApi(QSGRendererInterface::Software);
+
+  // Load native graphics API for each platform
+  else
+  {
+#if defined(Q_OS_WIN)
+    QQuickWindow::setGraphicsApi(QSGRendererInterface::Direct3D11Rhi);
+#elif defined(Q_OS_MACOS)
+    QQuickWindow::setGraphicsApi(QSGRendererInterface::MetalRhi);
+#else
+    QQuickWindow::setGraphicsApi(QSGRendererInterface::VulkanRhi);
+#endif
+  }
 
   // Stop modules when application is about to quit
   connect(&m_engine, &QQmlApplicationEngine::quit, this,
@@ -243,7 +255,7 @@ void Misc::ModuleManager::registerQmlTypes()
   qmlRegisterType<Widgets::Gauge>("SerialStudio", 1, 0, "GaugeModel");
   qmlRegisterType<Widgets::Compass>("SerialStudio", 1, 0, "CompassModel");
   qmlRegisterType<Widgets::FFTPlot>("SerialStudio", 1, 0, "FFTPlotModel");
-  qmlRegisterType<Widgets::DataGrid>("SerialStudio", 1, 0, "DataGridModel");
+  qmlRegisterType<Widgets::DataGrid>("SerialStudio", 1, 0, "DataGridWidget");
   qmlRegisterType<Widgets::LEDPanel>("SerialStudio", 1, 0, "LEDPanelModel");
   qmlRegisterType<Widgets::Terminal>("SerialStudio", 1, 0, "TerminalWidget");
   qmlRegisterType<Widgets::MultiPlot>("SerialStudio", 1, 0, "MultiPlotModel");
@@ -251,7 +263,7 @@ void Misc::ModuleManager::registerQmlTypes()
   qmlRegisterType<Widgets::Accelerometer>("SerialStudio", 1, 0,
                                           "AccelerometerModel");
 
-#ifdef USE_QT_COMMERCIAL
+#ifdef BUILD_COMMERCIAL
   qmlRegisterType<Widgets::Plot3D>("SerialStudio", 1, 0, "Plot3DWidget");
 #endif
 
@@ -281,7 +293,7 @@ void Misc::ModuleManager::registerQmlTypes()
 void Misc::ModuleManager::initializeQmlInterface()
 {
   // Initialize licensing module first
-#ifdef USE_QT_COMMERCIAL
+#ifdef BUILD_COMMERCIAL
   auto lemonSqueezy = &Licensing::LemonSqueezy::instance();
 #endif
 
@@ -309,7 +321,7 @@ void Misc::ModuleManager::initializeQmlInterface()
   auto miscWorkspaceManager = &Misc::WorkspaceManager::instance();
 
   // Initialize commercial modules
-#ifdef USE_QT_COMMERCIAL
+#ifdef BUILD_COMMERCIAL
   const bool qtCommercialAvailable = true;
   auto mqttClient = &MQTT::Client::instance();
 #else
@@ -357,7 +369,7 @@ void Misc::ModuleManager::initializeQmlInterface()
   c->setContextProperty("Cpp_QtCommercial_Available", qtCommercialAvailable);
 
   // Register commercial C++ modules with QML
-#ifdef USE_QT_COMMERCIAL
+#ifdef BUILD_COMMERCIAL
   c->setContextProperty("Cpp_MQTT_Client", mqttClient);
   c->setContextProperty("Cpp_Licensing_LemonSqueezy", lemonSqueezy);
 #endif
@@ -390,7 +402,7 @@ void Misc::ModuleManager::initializeQmlInterface()
   qInstallMessageHandler(MessageHandler);
 
   // Try to contact activation server to validate license
-#ifdef USE_QT_COMMERCIAL
+#ifdef BUILD_COMMERCIAL
   if (!lemonSqueezy->licensingData().isEmpty())
     QMetaObject::invokeMethod(lemonSqueezy, &Licensing::LemonSqueezy::validate);
 #endif

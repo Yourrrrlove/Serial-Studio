@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * SPDX-License-Identifier: GPL-3.0-only
  */
 
 import QtQuick
@@ -41,7 +41,7 @@ Item {
   //
   // Widget layout
   //
-  RowLayout {
+  ColumnLayout {
     spacing: 0
     anchors.margins: 8
     anchors.fill: parent
@@ -62,8 +62,7 @@ Item {
       //
       Layout.fillWidth: true
       Layout.fillHeight: true
-      Layout.alignment: Qt.AlignVCenter
-      Layout.maximumWidth: root.width - range.width - 64
+      Layout.alignment: Qt.AlignHCenter
 
       //
       // Compass background
@@ -110,11 +109,10 @@ Item {
       alarm: false
       minValue: 0
       maxValue: 360
+      rangeVisible: false
       textValue: root.model.text
       maximumWidth: root.width * 0.3
-      rangeVisible: root.height >= 120
-
-      Layout.fillHeight: true
+      Layout.alignment: Qt.AlignHCenter
       Layout.minimumWidth: implicitWidth
     }
 

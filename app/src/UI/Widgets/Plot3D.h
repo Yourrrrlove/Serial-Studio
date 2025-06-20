@@ -1,22 +1,23 @@
 /*
  * Serial Studio - https://serial-studio.github.io/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru <https://aspatru.com>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is part of the proprietary feature set of Serial Studio
+ * and is licensed under the Serial Studio Commercial License.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * Redistribution, modification, or use of this file in any form
+ * is permitted only under the terms of a valid commercial license
+ * obtained from the author.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * This file may NOT be used in any build distributed under the
+ * GNU General Public License (GPL) unless explicitly authorized
+ * by a separate commercial agreement.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For license terms, see:
+ * https://github.com/Serial-Studio/Serial-Studio/blob/master/LICENSE.md
+ *
+ * SPDX-License-Identifier: LicenseRef-SerialStudio-Commercial
  */
 
 #pragma once
@@ -59,35 +60,35 @@ class Plot3D : public QQuickPaintedItem
              READ interpolationEnabled
              WRITE setInterpolationEnabled
              NOTIFY interpolationEnabledChanged)
-  Q_PROPERTY(qreal worldScale
+  Q_PROPERTY(double worldScale
              READ worldScale
              WRITE setWorldScale
              NOTIFY cameraChanged)
-  Q_PROPERTY(qreal cameraAngleX
+  Q_PROPERTY(double cameraAngleX
              READ cameraAngleX
              WRITE setCameraAngleX
              NOTIFY cameraChanged)
-  Q_PROPERTY(qreal cameraAngleY
+  Q_PROPERTY(double cameraAngleY
              READ cameraAngleY
              WRITE setCameraAngleY
              NOTIFY cameraChanged)
-  Q_PROPERTY(qreal cameraAngleZ
+  Q_PROPERTY(double cameraAngleZ
              READ cameraAngleZ
              WRITE setCameraAngleZ
              NOTIFY cameraChanged)
-  Q_PROPERTY(qreal cameraOffsetX
+  Q_PROPERTY(double cameraOffsetX
              READ cameraOffsetX
              WRITE setCameraOffsetX
              NOTIFY cameraChanged)
-  Q_PROPERTY(qreal cameraOffsetY
+  Q_PROPERTY(double cameraOffsetY
              READ cameraOffsetY
              WRITE setCameraOffsetY
              NOTIFY cameraChanged)
-  Q_PROPERTY(qreal cameraOffsetZ
+  Q_PROPERTY(double cameraOffsetZ
              READ cameraOffsetZ
              WRITE setCameraOffsetZ
              NOTIFY cameraChanged)
-  Q_PROPERTY(qreal idealWorldScale
+  Q_PROPERTY(double idealWorldScale
              READ idealWorldScale
              NOTIFY rangeChanged)
   Q_PROPERTY(float eyeSeparation
@@ -113,14 +114,14 @@ public:
   explicit Plot3D(const int index = -1, QQuickItem *parent = nullptr);
   void paint(QPainter *painter) override;
 
-  [[nodiscard]] qreal worldScale() const;
-  [[nodiscard]] qreal cameraAngleX() const;
-  [[nodiscard]] qreal cameraAngleY() const;
-  [[nodiscard]] qreal cameraAngleZ() const;
-  [[nodiscard]] qreal cameraOffsetX() const;
-  [[nodiscard]] qreal cameraOffsetY() const;
-  [[nodiscard]] qreal cameraOffsetZ() const;
-  [[nodiscard]] qreal idealWorldScale() const;
+  [[nodiscard]] double worldScale() const;
+  [[nodiscard]] double cameraAngleX() const;
+  [[nodiscard]] double cameraAngleY() const;
+  [[nodiscard]] double cameraAngleZ() const;
+  [[nodiscard]] double cameraOffsetX() const;
+  [[nodiscard]] double cameraOffsetY() const;
+  [[nodiscard]] double cameraOffsetZ() const;
+  [[nodiscard]] double idealWorldScale() const;
 
   [[nodiscard]] bool dirty() const;
 
@@ -131,14 +132,16 @@ public:
   [[nodiscard]] bool orbitNavigation() const;
   [[nodiscard]] bool interpolationEnabled() const;
 
+  [[nodiscard]] const QSize &widgetSize() const;
+
 public slots:
-  void setWorldScale(const qreal z);
-  void setCameraAngleX(const qreal angle);
-  void setCameraAngleY(const qreal angle);
-  void setCameraAngleZ(const qreal angle);
-  void setCameraOffsetX(const qreal offset);
-  void setCameraOffsetY(const qreal offset);
-  void setCameraOffsetZ(const qreal offset);
+  void setWorldScale(const double z);
+  void setCameraAngleX(const double angle);
+  void setCameraAngleY(const double angle);
+  void setCameraAngleZ(const double angle);
+  void setCameraOffsetX(const double offset);
+  void setCameraOffsetY(const double offset);
+  void setCameraOffsetZ(const double offset);
   void setAnaglyphEnabled(const bool enabled);
   void setOrbitNavigation(const bool enabled);
   void setEyeSeparation(const float separation);
@@ -151,6 +154,7 @@ private slots:
 
 private:
   void markDirty();
+  void updateSize();
 
   void drawData();
   void drawGrid();
@@ -158,16 +162,16 @@ private:
   void drawCameraIndicator();
 
 private:
-  qreal gridStep(const qreal scale = -1) const;
+  double gridStep(const double scale = -1) const;
   std::vector<QPointF> screenProjection(const PlotData3D &points,
                                         const QMatrix4x4 &matrix);
   void drawLine3D(QPainter &painter, const QMatrix4x4 &matrix,
                   const QVector3D &p1, const QVector3D &p2, QColor color,
                   float lineWidth, Qt::PenStyle style);
 
-  QPixmap renderGrid(const QMatrix4x4 &matrix);
-  QPixmap renderCameraIndicator(const QMatrix4x4 &matrix);
-  QPixmap renderData(const QMatrix4x4 &matrix, const PlotData3D &data);
+  QImage renderGrid(const QMatrix4x4 &matrix);
+  QImage renderCameraIndicator(const QMatrix4x4 &matrix);
+  QImage renderData(const QMatrix4x4 &matrix, const PlotData3D &data);
   QPair<QMatrix4x4, QMatrix4x4> eyeTransformations(const QMatrix4x4 &matrix);
 
 protected:
@@ -179,20 +183,20 @@ protected:
 private:
   int m_index;
 
-  qreal m_minX;
-  qreal m_maxX;
-  qreal m_minY;
-  qreal m_maxY;
-  qreal m_minZ;
-  qreal m_maxZ;
+  double m_minX;
+  double m_maxX;
+  double m_minY;
+  double m_maxY;
+  double m_minZ;
+  double m_maxZ;
 
-  qreal m_worldScale;
-  qreal m_cameraAngleX;
-  qreal m_cameraAngleY;
-  qreal m_cameraAngleZ;
-  qreal m_cameraOffsetX;
-  qreal m_cameraOffsetY;
-  qreal m_cameraOffsetZ;
+  double m_worldScale;
+  double m_cameraAngleX;
+  double m_cameraAngleY;
+  double m_cameraAngleZ;
+  double m_cameraOffsetX;
+  double m_cameraOffsetY;
+  double m_cameraOffsetZ;
 
   float m_eyeSeparation;
 
@@ -218,19 +222,20 @@ private:
   QColor m_innerBackgroundColor;
   QColor m_outerBackgroundColor;
 
-  QPixmap m_plotPixmap[2];
-  QPixmap m_gridPixmap[2];
-  QPixmap m_backgroundPixmap[2];
-  QPixmap m_cameraIndicatorPixmap[2];
+  QImage m_bgImg[2];
+  QImage m_plotImg[2];
+  QImage m_gridImg[2];
+  QImage m_cameraIndicatorImg[2];
 
-  qreal m_orbitOffsetX;
-  qreal m_orbitOffsetY;
+  double m_orbitOffsetX;
+  double m_orbitOffsetY;
   QPointF m_lastMousePos;
-  qreal m_minimumWorldScale;
+  double m_minimumWorldScale;
 
   QVector3D m_minPoint;
   QVector3D m_maxPoint;
 
+  QSize m_size;
   QSettings m_settings;
 };
 } // namespace Widgets

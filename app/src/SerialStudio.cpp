@@ -1,28 +1,31 @@
 /*
  * Serial Studio - https://serial-studio.github.io/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru <https://aspatru.com>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file contains both open-source and proprietary sections.
+ * Portions enabled via preprocessor macros (e.g., BUILD_COMMERCIAL)
+ * are part of Serial Studio's commercial feature set and may only be
+ * used under the terms of a valid Serial Studio Commercial License.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * You may use, modify, or distribute this file under the terms of
+ * the GNU General Public License (GPLv3) **only if** you:
+ *   - Do NOT compile or enable any gated commercial features
+ *   - Comply fully with the license terms defined in LICENSE.md
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * Attempting to use Pro features without activation or a valid license
+ * is a breach of this file’s licensing terms and may result in legal action.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For full details, see:
+ * https://github.com/Serial-Studio/Serial-Studio/blob/master/LICENSE.md
+ *
+ * SPDX-License-Identifier: LicenseRef-SerialStudio-Mixed
  */
 
 #include "SerialStudio.h"
 #include "Misc/ThemeManager.h"
 
-#ifdef USE_QT_COMMERCIAL
+#ifdef BUILD_COMMERCIAL
 #  include "Licensing/LemonSqueezy.h"
 #endif
 
@@ -43,7 +46,7 @@
  */
 bool SerialStudio::activated()
 {
-#ifdef USE_QT_COMMERCIAL
+#ifdef BUILD_COMMERCIAL
   return Licensing::LemonSqueezy::instance().isActivated();
 #else
   return false;
@@ -486,6 +489,49 @@ QString SerialStudio::stringToHex(const QString &str)
 {
   QString resolved = resolveEscapeSequences(str);
   return QString::fromLatin1(resolved.toUtf8().toHex(' '));
+}
+
+/**
+ * Converts the given @a data in HEX format into real binary data.
+ */
+QByteArray SerialStudio::hexToBytes(const QString &data)
+{
+  // Remove spaces from the input data
+  QString withoutSpaces = data;
+  withoutSpaces.replace(QStringLiteral(" "), "");
+
+  // Check if the length of the string is even
+  if (withoutSpaces.length() % 2 != 0)
+  {
+    qWarning() << data << "is not a valid hexadecimal array";
+    return QByteArray();
+  }
+
+  // Iterate over the string in steps of 2
+  bool ok;
+  QByteArray array;
+  for (int i = 0; i < withoutSpaces.length(); i += 2)
+  {
+    // Get two characters (a hex pair)
+    auto chr1 = withoutSpaces.at(i);
+    auto chr2 = withoutSpaces.at(i + 1);
+
+    // Convert the hex pair into a byte
+    QString byteStr = QStringLiteral("%1%2").arg(chr1, chr2);
+    int byte = byteStr.toInt(&ok, 16);
+
+    // If the conversion fails, return an empty array
+    if (!ok)
+    {
+      qWarning() << data << "is not a valid hexadecimal array";
+      return QByteArray();
+    }
+
+    // Append the byte to the result array
+    array.append(static_cast<char>(byte));
+  }
+
+  return array;
 }
 
 /**

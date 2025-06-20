@@ -1,9 +1,11 @@
 # Serial Studio
 
 [![GitHub downloads](https://img.shields.io/github/downloads/Serial-Studio/Serial-Studio/total.svg?logo=github)](https://github.com/Serial-Studio/Serial-Studio/releases/)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Serial-Studio/Serial-Studio)
 [![Instagram](https://img.shields.io/badge/Instagram-E4405F?logo=instagram&logoColor=white)](https://instagram.com/serialstudio.app)
 [![Donate](https://img.shields.io/badge/Donate-00457C?logo=paypal&logoColor=white)](https://www.paypal.com/donate?hosted_button_id=XN68J47QJKYDE)
-[![Buy Pro](https://img.shields.io/badge/Buy%20Pro-Lemon%20Squeezy-blue?logo=lemonsqueezy)](https://store.serial-studio.com/)
+[![Buy Pro](https://img.shields.io/badge/Buy%20Pro-Lemon%20Squeezy-blue?logo=lemonsqueezy)](https://store.serial-studio.com/buy/ba46c099-0d51-4d98-9154-6be5c35bc1ec)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/4b6f3ce14a684704980fea31d8c1632e)](https://app.codacy.com/gh/Serial-Studio/Serial-Studio/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
 **Serial Studio** is an open source, cross-platform telemetry dashboard and real-time data visualization tool. It supports input from serial ports, Bluetooth Low Energy (BLE), MQTT, and TCP/UDP sockets, allowing data acquisition from embedded devices, external software, and networked services.
 
@@ -20,25 +22,6 @@ Serial Studio is available as source code and official precompiled binaries for 
 #### Microsoft Windows:
 Requires the [Microsoft Visual C++ Redistributable (x64)](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version). On first launch, Windows may show a warning about an unknown developer, click _"More Info → Run Anyway"_ to continue.
 
-#### Linux:
-Provided as an [AppImage](https://appimage.org/). Make it executable and run it:
-
-```bash
-chmod +x SerialStudio-3.0.6-Linux-x86_64.AppImage
-./SerialStudio-3.0.6-Linux-x86_64.AppImage
-```
-
-Some systems may require `libfuse2` to run AppImages:
-
-```bash
-sudo apt install libfuse2
-```
-
-**Recommendation:** Use [AppImageLauncher](https://github.com/TheAssassin/AppImageLauncher) to integrate Serial Studio with your desktop environment.
-
-##### Raspberry Pi / ARM64:
-An AppImage build for ARM64 is also available for devices like the Raspberry Pi. _Mileage may vary_ depending on your hardware and GPU drivers, as Serial Studio relies heavily on GPU-accelerated operations to render the user interface. A 64-bit Linux OS and `libfuse2` are required.
-
 #### macOS: 
 Distributed as a universal DMG. Open the DMG file and drag **Serial Studio** into the **Applications** folder.
 Alternatively, you can try installing via Homebrew:
@@ -48,6 +31,32 @@ brew install --cask serial-studio
 ```
 
 **Note:** The Homebrew cask is community-maintained. It’s available, but not officially developed or tested by me.
+
+#### Linux:
+The recommended way to install Serial Studio on Linux is via the official pre-built [AppImage](https://appimage.org/). Make it executable and run it:
+
+```bash
+chmod +x SerialStudio-3.0.6-Linux-x86_64.AppImage
+./SerialStudio-3.0.6-Linux-x86_64.AppImage
+```
+
+If the AppImage fails to launch, your system may be missing `libfuse2`:
+
+```bash
+sudo apt install libfuse2
+```
+
+**Tip:** For better desktop integration (menu entries, updates, icons), use [AppImageLauncher](https://github.com/TheAssassin/AppImageLauncher).
+
+##### Flatpak (via Flathub)
+Serial Studio is also available on [Flathub](https://flathub.org/apps/com.serial_studio.Serial-Studio). This version receives regular updates and may offer better support for ARM64 systems. However, minor graphical glitches may occur on some desktop environments—especially under Wayland (e.g., missing window shadows).
+
+##### Raspberry Pi / ARM64:
+An ARM64 AppImage is available for Raspberry Pi and similar devices. Performance varies based on hardware and GPU drivers, since the UI depends on GPU acceleration. The ARM64 AppImage requires:
+- A 64-bit Linux OS equivalent to or newer than **Ubuntu 24.04** (due to a `glibc 2.38` dependency)
+- `libfuse2` installed
+
+Make sure your system meets these requirements before running the AppImage.
 
 ## Features
 
@@ -96,9 +105,10 @@ cmake ../ -DPRODUCTION_OPTIMIZATION=ON -DCMAKE_BUILD_TYPE=Release
 cmake --build . -j$(nproc)
 ```
 
-If you build Serial Studio using an open-source Qt installation, the resulting binary is licensed under the terms of the GNU GPLv3. You are free to use and distribute that build as long as you comply with the license.
+By default, the build system produces a fully GPLv3-compliant version of Serial Studio.
+This version includes most core features but excludes commercial modules such as MQTT, 3D visualization, XY plotting, and other advanced tools that depend on proprietary Qt components.
 
-**Note:** GPL builds exclude certain features such as MQTT, 3D plotting, and others that depend on proprietary Qt modules not available in open-source distributions.
+If you are a Pro user or have a commercial license, [contact the project maintainer](mailto:alex@serial-studio.com) for build instructions and activation requirements.
 
 ## Support & Licensing
 Serial Studio is developed and maintained by [Alex Spataru](https://github.com/alex-spataru).  
@@ -111,25 +121,26 @@ If Serial Studio is useful to you, consider supporting its development in one of
 
 Commercial licenses directly fund continued development, bug fixes, and new features.
 
-## License
-Serial Studio is distributed under a dual-license model. For full licensing terms, see [LICENSE.md](LICENSE.md). 
+## Licensing
 
-#### Open Source (GPLv3)
+Serial Studio uses a **dual-license model**:
 
-The source code is licensed under the GNU General Public License v3 (GPLv3). You are free to use, modify, and redistribute it under GPL terms, provided any derivative works are also licensed under GPLv3.
+- [LICENSE.md](./LICENSE.md) — overview of GPLv3 and Commercial License structure
+- [LICENSE_COMMERCIAL.md](./LICENSE_COMMERCIAL.md) — terms for official binaries and proprietary Pro features
+- [LICENSE_GPL3.md](./LICENSE_GPL3.md) — GNU GPLv3 for open-source source code
 
-To use Serial Studio under the GPL:
-- You must compile it yourself using an open-source Qt installation, or
-- Use a GPL-compliant build distributed by a trusted package manager.
+## Choosing the Right Version of Serial Studio
 
-**Note:** The GPL license applies only to builds made from source using open-source Qt. It does not cover official binaries.
+Use the table below to determine which edition best fits your use case. It outlines key differences in licensing, feature access, and compliance obligations.
 
-### Commercial License
-All official binaries downloaded from [serial-studio.com](https://serial-studio.com/), GitHub Releases, or other channels maintained by the author are covered by a Commercial License.
-
-A paid license is required to:
-- Use the official binary in any commercial, enterprise, or proprietary environment.
-- Access Pro features (MQTT, XY plotting, 3D plots, etc.).
-- Receive priority support.
-
-Without a valid license, use of the binary is limited to personal and evaluation purposes only.
+| Feature / Use Case           | GPL Version *(Build it yourself)* | Free Version *(Official binary)* | Pro Version *(Commercial license)* |
+|-----------------------------|------------------------------------|----------------------------------|-------------------------------------|
+| **Commercial Use**          | ✅ If GPL terms are respected      | ❌ Personal/eval only            | ✅ Fully licensed                   |
+| **Official Support**        | ❌ Community only                  | ❌ None                          | ✅ Priority channels                |
+| **Pro Features**            | ❌ Not included                    | ❌ Not included                  | ✅ MQTT, 3D, XY, license manager    |
+| **Usage Restrictions**      | Must release source and comply     | No redistribution, no commercial| Licensed use only                  |
+| **Precompiled Binary**      | ❌ Build required                  | ✅ Provided                      | ✅ Provided                         |
+| **Qt Licensing**            | Requires open-source Qt            | Covered by Licensor             | Covered by Licensor                |
+| **Activation**              | ❌ Not applicable                  | ❌ Not applicable                | ✅ License key required             |
+| **Business Use**            | ✅ If fully GPL compliant          | ❌ Not allowed                   | ✅ Allowed                          |
+| **Best For**                | OSS devs, students, contributors   | Hobbyists, evaluation use       | Businesses, professional teams     |

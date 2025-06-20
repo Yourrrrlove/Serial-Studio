@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * SPDX-License-Identifier: GPL-3.0-only
  */
 
 #include "SIMD/SIMD.h"
@@ -42,8 +42,8 @@ Widgets::MultiPlot::MultiPlot(const int index, QQuickItem *parent)
   {
     // Obtain min/max values from datasets
     const auto &group = GET_GROUP(SerialStudio::DashboardMultiPlot, m_index);
-    m_minY = std::numeric_limits<qreal>::max();
-    m_maxY = std::numeric_limits<qreal>::lowest();
+    m_minY = std::numeric_limits<double>::max();
+    m_maxY = std::numeric_limits<double>::lowest();
     for (const auto &dataset : group.datasets())
     {
       m_labels.append(dataset.title());
@@ -87,7 +87,7 @@ int Widgets::MultiPlot::count() const
  * @brief Returns the minimum X-axis value.
  * @return The minimum X-axis value.
  */
-qreal Widgets::MultiPlot::minX() const
+double Widgets::MultiPlot::minX() const
 {
   return m_minX;
 }
@@ -96,7 +96,7 @@ qreal Widgets::MultiPlot::minX() const
  * @brief Returns the maximum X-axis value.
  * @return The maximum X-axis value.
  */
-qreal Widgets::MultiPlot::maxX() const
+double Widgets::MultiPlot::maxX() const
 {
   return m_maxX;
 }
@@ -105,7 +105,7 @@ qreal Widgets::MultiPlot::maxX() const
  * @brief Returns the minimum Y-axis value.
  * @return The minimum Y-axis value.
  */
-qreal Widgets::MultiPlot::minY() const
+double Widgets::MultiPlot::minY() const
 {
   return m_minY;
 }
@@ -114,7 +114,7 @@ qreal Widgets::MultiPlot::minY() const
  * @brief Returns the maximum Y-axis value.
  * @return The maximum Y-axis value.
  */
-qreal Widgets::MultiPlot::maxY() const
+double Widgets::MultiPlot::maxY() const
 {
   return m_maxY;
 }
@@ -123,7 +123,7 @@ qreal Widgets::MultiPlot::maxY() const
  * @brief Returns the X-axis tick interval.
  * @return The X-axis tick interval.
  */
-qreal Widgets::MultiPlot::xTickInterval() const
+double Widgets::MultiPlot::xTickInterval() const
 {
   return UI::Dashboard::smartInterval(m_minX, m_maxX);
 }
@@ -132,7 +132,7 @@ qreal Widgets::MultiPlot::xTickInterval() const
  * @brief Returns the Y-axis tick interval with human-readable values.
  * @return The Y-axis tick interval.
  */
-qreal Widgets::MultiPlot::yTickInterval() const
+double Widgets::MultiPlot::yTickInterval() const
 {
   return UI::Dashboard::smartInterval(m_minY, m_maxY);
 }
@@ -173,12 +173,6 @@ void Widgets::MultiPlot::draw(QXYSeries *series, const int index)
 {
   if (series && index >= 0 && index < count())
   {
-    if (index == 0)
-    {
-      updateData();
-      calculateAutoScaleRange();
-    }
-
     series->replace(m_data[index]);
     Q_EMIT series->update();
   }
@@ -251,36 +245,6 @@ void Widgets::MultiPlot::updateRange()
 }
 
 /**
- * @brief Updates the theme of the multiplot.
- */
-void Widgets::MultiPlot::onThemeChanged()
-{
-  // clang-format off
-  const auto colors = Misc::ThemeManager::instance().colors()["widget_colors"].toArray();
-  // clang-format on
-
-  if (VALIDATE_WIDGET(SerialStudio::DashboardMultiPlot, m_index))
-  {
-    const auto &group = GET_GROUP(SerialStudio::DashboardMultiPlot, m_index);
-
-    m_colors.clear();
-    m_colors.resize(group.datasetCount());
-    for (int i = 0; i < group.datasetCount(); ++i)
-    {
-      const auto &dataset = group.getDataset(i);
-      const auto index = dataset.index() - 1;
-      const auto color = colors.count() > index
-                             ? colors.at(index).toString()
-                             : colors.at(index % colors.count()).toString();
-
-      m_colors[i] = color;
-    }
-
-    Q_EMIT themeChanged();
-  }
-}
-
-/**
  * @brief Calculates the auto scale range of the multiplot.
  */
 void Widgets::MultiPlot::calculateAutoScaleRange()
@@ -302,8 +266,8 @@ void Widgets::MultiPlot::calculateAutoScaleRange()
   {
     const auto &group = GET_GROUP(SerialStudio::DashboardMultiPlot, m_index);
 
-    m_minY = std::numeric_limits<qreal>::max();
-    m_maxY = std::numeric_limits<qreal>::lowest();
+    m_minY = std::numeric_limits<double>::max();
+    m_maxY = std::numeric_limits<double>::lowest();
 
     for (const auto &dataset : group.datasets())
     {
@@ -323,8 +287,8 @@ void Widgets::MultiPlot::calculateAutoScaleRange()
   if (!ok)
   {
     // Initialize values to ensure that min/max are set
-    m_minY = std::numeric_limits<qreal>::max();
-    m_maxY = std::numeric_limits<qreal>::lowest();
+    m_minY = std::numeric_limits<double>::max();
+    m_maxY = std::numeric_limits<double>::lowest();
 
     // Loop through each dataset and find the min and max values
     for (const auto &dataset : std::as_const(m_data))
@@ -376,4 +340,34 @@ void Widgets::MultiPlot::calculateAutoScaleRange()
   // Update user interface if required
   if (qFuzzyCompare(prevMinY, m_minY) || qFuzzyCompare(prevMaxY, m_maxY))
     Q_EMIT rangeChanged();
+}
+
+/**
+ * @brief Updates the theme of the multiplot.
+ */
+void Widgets::MultiPlot::onThemeChanged()
+{
+  // clang-format off
+  const auto colors = Misc::ThemeManager::instance().colors()["widget_colors"].toArray();
+  // clang-format on
+
+  if (VALIDATE_WIDGET(SerialStudio::DashboardMultiPlot, m_index))
+  {
+    const auto &group = GET_GROUP(SerialStudio::DashboardMultiPlot, m_index);
+
+    m_colors.clear();
+    m_colors.resize(group.datasetCount());
+    for (int i = 0; i < group.datasetCount(); ++i)
+    {
+      const auto &dataset = group.getDataset(i);
+      const auto index = dataset.index() - 1;
+      const auto color = colors.count() > index
+                             ? colors.at(index).toString()
+                             : colors.at(index % colors.count()).toString();
+
+      m_colors[i] = color;
+    }
+
+    Q_EMIT themeChanged();
+  }
 }

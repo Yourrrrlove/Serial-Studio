@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * SPDX-License-Identifier: GPL-3.0-only
  */
 
 #include "IO/Manager.h"
@@ -41,19 +41,16 @@ IO::Drivers::UART::UART()
   , m_lastSerialDeviceIndex(0)
   , m_portIndex(0)
 {
+  m_baudRate = m_settings.value("IO_Serial_Baud_Rate", 9600).toInt();
+
   // Populate error list
   populateErrors();
 
-  // Read settings
-  readSettings();
-
   // Init serial port configuration variables
-  close();
-  setBaudRate(9600);
-  setDataBits(dataBitsList().indexOf(QStringLiteral("8")));
-  setStopBits(stopBitsList().indexOf(QStringLiteral("1")));
   setParity(parityList().indexOf(tr("None")));
   setFlowControl(flowControlList().indexOf(tr("None")));
+  setDataBits(dataBitsList().indexOf(QStringLiteral("8")));
+  setStopBits(stopBitsList().indexOf(QStringLiteral("1")));
 
   // Update connect button status when user selects a serial device
   connect(this, &IO::Drivers::UART::portIndexChanged, this,
@@ -70,7 +67,6 @@ IO::Drivers::UART::UART()
  */
 IO::Drivers::UART::~UART()
 {
-  writeSettings();
   if (port())
   {
     if (port()->isOpen())
@@ -353,11 +349,23 @@ QStringList IO::Drivers::UART::portList() const
  * Returns a list with the available baud rate configurations.
  * This function can be used with a combo-box to build UIs.
  */
-const QStringList &IO::Drivers::UART::baudRateList() const
+QStringList IO::Drivers::UART::baudRateList() const
 {
-  return m_baudRateList;
-}
+  QSet<qint32> baudSet
+      = {110,   150,   300,    1200,   2400,   4800,   9600,   19200,
+         38400, 57600, 115200, 230400, 256000, 460800, 576000, 921600};
 
+  baudSet.insert(m_baudRate);
+  QList<qint32> sortedList = baudSet.values();
+  std::sort(sortedList.begin(), sortedList.end());
+
+  QStringList result;
+  result.reserve(sortedList.size());
+  for (qint32 rate : std::as_const(sortedList))
+    result.append(QString::number(rate));
+
+  return result;
+}
 /**
  * Returns a list with the available parity configurations.
  * This function can be used with a combo-box to build UIs.
@@ -478,18 +486,16 @@ void IO::Drivers::UART::setupExternalConnections()
  */
 void IO::Drivers::UART::setBaudRate(const qint32 rate)
 {
-  // Asserts
-  Q_ASSERT(rate > 0);
+  if (m_baudRate != rate && rate > 0)
+  {
+    m_baudRate = rate;
+    m_settings.setValue("IO_Serial_Baud_Rate", rate);
 
-  // Update baud rate
-  m_baudRate = rate;
+    if (port())
+      port()->setBaudRate(baudRate());
 
-  // Update serial port config
-  if (port())
-    port()->setBaudRate(baudRate());
-
-  // Update user interface
-  Q_EMIT baudRateChanged();
+    Q_EMIT baudRateChanged();
+  }
 }
 
 /**
@@ -604,22 +610,6 @@ void IO::Drivers::UART::setParity(const quint8 parityIndex)
 
   // Notify user interface
   Q_EMIT parityChanged();
-}
-
-/**
- * Registers the new baud rate to the list
- */
-void IO::Drivers::UART::appendBaudRate(const QString &baudRate)
-{
-  if (!m_baudRateList.contains(baudRate))
-  {
-    m_baudRateList.append(baudRate);
-    writeSettings();
-    Q_EMIT baudRateListChanged();
-    Misc::Utilities::showMessageBox(
-        tr("Baud rate registered successfully"),
-        tr("Rate \"%1\" has been added to baud rate list").arg(baudRate));
-  }
 }
 
 /**
@@ -832,12 +822,19 @@ void IO::Drivers::UART::refreshSerialDevices()
  */
 void IO::Drivers::UART::handleError(QSerialPort::SerialPortError error)
 {
+  // Ensure that this function is only called once
+  QMutexLocker locker(&m_errorHandlerMutex);
+
   // Ignore if port is not open
   if (port())
   {
     if (!port()->isOpen())
       return;
   }
+
+  // No need to show error if device was disconnected from previous error
+  if (!Manager::instance().isConnected())
+    return;
 
   // Log error
   if (error != QSerialPort::NoError)
@@ -850,20 +847,14 @@ void IO::Drivers::UART::handleError(QSerialPort::SerialPortError error)
         return;
     }
 
-    // Fail silently on resource errors if auto-reconnect is enabled
-    if (m_autoReconnect && error == QSerialPort::ResourceError)
-    {
-      Manager::instance().disconnectDevice();
-      return;
-    }
+    // Disconnect the device
+    Manager::instance().disconnectDevice();
 
     // Display error
-    Misc::Utilities::showMessageBox(tr("Critical serial port error"),
-                                    m_errorDescriptions[error],
-                                    QMessageBox::Critical);
-
-    // Disconnect from device
-    Manager::instance().disconnectDevice();
+    if (!m_autoReconnect || error != QSerialPort::ResourceError)
+      Misc::Utilities::showMessageBox(tr("Critical serial port error"),
+                                      m_errorDescriptions[error],
+                                      QMessageBox::Critical);
   }
 }
 
@@ -874,82 +865,6 @@ void IO::Drivers::UART::onReadyRead()
 {
   if (isOpen())
     processData(port()->readAll());
-}
-
-/**
- * Read saved settings (if any)
- */
-void IO::Drivers::UART::readSettings()
-{
-  // Register standard baud rates
-  QStringList stdBaudRates
-      = {"110",    "150",    "300",    "1200",  "2400",   "4800",
-         "9600",   "19200",  "38400",  "57600", "115200", "230400",
-         "256000", "460800", "576000", "921600"};
-
-  // Get value from settings
-  QStringList list;
-  list = m_settings.value("SerialBaudRates", stdBaudRates).toStringList();
-
-  // Add any missing standard baud rate to saved user settings
-  for (const QString &rate : std::as_const(stdBaudRates))
-  {
-    if (!list.contains(rate))
-      list.append(rate);
-  }
-
-  // Ensure that baud rate list is ordered correctly
-  m_baudRateList.clear();
-  for (int i = 0; i < list.count(); ++i)
-    m_baudRateList.append(list.at(i));
-
-  // Sort baud rate list
-#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
-  for (auto i = 0; i < m_baudRateList.count() - 1; ++i)
-  {
-    for (auto j = 0; j < m_baudRateList.count() - i - 1; ++j)
-    {
-      auto a = m_baudRateList.at(j).toInt();
-      auto b = m_baudRateList.at(j + 1).toInt();
-      if (a > b)
-        m_baudRateList.swapItemsAt(j, j + 1);
-    }
-  }
-#endif
-
-  // Notify UI
-  Q_EMIT baudRateListChanged();
-}
-
-/**
- * Save settings between application runs
- */
-void IO::Drivers::UART::writeSettings()
-{
-  // Sort baud rate list
-#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
-  for (auto i = 0; i < m_baudRateList.count() - 1; ++i)
-  {
-    for (auto j = 0; j < m_baudRateList.count() - i - 1; ++j)
-    {
-      auto a = m_baudRateList.at(j).toInt();
-      auto b = m_baudRateList.at(j + 1).toInt();
-      if (a > b)
-      {
-        m_baudRateList.swapItemsAt(j, j + 1);
-        Q_EMIT baudRateListChanged();
-      }
-    }
-  }
-#endif
-
-  // Convert QVector to QStringList
-  QStringList list;
-  for (int i = 0; i < baudRateList().count(); ++i)
-    list.append(baudRateList().at(i));
-
-  // Save list to memory
-  m_settings.setValue(QStringLiteral("IO_DataSource_Serial__BaudRates"), list);
 }
 
 /**

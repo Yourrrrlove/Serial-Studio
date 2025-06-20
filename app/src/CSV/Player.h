@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * SPDX-License-Identifier: GPL-3.0-only
  */
 
 #pragma once
@@ -41,13 +41,13 @@ class Player : public QObject
   Q_PROPERTY(bool isOpen
              READ isOpen
              NOTIFY openChanged)
-  Q_PROPERTY(qreal progress
+  Q_PROPERTY(double progress
              READ progress
              NOTIFY timestampChanged)
-  Q_PROPERTY(qreal frameCount
+  Q_PROPERTY(double frameCount
              READ frameCount
              NOTIFY playerStateChanged)
-  Q_PROPERTY(qreal framePosition
+  Q_PROPERTY(double framePosition
              READ framePosition
              NOTIFY timestampChanged)
   Q_PROPERTY(bool isPlaying
@@ -74,7 +74,7 @@ public:
   static Player &instance();
 
   [[nodiscard]] bool isOpen() const;
-  [[nodiscard]] qreal progress() const;
+  [[nodiscard]] double progress() const;
   [[nodiscard]] bool isPlaying() const;
   [[nodiscard]] int frameCount() const;
   [[nodiscard]] int framePosition() const;
@@ -91,7 +91,7 @@ public slots:
   void nextFrame();
   void previousFrame();
   void openFile(const QString &filePath);
-  void setProgress(const qreal progress);
+  void setProgress(const double progress);
 
 private slots:
   void updateData();
