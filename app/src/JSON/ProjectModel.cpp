@@ -1,25 +1,26 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 #include <QFile>
+#include <QTimer>
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QFileDialog>
@@ -28,6 +29,7 @@
 #include <QJsonDocument>
 
 #include "AppInfo.h"
+#include "IO/Checksum.h"
 #include "Misc/Utilities.h"
 #include "Misc/Translator.h"
 #include "Misc/WorkspaceManager.h"
@@ -63,8 +65,7 @@ typedef enum
   kProjectView_FrameDecoder,        /**< Represents the frame decoder item */
   kProjectView_HexadecimalSequence, /**< Represents the frame sequence format */
   kProjectView_FrameDetection,      /**< Represents the frame detection item */
-  kProjectView_ThunderforestApiKey, /**< Represents the Thunderforest API key */
-  kProjectView_MapTilerApiKey       /**< Represents the MapTiler API key */
+  kProjectView_ChecksumFunction     /**< Represents the frame checksum item */
 } ProjectItem;
 // clang-format on
 
@@ -98,11 +99,14 @@ typedef enum
 // clang-format off
 typedef enum
 {
-  kActionView_Title,   /**< Represents the action title item. */
-  kActionView_Icon,    /**< Represents the icon item. */
-  kActionView_EOL,     /**< Represents the EOL (end of line) item. */
-  kActionView_Data,    /**< Represents the TX data item. */
-  kActionView_Binary,  /**< Represents the binary data transmision status */
+  kActionView_Title,        /**< The action title item. */
+  kActionView_Icon,         /**< The icon item. */
+  kActionView_EOL,          /**< The EOL (end of line) item. */
+  kActionView_Data,         /**< The TX data item. */
+  kActionView_Binary,       /**< The binary data transmission status. */
+  kActionView_AutoExecute,  /**< Whether the action executes on connect. */
+  kActionView_TimerMode,    /**< The timer behavior mode. */
+  kActionView_TimerInterval /**< The timer interval in milliseconds. */
 } ActionItem;
 // clang-format on
 
@@ -116,13 +120,6 @@ typedef enum
   kGroupView_Widget  /**< Represents the group widget item. */
 } GroupItem;
 // clang-format on
-
-//------------------------------------------------------------------------------
-// Define ports for the OSM server
-//------------------------------------------------------------------------------
-
-static quint16 SERVER_PORT = 9727;
-static quint16 TILE_SERVER_PORT = 2701;
 
 //------------------------------------------------------------------------------
 // Constructor/deconstructor & singleton instance access function
@@ -154,7 +151,6 @@ JSON::ProjectModel::ProjectModel()
   , m_groupModel(nullptr)
   , m_projectModel(nullptr)
   , m_datasetModel(nullptr)
-  , m_server("", "", TILE_SERVER_PORT, SERVER_PORT, nullptr)
 {
   // Generate data sources for project model
   generateComboBoxModels();
@@ -176,10 +172,6 @@ JSON::ProjectModel::ProjectModel()
           &JSON::ProjectModel::editableOptionsChanged);
   connect(this, &JSON::ProjectModel::datasetModelChanged, this,
           &JSON::ProjectModel::datasetOptionsChanged);
-
-  // Apply map provider API keys
-  connect(this, &JSON::ProjectModel::gpsApiKeysChanged, this,
-          &JSON::ProjectModel::onGpsApiKeysChanged);
 
   // Load current JSON map file into C++ model
   if (!JSON::FrameBuilder::instance().jsonMapFilepath().isEmpty())
@@ -245,7 +237,12 @@ JSON::ProjectModel::CurrentView JSON::ProjectModel::currentView() const
  */
 SerialStudio::DecoderMethod JSON::ProjectModel::decoderMethod() const
 {
-  return m_frameDecoder;
+#ifdef BUILD_COMMERCIAL
+  if (SerialStudio::activated())
+    return m_frameDecoder;
+#endif
+
+  return SerialStudio::PlainText;
 }
 
 /**
@@ -295,14 +292,6 @@ QString JSON::ProjectModel::jsonFileName() const
 QString JSON::ProjectModel::jsonProjectsPath() const
 {
   return Misc::WorkspaceManager::instance().path("JSON Projects");
-}
-
-/**
- * @brief Returns the server address of the OSM provider from SdrAngel
- */
-QString JSON::ProjectModel::osmAddress() const
-{
-  return QStringLiteral("http://localhost:%1").arg(m_server.serverPort());
 }
 
 /**
@@ -451,32 +440,6 @@ const QString &JSON::ProjectModel::frameParserCode() const
 }
 
 /**
- * @brief Retrieves the MapTiler API key used by the project.
- *
- * This function returns the API key used for accessing MapTiler mapping
- * services.
- *
- * @return A reference to the Thunderforest API key.
- */
-const QString &JSON::ProjectModel::mapTilerApiKey() const
-{
-  return m_mapTilerApiKey;
-}
-
-/**
- * @brief Retrieves the Thunderforest API key used by the project.
- *
- * This function returns the API key used for accessing Thunderforest mapping
- * services.
- *
- * @return A reference to the Thunderforest API key.
- */
-const QString &JSON::ProjectModel::thunderforestApiKey() const
-{
-  return m_thunderforestApiKey;
-}
-
-/**
  * @brief Determines whether the currently selected group is editable.
  *
  * This function checks if the currently selected group is editable.
@@ -535,7 +498,8 @@ bool JSON::ProjectModel::currentDatasetIsEditable() const
  */
 bool JSON::ProjectModel::containsCommercialFeatures() const
 {
-  return SerialStudio::commercialCfg(m_groups);
+  return SerialStudio::commercialCfg(m_groups)
+         || m_frameDecoder != SerialStudio::PlainText;
 }
 
 /**
@@ -776,9 +740,9 @@ bool JSON::ProjectModel::saveJsonFile(const bool askPath)
   // Get file save path
   if (jsonFilePath().isEmpty() || askPath)
   {
-    const auto name = jsonProjectsPath() + "/" + title() + ".json";
-    auto path = QFileDialog::getSaveFileName(nullptr, tr("Save JSON project"),
-                                             name, "*.json");
+    const auto name = jsonProjectsPath() + "/" + title() + ".ssproj";
+    auto path = QFileDialog::getSaveFileName(
+        nullptr, tr("Save Serial Studio Project"), name, "*.ssproj");
     if (path.isEmpty())
       return false;
 
@@ -800,10 +764,9 @@ bool JSON::ProjectModel::saveJsonFile(const bool askPath)
   json.insert("decoder", m_frameDecoder);
   json.insert("frameEnd", m_frameEndSequence);
   json.insert("frameParser", m_frameParserCode);
+  json.insert("checksum", m_checksumAlgorithm);
   json.insert("frameDetection", m_frameDetection);
   json.insert("frameStart", m_frameStartSequence);
-  json.insert("mapTilerApiKey", m_mapTilerApiKey);
-  json.insert("thunderforestApiKey", m_thunderforestApiKey);
   json.insert("hexadecimalDelimiters", m_hexadecimalDelimiters);
 
   // Create group array
@@ -904,8 +867,7 @@ void JSON::ProjectModel::newJsonFile()
   m_frameDecoder = SerialStudio::PlainText;
   m_frameDetection = SerialStudio::EndDelimiterOnly;
   m_frameEndSequence = "\\n";
-  m_mapTilerApiKey = "";
-  m_thunderforestApiKey = "";
+  m_checksumAlgorithm = "";
   m_frameStartSequence = "$";
   m_hexadecimalDelimiters = false;
   m_title = tr("Untitled Project");
@@ -928,7 +890,6 @@ void JSON::ProjectModel::newJsonFile()
   // Emit signals
   Q_EMIT titleChanged();
   Q_EMIT jsonFileChanged();
-  Q_EMIT gpsApiKeysChanged();
   Q_EMIT frameDetectionChanged();
   Q_EMIT frameParserCodeChanged();
 
@@ -952,7 +913,8 @@ void JSON::ProjectModel::openJsonFile()
 {
   // Let user select a file
   const auto path = QFileDialog::getOpenFileName(
-      nullptr, tr("Select JSON file"), jsonProjectsPath(), "*.json");
+      nullptr, tr("Select Project File"), jsonProjectsPath(),
+      tr("Project Files (*.json *.ssproj)"));
 
   // Invalid path, abort
   if (path.isEmpty())
@@ -1004,10 +966,9 @@ void JSON::ProjectModel::openJsonFile(const QString &path)
   auto json = document.object();
   m_title = json.value("title").toString();
   m_frameEndSequence = json.value("frameEnd").toString();
+  m_checksumAlgorithm = json.value("checksum").toString();
   m_frameParserCode = json.value("frameParser").toString();
   m_frameStartSequence = json.value("frameStart").toString();
-  m_mapTilerApiKey = json.value("mapTilerApiKey").toString();
-  m_thunderforestApiKey = json.value("thunderforestApiKey").toString();
   m_hexadecimalDelimiters = json.value("hexadecimalDelimiters").toBool();
   m_frameDecoder
       = static_cast<SerialStudio::DecoderMethod>(json.value("decoder").toInt());
@@ -1091,7 +1052,6 @@ void JSON::ProjectModel::openJsonFile(const QString &path)
   // Update UI
   Q_EMIT titleChanged();
   Q_EMIT jsonFileChanged();
-  Q_EMIT gpsApiKeysChanged();
   Q_EMIT frameDetectionChanged();
   Q_EMIT frameParserCodeChanged();
 }
@@ -1310,6 +1270,9 @@ void JSON::ProjectModel::duplicateCurrentAction()
   action.m_eolSequence = m_selectedAction.eolSequence();
   action.m_txData = m_selectedAction.txData();
   action.m_icon = m_selectedAction.icon();
+  action.m_autoExecuteOnConnect = m_selectedAction.m_autoExecuteOnConnect;
+  action.m_timerIntervalMs = m_selectedAction.m_timerIntervalMs;
+  action.m_timerMode = m_selectedAction.m_timerMode;
 
   // Register the group
   m_actions.append(action);
@@ -2308,32 +2271,20 @@ void JSON::ProjectModel::buildProjectModel()
     m_projectModel->appendRow(sequence);
   }
 
-  // Add Thunderforest API Key
-  auto thunderforest = new QStandardItem();
-  thunderforest->setEditable(true);
-  thunderforest->setData(TextField, WidgetType);
-  thunderforest->setData(m_thunderforestApiKey, EditableValue);
-  thunderforest->setData(tr("Thunderforest API Key"), ParameterName);
-  thunderforest->setData(kProjectView_ThunderforestApiKey, ParameterType);
-  thunderforest->setData(tr("None"), PlaceholderValue);
-  thunderforest->setData(tr("Required for Thunderforest maps"),
-                         ParameterDescription);
-  thunderforest->setData("qrc:/rcc/icons/project-editor/model/api-key.svg",
-                         ParameterIcon);
-  m_projectModel->appendRow(thunderforest);
-
-  // Add MapTiler API Key
-  auto mapTiler = new QStandardItem();
-  mapTiler->setEditable(true);
-  mapTiler->setData(TextField, WidgetType);
-  mapTiler->setData(m_mapTilerApiKey, EditableValue);
-  mapTiler->setData(tr("MapTiler API Key"), ParameterName);
-  mapTiler->setData(kProjectView_MapTilerApiKey, ParameterType);
-  mapTiler->setData(tr("None"), PlaceholderValue);
-  mapTiler->setData(tr("Required for satellite maps"), ParameterDescription);
-  mapTiler->setData("qrc:/rcc/icons/project-editor/model/api-key.svg",
+  // Add checksum
+  auto checksum = new QStandardItem();
+  auto checksumAlgo = IO::availableChecksums().indexOf(m_checksumAlgorithm);
+  checksum->setEditable(true);
+  checksum->setData(ComboBox, WidgetType);
+  checksum->setData(checksumAlgo, EditableValue);
+  checksum->setData(m_checksumMethods, ComboBoxData);
+  checksum->setData(tr("Checksum Algorithm"), ParameterName);
+  checksum->setData(kProjectView_ChecksumFunction, ParameterType);
+  checksum->setData(tr("Checksum algorithm used for frame validation"),
+                    ParameterDescription);
+  checksum->setData("qrc:/rcc/icons/project-editor/model/checksum.svg",
                     ParameterIcon);
-  m_projectModel->appendRow(mapTiler);
+  m_projectModel->appendRow(checksum);
 
   // Handle edits
   connect(m_projectModel, &CustomModel::itemChanged, this,
@@ -2534,6 +2485,53 @@ void JSON::ProjectModel::buildActionModel(const JSON::Action &action)
     eol->setData(tr("End-of-line (EOL) sequence to use"), ParameterDescription);
     eol->setData("qrc:/rcc/icons/project-editor/model/eol.svg", ParameterIcon);
     m_actionModel->appendRow(eol);
+  }
+
+  // Auto-execute on connect
+  auto autoExecute = new QStandardItem();
+  autoExecute->setEditable(true);
+  autoExecute->setData(CheckBox, WidgetType);
+  autoExecute->setData(action.autoExecuteOnConnect(), EditableValue);
+  autoExecute->setData(tr("Auto Execute on Connect"), ParameterName);
+  autoExecute->setData(kActionView_AutoExecute, ParameterType);
+  autoExecute->setData(0, PlaceholderValue);
+  autoExecute->setData(
+      tr("Trigger this action automatically when a device connects."),
+      ParameterDescription);
+  autoExecute->setData("qrc:/rcc/icons/project-editor/model/auto-execute.svg",
+                       ParameterIcon);
+  m_actionModel->appendRow(autoExecute);
+
+  // Timer mode
+  auto timerMode = new QStandardItem();
+  timerMode->setEditable(true);
+  timerMode->setData(ComboBox, WidgetType);
+  timerMode->setData(m_timerModes, ComboBoxData);
+  timerMode->setData(static_cast<int>(action.timerMode()), EditableValue);
+  timerMode->setData(tr("Timer Mode"), ParameterName);
+  timerMode->setData(kActionView_TimerMode, ParameterType);
+  timerMode->setData(tr("How and when the timer should activate."),
+                     ParameterDescription);
+  timerMode->setData("qrc:/rcc/icons/project-editor/model/timer.svg",
+                     ParameterIcon);
+  m_actionModel->appendRow(timerMode);
+
+  // Timer interval
+  if (action.timerMode() != JSON::Action::TimerMode::Off)
+  {
+    auto timerInterval = new QStandardItem();
+    timerInterval->setEditable(true);
+    timerInterval->setData(IntField, WidgetType);
+    timerInterval->setData(action.timerIntervalMs(), EditableValue);
+    timerInterval->setData(tr("Timer Interval (ms)"), ParameterName);
+    timerInterval->setData(kActionView_TimerInterval, ParameterType);
+    timerInterval->setData(tr("Timer Interval (ms)"), PlaceholderValue);
+    timerInterval->setData(
+        tr("Interval in milliseconds between each timer-triggered action."),
+        ParameterDescription);
+    timerInterval->setData("qrc:/rcc/icons/project-editor/model/interval.svg",
+                           ParameterIcon);
+    m_actionModel->appendRow(timerInterval);
   }
 
   // Handle edits
@@ -2891,15 +2889,6 @@ void JSON::ProjectModel::onJsonLoaded()
   openJsonFile(JSON::FrameBuilder::instance().jsonMapFilepath());
 }
 
-/**
- * @brief Sets the API keys for the map providers.
- */
-void JSON::ProjectModel::onGpsApiKeysChanged()
-{
-  m_server.setMaptilerAPIKey(m_mapTilerApiKey);
-  m_server.setThunderforestAPIKey(m_thunderforestApiKey);
-}
-
 //------------------------------------------------------------------------------
 // Re-generate combobox data sources when the language is changed
 //------------------------------------------------------------------------------
@@ -2931,11 +2920,26 @@ void JSON::ProjectModel::generateComboBoxModels()
   m_fftSamples.append("8192");
   m_fftSamples.append("16384");
 
+  // Initialize timer modes
+  m_timerModes.clear();
+  m_timerModes.append(tr("Off"));
+  m_timerModes.append(tr("Auto Start"));
+  m_timerModes.append(tr("Start on Trigger"));
+  m_timerModes.append(tr("Toggle on Trigger"));
+
   // Initialize decoder options
   m_decoderOptions.clear();
   m_decoderOptions.append(tr("Plain Text (UTF8)"));
   m_decoderOptions.append(tr("Hexadecimal"));
   m_decoderOptions.append(tr("Base64"));
+  m_decoderOptions.append(tr("Binary (Direct)"));
+
+  // Initialize checksum options
+  m_checksumMethods.clear();
+  m_checksumMethods = IO::availableChecksums();
+  const int index = m_checksumMethods.indexOf(QLatin1String(""));
+  if (index >= 0)
+    m_checksumMethods[index] = tr("No Checksum");
 
   // Initialize frame detection methods
   m_frameDetectionMethods.clear();
@@ -3191,6 +3195,17 @@ void JSON::ProjectModel::onActionItemChanged(QStandardItem *item)
       m_selectedAction.m_binaryData = value.toBool();
       buildActionModel(m_selectedAction);
       break;
+    case kActionView_AutoExecute:
+      m_selectedAction.m_autoExecuteOnConnect = value.toBool();
+      break;
+    case kActionView_TimerMode:
+      m_selectedAction.m_timerMode
+          = static_cast<JSON::Action::TimerMode>(value.toInt());
+      buildActionModel(m_selectedAction);
+      break;
+    case kActionView_TimerInterval:
+      m_selectedAction.m_timerIntervalMs = value.toInt();
+      break;
     default:
       break;
   }
@@ -3243,6 +3258,9 @@ void JSON::ProjectModel::onProjectItemChanged(QStandardItem *item)
     case kProjectView_FrameDecoder:
       m_frameDecoder = static_cast<SerialStudio::DecoderMethod>(value.toInt());
       break;
+    case kProjectView_ChecksumFunction:
+      m_checksumAlgorithm = IO::availableChecksums()[value.toInt()];
+      break;
     case kProjectView_HexadecimalSequence: {
       bool changed = m_hexadecimalDelimiters != value.toBool();
       m_hexadecimalDelimiters = value.toBool();
@@ -3265,14 +3283,6 @@ void JSON::ProjectModel::onProjectItemChanged(QStandardItem *item)
       m_frameDetection = m_frameDetectionMethodsValues.at(value.toInt());
       Q_EMIT frameDetectionChanged();
       buildProjectModel();
-      break;
-    case kProjectView_ThunderforestApiKey:
-      m_thunderforestApiKey = value.toString();
-      Q_EMIT gpsApiKeysChanged();
-      break;
-    case kProjectView_MapTilerApiKey:
-      m_mapTilerApiKey = value.toString();
-      Q_EMIT gpsApiKeysChanged();
       break;
     default:
       break;

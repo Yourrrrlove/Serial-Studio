@@ -1,7 +1,30 @@
 # Acknowledgements
 
-Serial Studio makes use of several libraries in order to provide functionality.
-Below, you can find the libraries used and their respective licenses:
+Serial Studio makes use of several libraries and data providers to deliver its full functionality.
+Below is a list of external components and services, along with their respective licenses or attribution.
+
+## Cloud Map Imagery
+
+This application uses near real-time cloud imagery provided by [Matt Eason](https://clouds.matteason.co.uk/).
+Images are updated every 3 hours and derived from EUMETSAT satellite data.
+The cloud texture is used in equirectangular projection with alpha transparency.
+
+- Cloud image URL: [https://clouds.matteason.co.uk/images/4096x2048/clouds-alpha.png](https://clouds.matteason.co.uk/images/4096x2048/clouds-alpha.png)
+- Source: [clouds.matteason.co.uk](https://clouds.matteason.co.uk/)
+- License: [CC0 1.0 Universal (Public Domain)](https://creativecommons.org/publicdomain/zero/1.0/)
+- Attribution:
+  **Contains modified EUMETSAT data**
+  The base Earth imagery is provided by NASA and is in the public domain.
+
+Special thanks to [Matt Eason](https://twitter.com/MattEason) for maintaining the cloud data service.
+
+## Satellite & Map Imagery
+
+Satellite and mapping imagery in this application is sourced from the following providers:
+
+**Esri / ArcGIS Online**
+Basemaps and geographic reference layers are provided by Esri through ArcGIS Online services, including World Imagery, Street Map, Topographic, and others.
+[https://www.esri.com/en-us/arcgis/products/arcgis-online/overview](https://www.esri.com/en-us/arcgis/products/arcgis-online/overview)
 
 ## SIMDe
 

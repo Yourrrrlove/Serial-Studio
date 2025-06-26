@@ -1,22 +1,22 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 import QtCore
@@ -85,9 +85,42 @@ Item {
       iconSize: 16
       startMenu: true
       text: qsTr("Menu")
-      onClicked: root.startClicked()
       implicitWidth: start.layout.implicitWidth + 8
       icon.source: Cpp_Misc_Utilities.hdpiImagePath("qrc:/rcc/logo/start.png")
+      onClicked: {
+        root.startClicked()
+        taskBar.activeWindow = null
+      }
+    }
+
+    //
+    // Shortcuts
+    //
+    Widgets.TaskbarButton {
+      forceVisible: true
+      icon.source: "qrc:/rcc/icons/taskbar/adjust.svg"
+      onClicked: {
+        app.showSettingsDialog()
+        taskBar.activeWindow = null
+      }
+    } Widgets.TaskbarButton {
+      forceVisible: true
+      focused: Cpp_UI_Dashboard.terminalEnabled
+      icon.source: "qrc:/rcc/icons/taskbar/console.svg"
+      onClicked: {
+        taskBar.activeWindow = null
+        Cpp_UI_Dashboard.terminalEnabled = !Cpp_UI_Dashboard.terminalEnabled
+      }
+    } Widgets.TaskbarButton {
+      forceVisible: true
+      focused: Cpp_IO_Manager.paused
+      icon.source: Cpp_IO_Manager.paused ?
+                     "qrc:/rcc/icons/taskbar/resume.svg" :
+                     "qrc:/rcc/icons/taskbar/pause.svg"
+      onClicked: {
+        taskBar.activeWindow = null
+        Cpp_IO_Manager.paused = !Cpp_IO_Manager.paused
+      }
     }
 
     //
@@ -114,27 +147,34 @@ Item {
           visible: buttonsContainer.showNavButtons
           icon.source: "qrc:/rcc/icons/buttons/backward.svg"
           icon.color: Cpp_ThemeManager.colors["taskbar_text"]
-          onClicked: buttonsView.contentX = Math.max(0, buttonsView.contentX - 150)
+          onClicked: {
+            taskBar.activeWindow = null
+            buttonsView.contentX = Math.max(0, buttonsView.contentX - 150)
+          }
         }
 
         ListView {
           id: buttonsView
+
           clip: true
           spacing: 2
+          interactive: true
           Layout.fillWidth: true
           Layout.fillHeight: true
           model: taskBar.taskbarButtons
           orientation: ListView.Horizontal
-          interactive: true
           boundsBehavior: Flickable.StopAtBounds
 
           delegate: Widgets.TaskbarButton {
             required property var model
 
             id: button
-            width: 144
             text: model.widgetName
+            forceVisible: taskBar.hasMaximizedWindow
             icon.source: SerialStudio.dashboardWidgetIcon(model.widgetType)
+
+            width: opacity > 0 ? 144 : 0
+            Behavior on width { NumberAnimation{} }
 
             Component.onCompleted: updateState()
 
@@ -143,8 +183,6 @@ Item {
               if (window !== null) {
                 if (taskBar.windowState(window) !== SS_Ui.TaskbarModel.WindowNormal)
                   taskBar.showWindow(window)
-                else if (taskBar.activeWindow === window)
-                  taskBar.minimizeWindow(window)
 
                 taskBar.activeWindow = window
               }
@@ -178,7 +216,122 @@ Item {
           visible: buttonsContainer.showNavButtons
           icon.source: "qrc:/rcc/icons/buttons/forward.svg"
           icon.color: Cpp_ThemeManager.colors["taskbar_text"]
-          onClicked: buttonsView.contentX = Math.min(buttonsView.contentWidth - buttonsView.width, buttonsView.contentX + 150)
+          onClicked: {
+            taskBar.activeWindow = null
+            buttonsView.contentX = Math.min(buttonsView.contentWidth - buttonsView.width, buttonsView.contentX + 150)
+          }
+        }
+      }
+    }
+
+    //
+    // Workspace switcher
+    //
+    ComboBox {
+      id: _switcher
+      textRole: "text"
+      model: taskBar.groupModel
+      Layout.alignment: Qt.AlignVCenter
+      currentIndex: taskBar.activeGroupIndex
+      onCurrentIndexChanged: {
+        if (currentIndex !== taskBar.activeGroupIndex)
+          taskBar.activeGroupIndex = currentIndex
+      }
+
+      indicator: Item {}
+
+      background: Rectangle {
+        color: "transparent"
+        border.width: 0
+      }
+
+      delegate: ItemDelegate {
+        width: _switcher.width
+
+        contentItem: RowLayout {
+          spacing: 8
+          anchors.verticalCenter: parent.verticalCenter
+          Component.onCompleted: {
+            var itemWidth = Math.min(480, implicitWidth + 32)
+            if (_switcher.implicitWidth < itemWidth)
+              _switcher.implicitWidth = itemWidth
+          }
+
+          Image {
+            source: modelData["icon"]
+            sourceSize: Qt.size(16, 16)
+            fillMode: Image.PreserveAspectFit
+          }
+
+          Label {
+            text: modelData["text"]
+            elide: Text.ElideRight
+            Layout.fillWidth: true
+            verticalAlignment: Text.AlignVCenter
+            font: text === _switcher.currentText
+                  ? Cpp_Misc_CommonFonts.boldUiFont
+                  : Cpp_Misc_CommonFonts.uiFont
+          }
+        }
+      }
+
+      contentItem: RowLayout {
+        spacing: 4
+        anchors.verticalCenter: parent.verticalCenter
+
+        Label {
+          Layout.fillWidth: true
+          text: _switcher.currentText
+          horizontalAlignment: Text.AlignRight
+          verticalAlignment: Text.AlignVCenter
+          font: Cpp_Misc_CommonFonts.boldUiFont
+          color: Cpp_ThemeManager.colors["pane_caption_foreground"]
+        }
+
+        Canvas {
+          id: _canvas
+
+          width: 18
+          height: 18
+          opacity: 0.8
+          Layout.alignment: Qt.AlignVCenter
+          Connections {
+            target: Cpp_ThemeManager
+            function onThemeChanged() {
+              _canvas.requestPaint()
+            }
+          }
+
+          onPaint: {
+            const ctx = getContext("2d");
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = Cpp_ThemeManager.colors["pane_caption_foreground"];
+
+            const spacing = 2;
+            const triangleWidth = 8;
+            const triangleHeight = 4;
+
+            const centerX = width / 2;
+            const totalHeight = triangleHeight * 2 + spacing;
+            const topY = (height - totalHeight) / 2;
+            const downTopY = topY + triangleHeight + spacing;
+
+            // Up Triangle
+            ctx.beginPath();
+            ctx.moveTo(centerX, topY);
+            ctx.lineTo(centerX - triangleWidth / 2, topY + triangleHeight);
+            ctx.lineTo(centerX + triangleWidth / 2, topY + triangleHeight);
+            ctx.closePath();
+            ctx.fill();
+
+            // Down Triangle
+            ctx.beginPath();
+            ctx.moveTo(centerX, downTopY + triangleHeight);
+            ctx.lineTo(centerX - triangleWidth / 2, downTopY);
+            ctx.lineTo(centerX + triangleWidth / 2, downTopY);
+            ctx.closePath();
+            ctx.fill();
+          }
         }
       }
     }
@@ -194,10 +347,13 @@ Item {
       Layout.preferredHeight: 24
       Layout.alignment: Qt.AlignVCenter
       icon.source: "qrc:/rcc/icons/buttons/auto-layout.svg"
-      onClicked: taskBar.windowManager.autoLayoutEnabled = !taskBar.windowManager.autoLayoutEnabled
       icon.color: taskBar.windowManager.autoLayoutEnabled ?
                     Cpp_ThemeManager.colors["tasbkar_highlight"] :
                     Cpp_ThemeManager.colors["taskbar_text"]
+      onClicked: {
+        taskBar.activeWindow = null
+        taskBar.windowManager.autoLayoutEnabled = !taskBar.windowManager.autoLayoutEnabled
+      }
     } Item {
       implicitWidth: 4
     }

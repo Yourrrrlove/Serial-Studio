@@ -1,22 +1,22 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 #pragma once
@@ -39,22 +39,34 @@ namespace JSON
  *
  * The JSON::Action class allows users to create an action with an ID, and
  * manage associated metadata such as an icon, title, transmission data
- * (txData), and an end-of-line (eol) sequence. It also provides functionality
- * to serialize and deserialize the action to and from a QJsonObject, making it
- * suitable for JSON-based communication or storage.
+ * (txData), and an end-of-line (eol) sequence. It also supports flags for
+ * auto-execution on device connection and timer-based behavior.
  */
 class Action
 {
 public:
+  enum class TimerMode
+  {
+    Off,            ///< No timer
+    AutoStart,      ///< Starts timer automatically (e.g. on connection)
+    StartOnTrigger, ///< Starts timer when the action is triggered
+    ToggleOnTrigger ///< Toggles timer state with each trigger
+  };
+
   Action(const int actionId = -1);
 
   [[nodiscard]] int actionId() const;
   [[nodiscard]] bool binaryData() const;
+  [[nodiscard]] QByteArray txByteArray() const;
 
   [[nodiscard]] const QString &icon() const;
   [[nodiscard]] const QString &title() const;
   [[nodiscard]] const QString &txData() const;
   [[nodiscard]] const QString &eolSequence() const;
+
+  [[nodiscard]] TimerMode timerMode() const;
+  [[nodiscard]] int timerIntervalMs() const;
+  [[nodiscard]] bool autoExecuteOnConnect() const;
 
   [[nodiscard]] QJsonObject serialize() const;
   [[nodiscard]] bool read(const QJsonObject &object);
@@ -67,6 +79,10 @@ private:
   QString m_title;
   QString m_txData;
   QString m_eolSequence;
+
+  int m_timerIntervalMs;
+  TimerMode m_timerMode;
+  bool m_autoExecuteOnConnect;
 
   friend class JSON::ProjectModel;
 };

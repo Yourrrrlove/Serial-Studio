@@ -1,22 +1,22 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 #pragma once
@@ -72,10 +72,17 @@ class Console : public QObject
   Q_PROPERTY(QStringList displayModes
              READ displayModes
              NOTIFY languageChanged)
+  Q_PROPERTY(QStringList checksumMethods
+             READ checksumMethods
+             NOTIFY languageChanged)
   Q_PROPERTY(int scrollback
              READ scrollback
              WRITE setScrollback
              NOTIFY scrollbackChanged)
+  Q_PROPERTY(int checksumMethod
+             READ checksumMethod
+             WRITE setChecksumMethod
+             NOTIFY checksumMethodChanged)
   // clang-format on
 
 signals:
@@ -88,6 +95,7 @@ signals:
   void historyItemChanged();
   void textDocumentChanged();
   void showTimestampChanged();
+  void checksumMethodChanged();
   void displayString(const QString &text);
 
 private:
@@ -127,6 +135,8 @@ public:
   [[nodiscard]] bool showTimestamp() const;
 
   [[nodiscard]] int scrollback() const;
+  [[nodiscard]] int checksumMethod() const;
+
   [[nodiscard]] DataMode dataMode() const;
   [[nodiscard]] LineEnding lineEnding() const;
   [[nodiscard]] DisplayMode displayMode() const;
@@ -135,11 +145,10 @@ public:
   [[nodiscard]] QStringList dataModes() const;
   [[nodiscard]] QStringList lineEndings() const;
   [[nodiscard]] QStringList displayModes() const;
+  [[nodiscard]] QStringList checksumMethods() const;
 
   Q_INVOKABLE bool validateUserHex(const QString &text);
   Q_INVOKABLE QString formatUserHex(const QString &text);
-
-  static QByteArray hexToBytes(const QString &data);
 
 public slots:
   void clear();
@@ -149,6 +158,7 @@ public slots:
   void send(const QString &data);
   void setEcho(const bool enabled);
   void setScrollback(const int lines);
+  void setChecksumMethod(const int method);
   void setShowTimestamp(const bool enabled);
   void setDataMode(const IO::Console::DataMode &mode);
   void setLineEnding(const IO::Console::LineEnding &mode);
@@ -172,6 +182,7 @@ private:
 
   int m_scrollback;
   int m_historyItem;
+  int m_checksumMethod;
 
   bool m_echo;
   bool m_showTimestamp;

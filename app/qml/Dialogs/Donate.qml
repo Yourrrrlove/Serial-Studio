@@ -1,22 +1,22 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 import QtCore
@@ -36,8 +36,8 @@ Window {
   title: qsTr("Support Serial Studio")
   minimumWidth: column.implicitWidth + 32
   maximumWidth: column.implicitWidth + 32
-  minimumHeight: column.implicitHeight + root.titlebarHeight + 32
-  maximumHeight: column.implicitHeight + root.titlebarHeight + 32
+  minimumHeight: column.implicitHeight + 32
+  maximumHeight: column.implicitHeight + 32
 
   //
   // Make window stay on top
@@ -47,57 +47,6 @@ Window {
         Qt.WindowTitleHint |
         Qt.WindowStaysOnTopHint |
         Qt.WindowCloseButtonHint
-  }
-
-  //
-  // Native window registration
-  //
-  property real titlebarHeight: 0
-  onVisibleChanged: {
-    if (visible) {
-      Cpp_NativeWindow.addWindow(root, Cpp_ThemeManager.colors["base"])
-      root.titlebarHeight = Cpp_NativeWindow.titlebarHeight(root)
-    }
-
-    else {
-      root.titlebarHeight = 0
-      Cpp_NativeWindow.removeWindow(root)
-    }
-  }
-
-  //
-  // Background + window title on macOS
-  //
-  Rectangle {
-    anchors.fill: parent
-    color: Cpp_ThemeManager.colors["window"]
-
-    //
-    // Drag the window anywhere
-    //
-    DragHandler {
-      target: null
-      onActiveChanged: {
-        if (active)
-          root.startSystemMove()
-      }
-    }
-
-    //
-    // Titlebar text
-    //
-    Label {
-      text: root.title
-      visible: root.titlebarHeight > 0
-      color: Cpp_ThemeManager.colors["text"]
-      font: Cpp_Misc_CommonFonts.customUiFont(1.07, true)
-
-      anchors {
-        topMargin: 6
-        top: parent.top
-        horizontalCenter: parent.horizontalCenter
-      }
-    }
   }
 
   //
@@ -130,7 +79,6 @@ Window {
   //
   Page {
     anchors.fill: parent
-    anchors.topMargin: root.titlebarHeight
     palette.mid: Cpp_ThemeManager.colors["mid"]
     palette.dark: Cpp_ThemeManager.colors["dark"]
     palette.text: Cpp_ThemeManager.colors["text"]

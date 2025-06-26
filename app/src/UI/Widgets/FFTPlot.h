@@ -1,28 +1,28 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 #pragma once
 
-#include <QtQuick>
 #include <QVector>
+#include <QQuickItem>
 #include <QLineSeries>
 #include <qfouriertransformer.h>
 
@@ -34,12 +34,12 @@ namespace Widgets
 class FFTPlot : public QQuickItem
 {
   Q_OBJECT
-  Q_PROPERTY(qreal minX READ minX CONSTANT)
-  Q_PROPERTY(qreal maxX READ maxX CONSTANT)
-  Q_PROPERTY(qreal minY READ minY CONSTANT)
-  Q_PROPERTY(qreal maxY READ maxY CONSTANT)
-  Q_PROPERTY(qreal xTickInterval READ xTickInterval CONSTANT)
-  Q_PROPERTY(qreal yTickInterval READ yTickInterval CONSTANT)
+  Q_PROPERTY(double minX READ minX CONSTANT)
+  Q_PROPERTY(double maxX READ maxX CONSTANT)
+  Q_PROPERTY(double minY READ minY CONSTANT)
+  Q_PROPERTY(double maxY READ maxY CONSTANT)
+  Q_PROPERTY(double xTickInterval READ xTickInterval CONSTANT)
+  Q_PROPERTY(double yTickInterval READ yTickInterval CONSTANT)
 
 public:
   explicit FFTPlot(const int index = -1, QQuickItem *parent = nullptr);
@@ -49,12 +49,12 @@ public:
     m_data.squeeze();
   }
 
-  [[nodiscard]] qreal minX() const;
-  [[nodiscard]] qreal maxX() const;
-  [[nodiscard]] qreal minY() const;
-  [[nodiscard]] qreal maxY() const;
-  [[nodiscard]] qreal xTickInterval() const;
-  [[nodiscard]] qreal yTickInterval() const;
+  [[nodiscard]] double minX() const;
+  [[nodiscard]] double maxX() const;
+  [[nodiscard]] double minY() const;
+  [[nodiscard]] double maxY() const;
+  [[nodiscard]] double xTickInterval() const;
+  [[nodiscard]] double yTickInterval() const;
 
 public slots:
   void draw(QLineSeries *series);
@@ -67,10 +67,10 @@ private:
   int m_index;
   int m_samplingRate;
 
-  qreal m_minX;
-  qreal m_maxX;
-  qreal m_minY;
-  qreal m_maxY;
+  double m_minX;
+  double m_maxX;
+  double m_minY;
+  double m_maxY;
 
   QFourierTransformer m_transformer;
 

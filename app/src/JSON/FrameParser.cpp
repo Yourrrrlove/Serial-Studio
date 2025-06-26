@@ -1,22 +1,22 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 #include <QFile>
@@ -163,28 +163,40 @@ bool JSON::FrameParser::isModified() const
 }
 
 /**
- * @brief Executes the current frame parser function over the input data.
+ * @brief Executes the current frame parser function over UTF-8 text data.
  *
- * @param frame current/latest frame data.
+ * This version is used when the frame is already a decoded QString
+ * (e.g., ASCII or UTF-8 text). It avoids any binary conversion and
+ * sends the string directly to the JavaScript parser function.
  *
- * @return An array of strings with the values returned by the JS frame parser.
+ * @param frame Decoded UTF-8 string frame (e.g., "value1,value2,value3").
+ * @return An array of strings returned by the JS parser.
  */
 QStringList JSON::FrameParser::parse(const QString &frame)
 {
-  // Construct function arguments
   QJSValueList args;
   args << frame;
 
-  // Evaluate frame parsing function
-  auto out = m_parseFunction.call(args).toVariant().toStringList();
+  return m_parseFunction.call(args).toVariant().toStringList();
+}
 
-  // Convert output to QStringList
-  QStringList list;
-  for (auto i = 0; i < out.count(); ++i)
-    list.append(out.at(i));
+/**
+ * @brief Executes the current frame parser function over the input binary data.
+ *
+ * @param frame Binary frame data (e.g., from serial input).
+ * @return Parsed string fields returned by the JS frame parser.
+ */
+QStringList JSON::FrameParser::parse(const QByteArray &frame)
+{
+  QJSValue jsArray = m_engine.newArray(frame.size());
+  const auto *data = reinterpret_cast<const quint8 *>(frame.constData());
+  for (int i = 0; i < frame.size(); ++i)
+    jsArray.setProperty(i, data[i]);
 
-  // Return fields list
-  return list;
+  QJSValueList args;
+  args << jsArray;
+
+  return m_parseFunction.call(args).toVariant().toStringList();
 }
 
 /**

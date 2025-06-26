@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+	<id>com.serial_studio.Serial-Studio</id>
+	<name>Serial Studio</name>
+	<project_license>GPL-3.0-only</project_license>
+	<developer id="com.serial-studio">
+		<name>Serial Studio</name>
+	</developer>
+	<summary>Visualize embedded device data</summary>
+	<metadata_license>CC-BY-SA-4.0</metadata_license>
+	<launchable type="desktop-id">com.serial_studio.Serial-Studio.desktop</launchable>
+	<url type="homepage">https://serial-studio.com/</url>
+	<url type="bugtracker">https://github.com/Serial-Studio/Serial-Studio/issues</url>
+	<url type="help">https://github.com/Serial-Studio/Serial-Studio/wiki</url>
+	<url type="donation">https://github.com/sponsors/alex-spataru</url>
+	<url type="contribute">https://github.com/Serial-Studio/Serial-Studio/wiki/Support-Serial-Studio</url>
+	<description>
+		<p>Serial Studio lets you visualize real-time data from microcontrollers and connected devices. It's ideal for monitoring sensor output, debugging hardware, and analyzing telemetry from sources like serial ports, Bluetooth Low Energy (BLE), and TCP/UDP.</p>
+		<p>Whether you're a student, hobbyist, or engineer, Serial Studio gives you insight into what your hardware is doing, live.</p>
+		<ul>
+		  <li>Cross-platform: Native support for Windows, macOS, and Linux</li>
+		  <li>CSV export: Save incoming data for offline analysis</li>
+		  <li>Multiple inputs: Serial, BLE, TCP/UDP (MQTT available in Pro version)</li>
+		  <li>Custom dashboards: Design interfaces with visual widgets using the Project Editor</li>
+		  <li>Advanced decoding: Use JavaScript to parse structured or binary data streams</li>
+		</ul>
+		<p>Note: This Flatpak package includes the open-source GPLv3 version of Serial Studio only. Commercial features such as MQTT integration, 3D plotting, and XY analysis are not included.</p>
+	</description>
+	<screenshots>
+		<screenshot type="default">
+			<image>https://raw.githubusercontent.com/Serial-Studio/Serial-Studio/refs/heads/master/doc/screenshot.png</image>
+		</screenshot>
+		<screenshot>
+			<image>https://raw.githubusercontent.com/Serial-Studio/Serial-Studio/refs/heads/master/examples/Hydrogen/doc/screenshot.png</image>
+		</screenshot>
+		<screenshot>
+			<image>https://raw.githubusercontent.com/Serial-Studio/Serial-Studio/refs/heads/master/examples/BLE%20Battery/doc/screenshot.png</image>
+		</screenshot>
+		<screenshot>
+			<image>https://raw.githubusercontent.com/Serial-Studio/Serial-Studio/master/examples/HexadecimalADC/doc/screenshot.png</image>
+		</screenshot>
+	</screenshots>
+	<categories>
+		<category>Electronics</category>
+		<category>Engineering</category>
+		<category>Science</category>
+	</categories>
+	<branding>
+		<color type="primary" scheme_preference="light">#3d6fa6</color>
+		<color type="primary" scheme_preference="dark">#244263</color>
+	</branding>
+	<releases>
+	  <release version="3.1.7" date="2025-06-22">
+		  <url>https://github.com/Serial-Studio/Serial-Studio/releases/tag/v3.1.7</url>
+		</release>
+	</releases>
+	<content_rating type="oars-1.1"/>
+</component>

@@ -1,22 +1,22 @@
 #
-# Serial Studio - https://github.com/alex-spataru/serial-studio
+# Serial Studio
+# https://serial-studio.com/
 #
-# Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+# Copyright (C) 2020–2025 Alex Spataru
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This file is dual-licensed:
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
+# - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+# - Under the Serial Studio Commercial License for builds that include
+#   any Pro functionality.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# You must comply with the terms of one of these licenses, depending
+# on your use case.
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
+# For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+# For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+#
+# SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
 #
 
 #-------------------------------------------------------------------------------
@@ -45,14 +45,13 @@ set(QT_MODULES
   Svg
   Gui
   Qml
+  Sql
   Core
   Quick
   Graphs
   Widgets
-  Location
   Bluetooth
   SerialPort
-  Positioning
   LinguistTools
   QuickControls2
 )
@@ -61,20 +60,19 @@ set(QT_MODULES
 set(QT_LIBS
   Qt6::Core
   Qt6::Svg
+  Qt6::Sql
   Qt6::Gui
   Qt6::Qml
   Qt6::Quick
   Qt6::Graphs
   Qt6::Widgets
-  Qt6::Location
   Qt6::Bluetooth
   Qt6::SerialPort
-  Qt6::Positioning
   Qt6::QuickControls2
 )
 
 # Add required modules for Pro version if needed
-if(USE_QT_COMMERCIAL)
+if(BUILD_COMMERCIAL)
   set(QT_MODULES
     ${QT_MODULES}
     Mqtt
@@ -97,6 +95,7 @@ find_package(
 # Qt project setup & policies
 qt_standard_project_setup()
 qt_policy(SET QTP0001 NEW)
+qt_policy(SET QTP0002 NEW)
 qt_policy(SET QTP0004 NEW)
 
 #-------------------------------------------------------------------------------
@@ -130,6 +129,8 @@ set(SOURCES
   src/UI/Widgets/Gyroscope.cpp
   src/UI/Widgets/GPS.cpp
   src/UI/Widgets/MultiPlot.cpp
+  src/UI/DeclarativeWidgets/DeclarativeWidget.cpp
+  src/UI/DeclarativeWidgets/StaticTable.cpp
   src/Plugins/Server.cpp
   src/IO/Drivers/Network.cpp
   src/IO/Drivers/UART.cpp
@@ -161,7 +162,6 @@ set(HEADERS
   src/Misc/ThemeManager.h
   src/Misc/TimerEvents.h
   src/Misc/Translator.h
-  src/Misc/OsmTemplateServer.h
   src/Misc/WorkspaceManager.h
   src/UI/Dashboard.h
   src/UI/DashboardWidget.h
@@ -179,6 +179,8 @@ set(HEADERS
   src/UI/Widgets/LEDPanel.h
   src/UI/Widgets/Compass.h
   src/UI/Widgets/Terminal.h
+  src/UI/DeclarativeWidgets/DeclarativeWidget.h
+  src/UI/DeclarativeWidgets/StaticTable.h
   src/Plugins/Server.h
   src/Platform/NativeWindow.h
   src/IO/Console.h
@@ -207,13 +209,14 @@ set(HEADERS
 )
 
 # Add headers & sources for commercial build
-if(USE_QT_COMMERCIAL)
+if(BUILD_COMMERCIAL)
   set(HEADERS
     ${HEADERS}
     src/MQTT/Client.h
     src/IO/Drivers/CANBus.h
     src/IO/Drivers/Modbus.h
     src/UI/Widgets/Plot3D.h
+    src/Licensing/Trial.h
     src/Licensing/MachineID.h
     src/Licensing/SimpleCrypt.h
     src/Licensing/LemonSqueezy.h
@@ -224,6 +227,7 @@ if(USE_QT_COMMERCIAL)
     src/IO/Drivers/CANBus.cpp
     src/IO/Drivers/Modbus.cpp
     src/UI/Widgets/Plot3D.cpp
+    src/Licensing/Trial.cpp
     src/Licensing/MachineID.cpp
     src/Licensing/SimpleCrypt.cpp
     src/Licensing/LemonSqueezy.cpp
@@ -289,15 +293,17 @@ set(QML_SRC
   qml/Widgets/VisualRange.qml
   qml/Widgets/MenuButton.qml
   qml/Widgets/SubMenuCombo.qml
+  qml/Widgets/InfoBullet.qml
   qml/DialogLoader.qml
   qml/main.qml
 )
 
 # Add extra QML files for commercial build
-if(USE_QT_COMMERCIAL)
+if(BUILD_COMMERCIAL)
   set(QML_SRC
     ${QML_SRC}
     qml/Widgets/Dashboard/Plot3D.qml
+    qml/Dialogs/Welcome.qml
     qml/Dialogs/MQTTConfiguration.qml
     qml/Dialogs/LicenseManagement.qml
     qml/MainWindow/Panes/SetupPanes/Drivers/CANBus.qml
@@ -398,12 +404,12 @@ elseif(UNIX)
   install(TARGETS ${PROJECT_EXECUTABLE} RUNTIME DESTINATION bin)
 
   install(
-    FILES ${CMAKE_CURRENT_SOURCE_DIR}/deploy/linux/serial-studio.svg
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/deploy/linux/serial-studio.png
     DESTINATION share/pixmaps
   )
 
   install(
-    FILES ${CMAKE_CURRENT_SOURCE_DIR}/deploy/linux/io.github.serial_studio.Serial_Studio.metainfo.xml
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/deploy/linux/serial-studio.metainfo.xml
     DESTINATION share/metainfo
   )
 

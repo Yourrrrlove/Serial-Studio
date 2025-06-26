@@ -1,27 +1,27 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 #pragma once
 
-#include <QtQuick>
+#include <QQuickItem>
 
 namespace Widgets
 {
@@ -31,7 +31,7 @@ namespace Widgets
 class Compass : public QQuickItem
 {
   Q_OBJECT
-  Q_PROPERTY(qreal value READ value NOTIFY updated)
+  Q_PROPERTY(double value READ value NOTIFY updated)
   Q_PROPERTY(QString text READ text NOTIFY updated)
 
 signals:
@@ -40,7 +40,7 @@ signals:
 public:
   explicit Compass(const int index = -1, QQuickItem *parent = nullptr);
 
-  [[nodiscard]] qreal value() const;
+  [[nodiscard]] double value() const;
   [[nodiscard]] QString text() const;
 
 private slots:
@@ -48,7 +48,7 @@ private slots:
 
 private:
   int m_index;
-  qreal m_value;
+  double m_value;
   QString m_text;
 };
 } // namespace Widgets

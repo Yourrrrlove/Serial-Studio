@@ -1,22 +1,22 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 import QtQuick
@@ -151,6 +151,7 @@ Rectangle {
       Layout.alignment: Qt.AlignVCenter
       onClicked: app.showProjectEditor()
       icon.source: "qrc:/rcc/icons/toolbar/project-setup.svg"
+      ToolTip.text: qsTr("Open the Project Editor to create or modify your JSON layout")
     }
 
     //
@@ -162,6 +163,7 @@ Rectangle {
       onClicked: Cpp_CSV_Player.openFile()
       icon.source: "qrc:/rcc/icons/toolbar/csv.svg"
       enabled: !Cpp_CSV_Player.isOpen && !Cpp_IO_Manager.isConnected
+      ToolTip.text: qsTr("Play a CSV file as if it were live sensor data")
     }
 
     //
@@ -172,7 +174,7 @@ Rectangle {
       Layout.fillHeight: true
       Layout.maximumHeight: 64
       Layout.alignment: Qt.AlignVCenter
-      visible: Cpp_QtCommercial_Available
+      visible: Cpp_CommercialBuild
       color: Cpp_ThemeManager.colors["toolbar_separator"]
     }
 
@@ -185,6 +187,7 @@ Rectangle {
       onClicked: root.setupClicked()
       Layout.alignment: Qt.AlignVCenter
       icon.source: "qrc:/rcc/icons/toolbar/device-setup.svg"
+      ToolTip.text: qsTr("Configure device connection via Serial, BLE, or network socket")
     }
 
     //
@@ -195,6 +198,7 @@ Rectangle {
       Layout.alignment: Qt.AlignVCenter
       onClicked: app.showSettingsDialog()
       icon.source: "qrc:/rcc/icons/toolbar/settings.svg"
+      ToolTip.text: qsTr("Open application settings and preferences")
     }
 
     //
@@ -205,7 +209,7 @@ Rectangle {
       Layout.fillHeight: true
       Layout.maximumHeight: 64
       Layout.alignment: Qt.AlignVCenter
-      visible: Cpp_QtCommercial_Available
+      visible: Cpp_CommercialBuild
       color: Cpp_ThemeManager.colors["toolbar_separator"]
     }
 
@@ -213,7 +217,7 @@ Rectangle {
     // MQTT Setup
     //
     Loader {
-      active: Cpp_QtCommercial_Available
+      active: Cpp_CommercialBuild
       sourceComponent: Component {
         Widgets.ToolbarButton {
           text: qsTr("MQTT")
@@ -223,6 +227,7 @@ Rectangle {
                             "qrc:/rcc/icons/toolbar/mqtt-subscriber.svg" :
                             "qrc:/rcc/icons/toolbar/mqtt-publisher.svg") :
                          "qrc:/rcc/icons/toolbar/mqtt.svg"
+          ToolTip.text: qsTr("Configure MQTT connection (publish or subscribe)")
         }
       }
     }
@@ -245,6 +250,7 @@ Rectangle {
       text: qsTr("Examples")
       Layout.alignment: Qt.AlignVCenter
       icon.source: "qrc:/rcc/icons/toolbar/examples.svg"
+      ToolTip.text: qsTr("Browse example projects on GitHub")
       onClicked: Qt.openUrlExternally("https://github.com/Serial-Studio/Serial-Studio/tree/master/examples")
     }
 
@@ -255,7 +261,19 @@ Rectangle {
       text: qsTr("Help")
       Layout.alignment: Qt.AlignVCenter
       icon.source: "qrc:/rcc/icons/toolbar/help.svg"
+      ToolTip.text: qsTr("Open the online documentation for help and guidance")
       onClicked: Qt.openUrlExternally("https://github.com/Serial-Studio/Serial-Studio/wiki")
+    }
+
+    //
+    // DeepWiki
+    //
+    Widgets.ToolbarButton {
+      text: qsTr("AI Help")
+      Layout.alignment: Qt.AlignVCenter
+      icon.source: "qrc:/rcc/icons/toolbar/deepwiki.svg"
+      ToolTip.text: qsTr("View detailed documentation and ask questions on DeepWiki")
+      onClicked: Qt.openUrlExternally("https://deepwiki.com/Serial-Studio/Serial-Studio")
     }
 
     //
@@ -266,6 +284,7 @@ Rectangle {
       onClicked: app.showAboutDialog()
       Layout.alignment: Qt.AlignVCenter
       icon.source: "qrc:/rcc/icons/toolbar/about.svg"
+      ToolTip.text: qsTr("Show application info and license details")
     }
 
     //
@@ -290,11 +309,17 @@ Rectangle {
       text: checked ? qsTr("Disconnect") : qsTr("Connect")
       icon.source: checked ? "qrc:/rcc/icons/toolbar/connect.svg" :
                              "qrc:/rcc/icons/toolbar/disconnect.svg"
+      ToolTip.text: qsTr("Connect or disconnect from device or MQTT broker")
+
+      //
+      // Hide button when trial expires
+      //
+      visible: Cpp_CommercialBuild ? (Cpp_Licensing_Trial.trialExpired && !Cpp_Licensing_LemonSqueezy.isActivated ? false : true) : true
 
       //
       // Get MQTT status
       //
-      readonly property bool mqttSubscriber: Cpp_QtCommercial_Available ? (Cpp_MQTT_Client.isConnected && Cpp_MQTT_Client.isSubscriber) : false
+      readonly property bool mqttSubscriber: Cpp_CommercialBuild ? (Cpp_MQTT_Client.isConnected && Cpp_MQTT_Client.isSubscriber) : false
 
       //
       // Enable/disable the connect button
@@ -319,6 +344,18 @@ Rectangle {
         text: " " + qsTr("Disconnect") + " "
         font: Cpp_Misc_CommonFonts.boldUiFont
       }
+    }
+
+    //
+    // Activate button
+    //
+    Widgets.ToolbarButton {
+      text: qsTr("Activate")
+      onClicked: app.showLicenseDialog()
+      Layout.alignment: Qt.AlignVCenter
+      icon.source: "qrc:/rcc/icons/toolbar/activate.svg"
+      ToolTip.text: qsTr("Manage license and activate the application")
+      visible: Cpp_CommercialBuild ? Cpp_Licensing_Trial.trialExpired && !Cpp_Licensing_LemonSqueezy.isActivated : false
     }
 
     //
