@@ -1,22 +1,22 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 #include "Taskbar.h"
@@ -281,6 +281,25 @@ UI::WindowManager *UI::Taskbar::windowManager() const
 }
 
 /**
+ * @brief Checks if any tracked window is maximized.
+ *
+ * Iterates through all window IDs and returns true if at least one
+ * window is in the "maximized" state.
+ *
+ * @return true if a maximized window exists, false otherwise.
+ */
+bool UI::Taskbar::hasMaximizedWindow() const
+{
+  for (auto it = m_windowIDs.begin(); it != m_windowIDs.end(); ++it)
+  {
+    if (it.key()->state() == QStringLiteral("maximized"))
+      return true;
+  }
+
+  return false;
+}
+
+/**
  * @brief Returns the QML window (QQuickItem) for a given window ID.
  *
  * Looks up the internal window ID → QQuickItem map to retrieve the actual
@@ -440,11 +459,11 @@ void UI::Taskbar::setActiveGroupId(int groupId)
     }
   }
 
-  // Focus the last window
+  // Focus the first window
   if (m_taskbarButtons->rowCount() > 0)
   {
-    auto lastGroup = m_taskbarButtons->item(m_taskbarButtons->rowCount() - 1);
-    auto windowId = lastGroup->data(TaskbarModel::WindowIdRole).toInt();
+    auto firstGroup = m_taskbarButtons->item(0);
+    auto windowId = firstGroup->data(TaskbarModel::WindowIdRole).toInt();
     for (auto it = m_windowIDs.begin(); it != m_windowIDs.end(); ++it)
     {
       if (it.value() == windowId)
@@ -580,6 +599,7 @@ void UI::Taskbar::unregisterWindow(QQuickItem *window)
 {
   if (m_windowIDs.contains(window))
   {
+    disconnect(window);
     m_windowIDs.remove(window);
     if (m_windowManager)
       m_windowManager->unregisterWindow(window);
@@ -617,6 +637,10 @@ void UI::Taskbar::registerWindow(const int id, QQuickItem *window)
   m_windowIDs.insert(window, id);
   m_windowManager->registerWindow(id, window);
   Q_EMIT registeredWindowsChanged();
+
+  // Keep track of window state
+  connect(window, &QQuickItem::stateChanged, this,
+          [=] { Q_EMIT statesChanged(); });
 
   // Trigger a layout update when the QML code created all the windows
   if (m_windowIDs.count() >= m_taskbarButtons->rowCount() && m_windowManager)

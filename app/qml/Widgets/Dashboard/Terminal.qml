@@ -1,22 +1,22 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 import QtCore
@@ -63,6 +63,7 @@ Item {
     property alias echo: echoCheck.checked
     property alias hex: hexCheckbox.checked
     property alias timestamp: timestampCheck.checked
+    property alias checksum: checkumCombo.currentIndex
     property alias vt100Enabled: terminal.vt100emulation
     property alias lineEnding: lineEndingCombo.currentIndex
     property alias displayMode: displayModeCombo.currentIndex
@@ -185,10 +186,12 @@ Item {
     // Data-write controls
     //
     RowLayout {
+      id: sendCtrl
       Layout.fillWidth: true
       visible: root.width > implicitWidth
 
       Button {
+        id: ftButton
         icon.width: 18
         icon.height: 18
         implicitHeight: 24
@@ -203,6 +206,7 @@ Item {
 
       TextField {
         id: send
+        implicitWidth: 128
         implicitHeight: 24
         font: terminal.font
         Layout.fillWidth: true
@@ -310,8 +314,9 @@ Item {
         enabled: Cpp_IO_Manager.readWrite
         checked: Cpp_IO_Console.dataMode === 1
         onCheckedChanged: {
-          if (Cpp_IO_Console.dataMode !== checked)
-            Cpp_IO_Console.dataMode = checked ? 1 : 0
+          const newValue = checked ? 1 : 0
+          if (Cpp_IO_Console.dataMode !== newValue)
+            Cpp_IO_Console.dataMode = newValue
         }
       }
 
@@ -326,6 +331,33 @@ Item {
           if (currentIndex !== Cpp_IO_Console.lineEnding)
             Cpp_IO_Console.lineEnding = currentIndex
         }
+      }
+
+      ComboBox {
+        id: checkumCombo
+        Layout.minimumWidth: 128
+        opacity: enabled ? 1 : 0.5
+        enabled: Cpp_IO_Manager.readWrite
+        Layout.alignment: Qt.AlignVCenter
+        model: Cpp_IO_Console.checksumMethods
+        currentIndex: Cpp_IO_Console.checksumMethod
+        onCurrentIndexChanged: {
+          if (currentIndex !== Cpp_IO_Console.checksumMethod)
+            Cpp_IO_Console.checksumMethod = currentIndex
+        }
+      }
+
+      Button {
+        id: sendBt
+        icon.width: 18
+        icon.height: 18
+        implicitHeight: 24
+        Layout.maximumWidth: 32
+        onClicked: root.sendData()
+        opacity: enabled ? 1 : 0.5
+        icon.source: "qrc:/rcc/icons/buttons/send.svg"
+        icon.color: Cpp_ThemeManager.colors["button_text"]
+        enabled: Cpp_IO_Manager.readWrite && (send.length > 0 || Cpp_IO_Console.lineEnding != 0)
       }
     }
 

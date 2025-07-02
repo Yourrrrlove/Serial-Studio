@@ -1,22 +1,22 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 #pragma once
@@ -31,15 +31,15 @@
  * @typedef PlotDataX
  * @brief Represents the unique X-axis data points for a plot.
  */
-typedef std::vector<qreal> PlotDataX;
+typedef std::vector<double> PlotDataX;
 
 /**
  * @typedef PlotDataY
  * @brief Represents the Y-axis data points for a single curve.
  */
-typedef std::vector<qreal> PlotDataY;
+typedef std::vector<double> PlotDataY;
 
-#ifdef USE_QT_COMMERCIAL
+#ifdef BUILD_COMMERCIAL
 /**
  * @typedef PlotData3D
  * @brief Represents a list of 3D points.
@@ -70,18 +70,48 @@ typedef std::vector<PlotDataY> MultiPlotDataY;
  */
 typedef struct
 {
-  PlotDataX *x;
-  PlotDataY *y;
+  PlotDataX *x; ///< X-axis data (e.g., time or samples)
+  PlotDataY *y; ///< Y-axis data (e.g., sensor readings)
 } LineSeries;
 
 /**
- * @typedef MultiLineSeries
+ * @struct MultiLineSeries
+ * @brief Represents a set of line plots sharing a common X-axis.
+ *
+ * This structure is used for rendering multi-curve plots, such as when multiple
+ * sensors or variables are plotted against the same time base or domain.
+ *
+ * - `x`: Pointer to the shared X-axis data (e.g., time).
+ * - `y`: A list of Y-axis data vectors, where each entry represents one curve.
+ *
+ * All Y-series are expected to align with the length and indexing of the
+ * shared X-axis.
  */
 typedef struct
 {
-  PlotDataX *x;
-  std::vector<PlotDataY> y;
+  PlotDataX *x;             ///< Shared X-axis data (e.g., time or index)
+  std::vector<PlotDataY> y; ///< Y-axis data for each individual curve
 } MultiLineSeries;
+
+/**
+ * @struct GpsSeries
+ * @brief Represents a time-ordered sequence of GPS position data.
+ *
+ * This structure stores a trajectory as three parallel vectors:
+ * - `latitudes`: The latitude values in degrees.
+ * - `longitudes`: The longitude values in degrees.
+ * - `altitudes`: The altitude values in meters.
+ *
+ * Each index across the three vectors corresponds to a single
+ * recorded GPS point in time. This format is optimized for
+ * visualization, analysis, and storage of path-based geospatial data.
+ */
+typedef struct
+{
+  std::vector<double> latitudes;  ///< Latitude values (degrees)
+  std::vector<double> longitudes; ///< Longitude values (degrees)
+  std::vector<double> altitudes;  ///< Altitude values (meters)
+} GpsSeries;
 
 /**
  * @class SerialStudio
@@ -141,7 +171,8 @@ public:
   {
     PlainText,   /**< Standard decoding, interprets data as plain text. */
     Hexadecimal, /**< Decodes data assuming a hexadecimal-encoded format. */
-    Base64       /**< Decodes data assuming a Base64-encoded format. */
+    Base64,      /**< Decodes data assuming a Base64-encoded format. */
+    Binary,      /**< Decodes raw data directly. */
     /* IMPORTANT: When adding other modes, please don't modify the order of the
      *            enums to ensure backward compatiblity with previous project
      *            files!! */
@@ -202,7 +233,7 @@ public:
     UART,        /**< Serial port communication. */
     Network,     /**< Network socket communication. */
     BluetoothLE, /**< Bluetooth Low Energy communication. */
-#ifdef USE_QT_COMMERCIAL
+#ifdef BUILD_COMMERCIAL
     ModBus, /**< MODBUS communication */
     CanBus, /**< CANBUS communication */
 #endif
@@ -342,6 +373,7 @@ public:
   //
   [[nodiscard]] static QString hexToString(const QString &hex);
   [[nodiscard]] static QString stringToHex(const QString &str);
+  [[nodiscard]] static QByteArray hexToBytes(const QString &data);
   [[nodiscard]] static QString resolveEscapeSequences(const QString &str);
   [[nodiscard]] static QString escapeControlCharacters(const QString &str);
 };

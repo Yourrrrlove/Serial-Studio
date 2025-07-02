@@ -1,22 +1,22 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 import QtQuick
@@ -50,6 +50,7 @@ Item {
   property bool running: true
   property bool interpolate: true
   property bool showLegends: true
+  property var seriesVisible: Array(root.model.count).fill(true)
 
   //
   // Save settings
@@ -66,7 +67,7 @@ Item {
   onWidthChanged: updateWidgetOptions()
   onHeightChanged: updateWidgetOptions()
   function updateWidgetOptions() {
-    root.showLegends = (root.width >= 256)
+    root.showLegends = (root.width >= 320)
     plot.yLabelVisible = (root.width >= 196)
     plot.xLabelVisible = (root.height >= (196 * 2/3))
     root.hasToolbar = (root.width >= toolbar.implicitWidth) && (root.height >= 220)
@@ -80,12 +81,14 @@ Item {
 
     function onTimeout24Hz() {
       if (root.visible && root.running) {
+        root.model.updateData()
+        root.model.calculateAutoScaleRange()
+
         const count = plot.graph.seriesList.length
         for (let i = 0; i < count; ++i) {
           let ptr = plot.graph.seriesList[i]
-
-          if (ptr.visible)
-            root.model.draw(ptr, ptr.objectName)
+          if (ptr.visible && root.seriesVisible[ptr.curveIndex])
+            root.model.draw(ptr, ptr.curveIndex)
           else
             ptr.clear()
         }
@@ -252,8 +255,8 @@ Item {
       Instantiator {
         model: root.model.count
         delegate: LineSeries {
-          objectName: index
           visible: root.interpolate
+          property int curveIndex: index
           Component.onCompleted: plot.graph.addSeries(this)
         }
       }
@@ -264,8 +267,8 @@ Item {
       Instantiator {
         model: root.model.count
         delegate: ScatterSeries {
-          objectName: index
           visible: !root.interpolate
+          property int curveIndex: index
           Component.onCompleted: plot.graph.addSeries(this)
           pointDelegate: Rectangle {
             width: 2
@@ -313,25 +316,17 @@ Item {
 
             Repeater {
               model: root.model.count
-              delegate: RowLayout {
-                id: _label
-                spacing: 4
+              delegate: Switch {
                 Layout.fillWidth: true
-
-                Rectangle {
-                  width: 14
-                  height: 14
-                  color: root.model.colors[index]
-                  Layout.alignment: Qt.AlignVCenter
-                }
-
-                Label {
-                  elide: Qt.ElideMiddle
-                  text: root.model.labels[index]
-                  Layout.alignment: Qt.AlignVCenter
-                  Layout.maximumWidth: 128 - 14 - 8
-                  color: Cpp_ThemeManager.colors["widget_text"]
-                  font: Cpp_Misc_CommonFonts.customMonoFont(0.8)
+                text: root.model.labels[index]
+                Layout.alignment: Qt.AlignVCenter
+                checked: root.seriesVisible[index]
+                palette.highlight: root.model.colors[index]
+                font: Cpp_Misc_CommonFonts.customMonoFont(0.8)
+                palette.text: Cpp_ThemeManager.colors["widget_text"]
+                onCheckedChanged: {
+                  if (checked !== root.seriesVisible[index])
+                    root.seriesVisible[index] = checked
                 }
               }
             }

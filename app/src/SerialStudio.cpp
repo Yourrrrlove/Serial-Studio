@@ -1,28 +1,29 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 #include "SerialStudio.h"
 #include "Misc/ThemeManager.h"
 
-#ifdef USE_QT_COMMERCIAL
+#ifdef BUILD_COMMERCIAL
+#  include "Licensing/Trial.h"
 #  include "Licensing/LemonSqueezy.h"
 #endif
 
@@ -43,8 +44,9 @@
  */
 bool SerialStudio::activated()
 {
-#ifdef USE_QT_COMMERCIAL
-  return Licensing::LemonSqueezy::instance().isActivated();
+#ifdef BUILD_COMMERCIAL
+  return Licensing::LemonSqueezy::instance().isActivated()
+         || Licensing::Trial::instance().trialEnabled();
 #else
   return false;
 #endif
@@ -489,6 +491,49 @@ QString SerialStudio::stringToHex(const QString &str)
 }
 
 /**
+ * Converts the given @a data in HEX format into real binary data.
+ */
+QByteArray SerialStudio::hexToBytes(const QString &data)
+{
+  // Remove spaces from the input data
+  QString withoutSpaces = data;
+  withoutSpaces.replace(QStringLiteral(" "), "");
+
+  // Check if the length of the string is even
+  if (withoutSpaces.length() % 2 != 0)
+  {
+    qWarning() << data << "is not a valid hexadecimal array";
+    return QByteArray();
+  }
+
+  // Iterate over the string in steps of 2
+  bool ok;
+  QByteArray array;
+  for (int i = 0; i < withoutSpaces.length(); i += 2)
+  {
+    // Get two characters (a hex pair)
+    auto chr1 = withoutSpaces.at(i);
+    auto chr2 = withoutSpaces.at(i + 1);
+
+    // Convert the hex pair into a byte
+    QString byteStr = QStringLiteral("%1%2").arg(chr1, chr2);
+    int byte = byteStr.toInt(&ok, 16);
+
+    // If the conversion fails, return an empty array
+    if (!ok)
+    {
+      qWarning() << data << "is not a valid hexadecimal array";
+      return QByteArray();
+    }
+
+    // Append the byte to the result array
+    array.append(static_cast<char>(byte));
+  }
+
+  return array;
+}
+
+/**
  * @brief Resolves C-style escape sequences in a string into their corresponding
  *        control characters.
  *
@@ -499,7 +544,8 @@ QString SerialStudio::stringToHex(const QString &str)
 QString SerialStudio::resolveEscapeSequences(const QString &str)
 {
   QString escapedStr = str;
-  escapedStr.replace(QStringLiteral("\\\\"), QStringLiteral("\\"));
+  escapedStr.replace('\n', QLatin1String(""));
+  escapedStr.replace('\r', QLatin1String(""));
   escapedStr.replace(QStringLiteral("\\a"), QStringLiteral("\a"));
   escapedStr.replace(QStringLiteral("\\b"), QStringLiteral("\b"));
   escapedStr.replace(QStringLiteral("\\f"), QStringLiteral("\f"));
@@ -507,6 +553,7 @@ QString SerialStudio::resolveEscapeSequences(const QString &str)
   escapedStr.replace(QStringLiteral("\\r"), QStringLiteral("\r"));
   escapedStr.replace(QStringLiteral("\\t"), QStringLiteral("\t"));
   escapedStr.replace(QStringLiteral("\\v"), QStringLiteral("\v"));
+  escapedStr.replace(QStringLiteral("\\\\"), QStringLiteral("\\"));
   return escapedStr;
 }
 

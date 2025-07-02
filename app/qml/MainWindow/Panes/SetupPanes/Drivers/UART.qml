@@ -1,22 +1,22 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 import QtCore
@@ -35,7 +35,6 @@ Item {
     category: "UartDriver"
     property alias dtr: _dtr.checked
     property alias port: _portCombo.currentIndex
-    property alias baudRate: _baudCombo.currentIndex
     property alias dataBits: _dataCombo.currentIndex
     property alias parity: _parityCombo.currentIndex
     property alias flowControl: _flowCombo.currentIndex
@@ -108,22 +107,43 @@ Item {
     } ComboBox {
       id: _baudCombo
       editable: true
-      currentIndex: 6
       Layout.fillWidth: true
-      model: Cpp_IO_Serial.baudRateList
 
-      validator: IntValidator {
-        bottom: 1
+      validator: IntValidator { bottom: 1 }
+
+      Component.onCompleted: {
+        Qt.callLater(() => {
+          const rates = Cpp_IO_Serial.baudRateList
+          const current = String(Cpp_IO_Serial.baudRate)
+
+          _baudCombo.model = rates
+
+          const idx = rates.indexOf(current)
+          if (idx !== -1) {
+            _baudCombo.currentIndex = idx
+          } else {
+            _baudCombo.currentIndex = -1
+            _baudCombo.editText = current
+          }
+        })
       }
 
-      onAccepted: {
-        if (find(editText) === -1)
-          Cpp_IO_Serial.appendBaudRate(editText)
+      onEditTextChanged: {
+        const value = parseInt(editText)
+        if (!isNaN(value) && value > 0) {
+          if (Cpp_IO_Serial.baudRate !== value)
+            Cpp_IO_Serial.baudRate = value
+        }
       }
 
-      onCurrentTextChanged: {
-        var value = currentText
-        Cpp_IO_Serial.baudRate = value
+      onCurrentIndexChanged: {
+        if (currentIndex >= 0 && currentIndex < model.length) {
+          const value = parseInt(model[currentIndex])
+          if (!isNaN(value) && Cpp_IO_Serial.baudRate !== value) {
+            Cpp_IO_Serial.baudRate = value
+            editText = String(value)
+          }
+        }
       }
     }
 

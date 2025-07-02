@@ -1,22 +1,23 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio - https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru <https://aspatru.com>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is part of the proprietary feature set of Serial Studio
+ * and is licensed under the Serial Studio Commercial License.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * Redistribution, modification, or use of this file in any form
+ * is permitted only under the terms of a valid commercial license
+ * obtained from the author.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * This file may NOT be used in any build distributed under the
+ * GNU General Public License (GPL) unless explicitly authorized
+ * by a separate commercial agreement.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For license terms, see:
+ * https://github.com/Serial-Studio/Serial-Studio/blob/master/LICENSE.md
+ *
+ * SPDX-License-Identifier: LicenseRef-SerialStudio-Commercial
  */
 
 import QtCore
@@ -109,7 +110,7 @@ Window {
 
     property alias host: _host.text
     property alias port: _port.text
-    //property alias clientId: _clientID.text
+    property alias clientId: _clientID.text
     property alias keepAlive: _keepAlive.text
     property alias cleanSession: _cleanSession.checked
 
@@ -237,6 +238,7 @@ Window {
         clip: true
         Layout.fillWidth: true
         Layout.fillHeight: true
+        Layout.minimumWidth: 356
         currentIndex: _tab.currentIndex
         Layout.topMargin: -parent.spacing - 1
         implicitHeight: Math.max(connectionSettings.implicitHeight,
@@ -260,6 +262,10 @@ Window {
             anchors.fill: parent
             color: Cpp_ThemeManager.colors["groupbox_background"]
             border.color: Cpp_ThemeManager.colors["groupbox_border"]
+
+            DragHandler {
+              target: null
+            }
           }
 
           GridLayout {
@@ -300,16 +306,19 @@ Window {
               }
             }
 
-            /*Label { text: qsTr("Client ID") + ":" }
-            TextField {
+            Label {
+              opacity: enabled ? 1 : 0.5
+              text: qsTr("Client ID") + ":"
+            } TextField {
               id: _clientID
               Layout.fillWidth: true
+              opacity: enabled ? 1 : 0.5
               text: Cpp_MQTT_Client.clientId
               onTextChanged: {
                 if (Cpp_MQTT_Client.clientId !== text)
                   Cpp_MQTT_Client.clientId = text
               }
-            }*/
+            }
 
             Label { text: qsTr("Keep Alive (s)") + ":" }
             TextField {
@@ -355,6 +364,10 @@ Window {
             anchors.fill: parent
             color: Cpp_ThemeManager.colors["groupbox_background"]
             border.color: Cpp_ThemeManager.colors["groupbox_border"]
+
+            DragHandler {
+              target: null
+            }
           }
 
           GridLayout {
@@ -430,6 +443,10 @@ Window {
             anchors.fill: parent
             color: Cpp_ThemeManager.colors["groupbox_background"]
             border.color: Cpp_ThemeManager.colors["groupbox_border"]
+
+            DragHandler {
+              target: null
+            }
           }
 
           GridLayout {
@@ -547,6 +564,10 @@ Window {
             anchors.fill: parent
             color: Cpp_ThemeManager.colors["groupbox_background"]
             border.color: Cpp_ThemeManager.colors["groupbox_border"]
+
+            DragHandler {
+              target: null
+            }
           }
 
           GridLayout {

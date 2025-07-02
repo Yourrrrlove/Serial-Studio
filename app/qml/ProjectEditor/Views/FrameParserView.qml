@@ -1,22 +1,22 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 import QtQuick
@@ -189,6 +189,7 @@ Widgets.Pane {
             onClicked: frameParser.reload()
             Layout.alignment: Qt.AlignVCenter
             icon.source: "qrc:/rcc/icons/code-editor/reload.svg"
+            ToolTip.text: qsTr("Reset to the default parsing script")
           }
 
           //
@@ -201,6 +202,7 @@ Widgets.Pane {
             onClicked: frameParser.import()
             Layout.alignment: Qt.AlignVCenter
             icon.source: "qrc:/rcc/icons/code-editor/import.svg"
+            ToolTip.text: qsTr("Import a JavaScript file for data parsing")
           }
 
           //
@@ -214,6 +216,7 @@ Widgets.Pane {
             enabled: frameParser.isModified
             Layout.alignment: Qt.AlignVCenter
             icon.source: "qrc:/rcc/icons/code-editor/apply.svg"
+            ToolTip.text: qsTr("Validate syntax and apply parsing changes")
           }
 
           //
@@ -238,6 +241,7 @@ Widgets.Pane {
             Layout.alignment: Qt.AlignVCenter
             enabled: frameParser.undoAvailable
             icon.source: "qrc:/rcc/icons/code-editor/undo.svg"
+            ToolTip.text: qsTr("Undo the last code edit")
           }
 
           //
@@ -251,6 +255,7 @@ Widgets.Pane {
             Layout.alignment: Qt.AlignVCenter
             enabled: frameParser.redoAvailable
             icon.source: "qrc:/rcc/icons/code-editor/redo.svg"
+            ToolTip.text: qsTr("Redo the previously undone edit")
           }
 
           //
@@ -274,6 +279,7 @@ Widgets.Pane {
             onClicked: frameParser.cut()
             Layout.alignment: Qt.AlignVCenter
             icon.source: "qrc:/rcc/icons/code-editor/cut.svg"
+            ToolTip.text: qsTr("Cut selected code to clipboard")
           }
 
           //
@@ -286,6 +292,7 @@ Widgets.Pane {
             onClicked: frameParser.copy()
             Layout.alignment: Qt.AlignVCenter
             icon.source: "qrc:/rcc/icons/code-editor/copy.svg"
+            ToolTip.text: qsTr("Copy selected code to clipboard")
           }
 
           //
@@ -298,6 +305,7 @@ Widgets.Pane {
             onClicked: frameParser.paste()
             Layout.alignment: Qt.AlignVCenter
             icon.source: "qrc:/rcc/icons/code-editor/paste.svg"
+            ToolTip.text: qsTr("Paste code from clipboard")
           }
 
           //
@@ -321,6 +329,7 @@ Widgets.Pane {
             onClicked: frameParser.help()
             Layout.alignment: Qt.AlignVCenter
             icon.source: "qrc:/rcc/icons/code-editor/help.svg"
+            ToolTip.text: qsTr("Open help documentation for JavaScript data parsing")
           }
 
           //

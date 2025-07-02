@@ -1,22 +1,22 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 #pragma once
@@ -30,8 +30,6 @@
 #include "JSON/Group.h"
 #include "JSON/Action.h"
 #include "JSON/Dataset.h"
-
-#include "Misc/OsmTemplateServer.h"
 
 namespace JSON
 {
@@ -132,9 +130,6 @@ class ProjectModel : public QObject
   Q_PROPERTY(QStringList availableActionIcons
              READ availableActionIcons
              CONSTANT)
-  Q_PROPERTY(QString osmAddress
-             READ osmAddress
-             CONSTANT)
   // clang-format on
 
 signals:
@@ -143,7 +138,6 @@ signals:
   void modifiedChanged();
   void treeModelChanged();
   void groupModelChanged();
-  void gpsApiKeysChanged();
   void currentViewChanged();
   void actionModelChanged();
   void projectModelChanged();
@@ -224,7 +218,6 @@ public:
   [[nodiscard]] QString jsonFileName() const;
   [[nodiscard]] QString jsonProjectsPath() const;
 
-  [[nodiscard]] QString osmAddress() const;
   [[nodiscard]] QString selectedText() const;
   [[nodiscard]] QString selectedIcon() const;
 
@@ -236,8 +229,6 @@ public:
   [[nodiscard]] const QString &title() const;
   [[nodiscard]] const QString &jsonFilePath() const;
   [[nodiscard]] const QString &frameParserCode() const;
-  [[nodiscard]] const QString &mapTilerApiKey() const;
-  [[nodiscard]] const QString &thunderforestApiKey() const;
 
   [[nodiscard]] bool currentGroupIsEditable() const;
   [[nodiscard]] bool currentDatasetIsEditable() const;
@@ -298,7 +289,6 @@ public slots:
 
 private slots:
   void onJsonLoaded();
-  void onGpsApiKeysChanged();
   void generateComboBoxModels();
   void setCurrentView(const CurrentView view);
   void onGroupItemChanged(QStandardItem *item);
@@ -319,12 +309,9 @@ private:
   QString m_title;
   QString m_frameParserCode;
   QString m_frameEndSequence;
+  QString m_checksumAlgorithm;
   QString m_frameStartSequence;
-
   bool m_hexadecimalDelimiters;
-
-  QString m_mapTilerApiKey;
-  QString m_thunderforestApiKey;
 
   CurrentView m_currentView;
   SerialStudio::DecoderMethod m_frameDecoder;
@@ -350,7 +337,9 @@ private:
   CustomModel *m_datasetModel;
 
   QStringList m_fftSamples;
+  QStringList m_timerModes;
   QStringList m_decoderOptions;
+  QStringList m_checksumMethods;
   QStringList m_frameDetectionMethods;
   QList<SerialStudio::FrameDetection> m_frameDetectionMethodsValues;
 
@@ -362,8 +351,6 @@ private:
   JSON::Group m_selectedGroup;
   JSON::Action m_selectedAction;
   JSON::Dataset m_selectedDataset;
-
-  OsmTemplateServer m_server;
 };
 
 /**

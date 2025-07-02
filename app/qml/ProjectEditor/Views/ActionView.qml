@@ -1,22 +1,22 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 import QtQuick
@@ -103,6 +103,7 @@ Widgets.Pane {
           toolbarButton: false
           text: qsTr("Change Icon")
           Layout.alignment: Qt.AlignVCenter
+          ToolTip.text: qsTr("Change the icon used for this action")
           icon.source: "qrc:/rcc/actions/" + Cpp_JSON_ProjectModel.actionIcon + ".svg"
           onClicked: {
             actionIconPicker.selectedIcon = Cpp_JSON_ProjectModel.actionIcon
@@ -125,6 +126,7 @@ Widgets.Pane {
           toolbarButton: false
           text: qsTr("Duplicate")
           Layout.alignment: Qt.AlignVCenter
+          ToolTip.text: qsTr("Duplicate this action with all its settings")
           onClicked: Cpp_JSON_ProjectModel.duplicateCurrentAction()
           icon.source: "qrc:/rcc/icons/project-editor/actions/duplicate.svg"
         }
@@ -138,6 +140,7 @@ Widgets.Pane {
           toolbarButton: false
           Layout.alignment: Qt.AlignVCenter
           onClicked: Cpp_JSON_ProjectModel.deleteCurrentAction()
+          ToolTip.text: qsTr("Delete this action from the project")
           icon.source: "qrc:/rcc/icons/project-editor/actions/delete.svg"
         }
       }
@@ -169,41 +172,6 @@ Widgets.Pane {
         id: delegate
         width: parent.width
         modelPointer: Cpp_JSON_ProjectModel.actionModel
-
-        footerItem: ColumnLayout {
-          spacing: 0
-
-          Image {
-            sourceSize: Qt.size(128, 128)
-            Layout.alignment: Qt.AlignHCenter
-            source: "qrc:/rcc/images/action.svg"
-          }
-
-          Item {
-            implicitHeight: 16
-          }
-
-          Label {
-            Layout.alignment: Qt.AlignHCenter
-            text: qsTr("Send commands with a button click")
-            horizontalAlignment: Label.AlignHCenter
-            font: Cpp_Misc_CommonFonts.customUiFont(2, true)
-          }
-
-          Item {
-            implicitHeight: 8
-          }
-
-          Label {
-            opacity: 0.8
-            Layout.alignment: Qt.AlignHCenter
-            horizontalAlignment: Label.AlignHCenter
-            Layout.maximumWidth: delegate.width * 0.9
-            wrapMode: Label.WrapAtWordBoundaryOrAnywhere
-            font: Cpp_Misc_CommonFonts.customUiFont(1.5, false)
-            text: qsTr("Actions let you send custom commands to the connected device with a single button press.")
-          }
-        }
       }
     }
   }

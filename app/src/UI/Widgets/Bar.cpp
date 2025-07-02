@@ -1,22 +1,22 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 #include "UI/Dashboard.h"
@@ -61,7 +61,7 @@ const QString &Widgets::Bar::units() const
  * @brief Returns the current value of the bar.
  * @return The current value of the bar.
  */
-qreal Widgets::Bar::value() const
+double Widgets::Bar::value() const
 {
   return m_value;
 }
@@ -70,7 +70,7 @@ qreal Widgets::Bar::value() const
  * @brief Returns the minimum value of the bar scale.
  * @return The minimum value of the bar scale.
  */
-qreal Widgets::Bar::minValue() const
+double Widgets::Bar::minValue() const
 {
   return m_minValue;
 }
@@ -79,7 +79,7 @@ qreal Widgets::Bar::minValue() const
  * @brief Returns the maximum value of the bar scale.
  * @return The maximum value of the bar scale.
  */
-qreal Widgets::Bar::maxValue() const
+double Widgets::Bar::maxValue() const
 {
   return m_maxValue;
 }
@@ -88,7 +88,7 @@ qreal Widgets::Bar::maxValue() const
  * @brief Returns the alarm level of the bar.
  * @return The alarm level of the bar.
  */
-qreal Widgets::Bar::alarmValue() const
+double Widgets::Bar::alarmValue() const
 {
   return m_alarmValue;
 }
@@ -100,15 +100,15 @@ qreal Widgets::Bar::alarmValue() const
  * the range defined by minValue() and maxValue(). It is used to determine
  * the visual height of the bar in the UI.
  */
-qreal Widgets::Bar::fractionalValue() const
+double Widgets::Bar::fractionalValue() const
 {
-  qreal min = qMin(minValue(), maxValue());
-  qreal max = qMax(minValue(), maxValue());
-  const qreal range = max - min;
+  double min = qMin(minValue(), maxValue());
+  double max = qMax(minValue(), maxValue());
+  const double range = max - min;
   if (qFuzzyIsNull(range))
     return 0.0;
 
-  const qreal level = value() - min;
+  const double level = value() - min;
   return qBound(0.0, level / range, 1.0);
 }
 
@@ -119,14 +119,14 @@ qreal Widgets::Bar::fractionalValue() const
  * the range defined by minValue() and maxValue(). It is used to determine
  * the position where the bar's color should change to indicate an alarm state.
  */
-qreal Widgets::Bar::alarmFractionalValue() const
+double Widgets::Bar::alarmFractionalValue() const
 {
-  const qreal range = maxValue() - minValue();
+  const double range = maxValue() - minValue();
   if (qFuzzyIsNull(range))
     return 0.0;
 
-  const qreal clampedAlarmLevel = qBound(minValue(), m_alarmValue, maxValue());
-  const qreal alarmPosition = clampedAlarmLevel - minValue();
+  const double clampedAlarmLevel = qBound(minValue(), m_alarmValue, maxValue());
+  const double alarmPosition = clampedAlarmLevel - minValue();
   return qBound(0.0, alarmPosition / range, 1.0);
 }
 

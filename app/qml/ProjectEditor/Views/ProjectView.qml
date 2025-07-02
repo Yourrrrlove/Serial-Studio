@@ -1,22 +1,22 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 import QtQuick
@@ -93,41 +93,6 @@ Widgets.Pane {
           id: delegate
           width: parent.width
           modelPointer: Cpp_JSON_ProjectModel.projectModel
-
-          footerItem: ColumnLayout {
-            spacing: 0
-
-            Image {
-              sourceSize: Qt.size(96, 96)
-              Layout.alignment: Qt.AlignHCenter
-              source: "qrc:/rcc/images/tip.svg"
-            }
-
-            Item {
-              implicitHeight: 16
-            }
-
-            Label {
-              Layout.alignment: Qt.AlignHCenter
-              text: qsTr("First, set up frame detection and data decoding.")
-              horizontalAlignment: Label.AlignHCenter
-              font: Cpp_Misc_CommonFonts.customUiFont(1.6, true)
-            }
-
-            Item {
-              implicitHeight: 8
-            }
-
-            Label {
-              opacity: 0.8
-              Layout.alignment: Qt.AlignHCenter
-              horizontalAlignment: Label.AlignHCenter
-              Layout.maximumWidth: delegate.width * 0.9
-              wrapMode: Label.WrapAtWordBoundaryOrAnywhere
-              font: Cpp_Misc_CommonFonts.customUiFont(1.4, false)
-              text: qsTr("Frames are parsed into arrays, and datasets link each element to a widget.")
-            }
-          }
         }
       }
     }

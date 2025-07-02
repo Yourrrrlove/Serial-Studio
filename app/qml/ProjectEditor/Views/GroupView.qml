@@ -1,22 +1,22 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 import QtQuick
@@ -118,6 +118,7 @@ Widgets.Pane {
             enabled: Cpp_JSON_ProjectModel.currentGroupIsEditable
             onClicked: Cpp_JSON_ProjectModel.addDataset(SerialStudio.DatasetGeneric)
             icon.source: "qrc:/rcc/icons/project-editor/actions/add-dataset.svg"
+            ToolTip.text: qsTr("Add a generic dataset to the current group")
           }
 
           //
@@ -131,6 +132,7 @@ Widgets.Pane {
             enabled: Cpp_JSON_ProjectModel.currentGroupIsEditable
             onClicked: Cpp_JSON_ProjectModel.addDataset(SerialStudio.DatasetPlot)
             icon.source: "qrc:/rcc/icons/project-editor/actions/add-plot.svg"
+            ToolTip.text: qsTr("Add a 2D plot to visualize numeric data")
           }
 
           //
@@ -144,6 +146,7 @@ Widgets.Pane {
             enabled: Cpp_JSON_ProjectModel.currentGroupIsEditable
             onClicked: Cpp_JSON_ProjectModel.addDataset(SerialStudio.DatasetFFT)
             icon.source: "qrc:/rcc/icons/project-editor/actions/add-fft.svg"
+            ToolTip.text: qsTr("Add an FFT plot for frequency domain visualization")
           }
 
           //
@@ -157,6 +160,7 @@ Widgets.Pane {
             enabled: Cpp_JSON_ProjectModel.currentGroupIsEditable
             onClicked: Cpp_JSON_ProjectModel.addDataset(SerialStudio.DatasetBar)
             icon.source: "qrc:/rcc/icons/project-editor/actions/add-bar.svg"
+            ToolTip.text: qsTr("Add a bar or level indicator for scaled values")
           }
 
           //
@@ -170,6 +174,7 @@ Widgets.Pane {
             enabled: Cpp_JSON_ProjectModel.currentGroupIsEditable
             onClicked: Cpp_JSON_ProjectModel.addDataset(SerialStudio.DatasetGauge)
             icon.source: "qrc:/rcc/icons/project-editor/actions/add-gauge.svg"
+            ToolTip.text: qsTr("Add a gauge widget for analog-style visualization")
           }
 
           //
@@ -183,6 +188,7 @@ Widgets.Pane {
             enabled: Cpp_JSON_ProjectModel.currentGroupIsEditable
             onClicked: Cpp_JSON_ProjectModel.addDataset(SerialStudio.DatasetCompass)
             icon.source: "qrc:/rcc/icons/project-editor/actions/add-compass.svg"
+            ToolTip.text: qsTr("Add a compass to display directional or angular data")
           }
 
           //
@@ -196,6 +202,7 @@ Widgets.Pane {
             enabled: Cpp_JSON_ProjectModel.currentGroupIsEditable
             onClicked: Cpp_JSON_ProjectModel.addDataset(SerialStudio.DatasetLED)
             icon.source: "qrc:/rcc/icons/project-editor/actions/add-led.svg"
+            ToolTip.text: qsTr("Add an LED indicator for binary status signals")
           }
 
           //
@@ -215,6 +222,7 @@ Widgets.Pane {
             Layout.alignment: Qt.AlignVCenter
             onClicked: Cpp_JSON_ProjectModel.duplicateCurrentGroup()
             icon.source: "qrc:/rcc/icons/project-editor/actions/duplicate.svg"
+            ToolTip.text: qsTr("Duplicate the current group and its contents")
           }
 
           //
@@ -227,6 +235,7 @@ Widgets.Pane {
             Layout.alignment: Qt.AlignVCenter
             onClicked: Cpp_JSON_ProjectModel.deleteCurrentGroup()
             icon.source: "qrc:/rcc/icons/project-editor/actions/delete.svg"
+            ToolTip.text: qsTr("Delete the current group and all contained datasets")
           }
         }
 
@@ -257,41 +266,6 @@ Widgets.Pane {
           id: delegate
           width: parent.width
           modelPointer: Cpp_JSON_ProjectModel.groupModel
-
-          footerItem: ColumnLayout {
-            spacing: 0
-
-            Image {
-              sourceSize: Qt.size(96, 96)
-              Layout.alignment: Qt.AlignHCenter
-              source: "qrc:/rcc/images/tip.svg"
-            }
-
-            Item {
-              implicitHeight: 16
-            }
-
-            Label {
-              Layout.alignment: Qt.AlignHCenter
-              horizontalAlignment: Label.AlignHCenter
-              font: Cpp_Misc_CommonFonts.customUiFont(1.6, true)
-              text: qsTr("Groups hold multiple datasets and organize your data.")
-            }
-
-            Item {
-              implicitHeight: 8
-            }
-
-            Label {
-              opacity: 0.8
-              Layout.alignment: Qt.AlignHCenter
-              horizontalAlignment: Label.AlignHCenter
-              Layout.maximumWidth: delegate.width * 0.9
-              wrapMode: Label.WrapAtWordBoundaryOrAnywhere
-              font: Cpp_Misc_CommonFonts.customUiFont(1.4, false)
-              text: qsTr("Use the sub-toolbar to quickly add plots, FFTs, and other dataset types to this group.")
-            }
-          }
         }
       }
     }

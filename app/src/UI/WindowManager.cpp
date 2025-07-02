@@ -1,22 +1,22 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 #include "WindowManager.h"
@@ -137,6 +137,10 @@ void UI::WindowManager::clear()
   m_windowZ.clear();
   m_windows.clear();
   m_windowOrder.clear();
+  m_dragWindow = nullptr;
+  m_targetWindow = nullptr;
+  m_resizeWindow = nullptr;
+  m_focusedWindow = nullptr;
   m_snapIndicatorVisible = false;
 
   Q_EMIT zCounterChanged();
@@ -217,6 +221,7 @@ void UI::WindowManager::autoLayout()
       win->setWidth(windowArea.width());
       win->setHeight(windowArea.height());
       Q_EMIT geometryChanged(win);
+
       return;
     }
 
@@ -232,7 +237,7 @@ void UI::WindowManager::autoLayout()
     // Vertical split, divide the area into left/right panels
     if (splitVertically)
     {
-      qreal splitX = area.x() + area.width() / 2.0 - spacing / 2.0;
+      double splitX = area.x() + area.width() / 2.0 - spacing / 2.0;
       firstArea = QRect(area.x(), area.y(), area.width() / 2.0 - spacing / 2.0,
                         area.height());
       secondArea = QRect(splitX + spacing, area.y(),
@@ -242,7 +247,7 @@ void UI::WindowManager::autoLayout()
     // Horizontal split, divide the area into top/bottom panels
     else
     {
-      qreal splitY = area.y() + area.height() / 2.0 - spacing / 2.0;
+      double splitY = area.y() + area.height() / 2.0 - spacing / 2.0;
       firstArea = QRect(area.x(), area.y(), area.width(),
                         area.height() / 2.0 - spacing / 2.0);
       secondArea = QRect(area.x(), splitY + spacing, area.width(),
@@ -256,6 +261,16 @@ void UI::WindowManager::autoLayout()
 
   // Kick off the recursive tiling process
   tileRecursive(tileRecursive, rootArea, visibleWindows);
+
+  // Ensure all windows are visible
+  for (auto *win : std::as_const(m_windows))
+  {
+    if (win && !win->isVisible())
+    {
+      if (win->state() == "normal" || win->state() == "maximized")
+        win->setVisible(true);
+    }
+  }
 }
 
 /**
@@ -303,8 +318,8 @@ void UI::WindowManager::cascadeLayout()
       continue;
 
     // Obtain minimum recommended window sizes
-    qreal minWidth = win->property("implicitWidth").toReal();
-    qreal minHeight = win->property("implicitHeight").toReal();
+    double minWidth = win->property("implicitWidth").toReal();
+    double minHeight = win->property("implicitHeight").toReal();
 
     // Fallback to sane defaults if minimum sizes aren't set
     if (minWidth <= 0)
@@ -330,6 +345,16 @@ void UI::WindowManager::cascadeLayout()
     // Update position counters
     x += offsetStep;
     y += offsetStep;
+  }
+
+  // Ensure all windows are visible
+  for (auto *win : std::as_const(m_windows))
+  {
+    if (win && !win->isVisible())
+    {
+      if (win->state() == "normal" || win->state() == "maximized")
+        win->setVisible(true);
+    }
   }
 }
 
@@ -574,10 +599,10 @@ UI::WindowManager::detectResizeEdge(QQuickItem *target) const
   {
     const int kResizeMargin = 8;
     QPointF localPos = target->mapFromItem(this, m_initialMousePos);
-    const qreal x = localPos.x();
-    const qreal y = localPos.y();
-    const qreal w = target->width();
-    const qreal h = target->height();
+    const double x = localPos.x();
+    const double y = localPos.y();
+    const double w = target->width();
+    const double h = target->height();
 
     const bool nearLeft = x <= kResizeMargin;
     const bool nearRight = x >= w - kResizeMargin;
@@ -677,12 +702,12 @@ void UI::WindowManager::mouseMoveEvent(QMouseEvent *event)
   if (m_dragWindow && dragDistance >= 20)
   {
     // Obtain new X/Y position
-    qreal newX = m_initialGeometry.x() + delta.x();
-    qreal newY = m_initialGeometry.y() + delta.y();
+    double newX = m_initialGeometry.x() + delta.x();
+    double newY = m_initialGeometry.y() + delta.y();
 
     // Obtain window size
-    qreal w = m_dragWindow->width();
-    qreal h = m_dragWindow->height();
+    double w = m_dragWindow->width();
+    double h = m_dragWindow->height();
 
     // Restore window size if needed
     if ((w >= width() - 20 || h >= height() - 20) && !autoLayoutEnabled())
@@ -750,14 +775,14 @@ void UI::WindowManager::mouseMoveEvent(QMouseEvent *event)
     else
     {
       // Get screen size
-      const qreal screenW = width();
-      const qreal screenH = height();
+      const double screenW = width();
+      const double screenH = height();
 
       // Set window rect
-      const qreal top = newY;
-      const qreal left = newX;
-      const qreal right = newX + w;
-      const qreal bottom = newY + h;
+      const double top = newY;
+      const double left = newX;
+      const double right = newX + w;
+      const double bottom = newY + h;
 
       // Initialize snapped flag
       bool snapped = false;

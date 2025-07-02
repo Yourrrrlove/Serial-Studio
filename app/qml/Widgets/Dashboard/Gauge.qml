@@ -1,22 +1,22 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 import QtQuick
@@ -41,7 +41,7 @@ Item {
   //
   // Widget layout
   //
-  RowLayout {
+  ColumnLayout {
     spacing: 0
     anchors.margins: 8
     anchors.fill: parent
@@ -58,8 +58,7 @@ Item {
       Layout.fillWidth: true
       Layout.fillHeight: true
       Layout.topMargin: trackWidth / 2
-      Layout.alignment: Qt.AlignVCenter
-      Layout.maximumWidth: root.width - range.width - 64
+      Layout.alignment: Qt.AlignHCenter
 
       //
       // Colors
@@ -75,6 +74,11 @@ Item {
       rotation: 180
       startAngle: 40
       capStyle: Qt.FlatCap
+
+      //
+      // Anumations
+      //
+      Behavior on value {NumberAnimation{}}
 
       //
       // Track widths
@@ -97,9 +101,9 @@ Item {
       Shape {
         layer.samples: 8
         layer.enabled: true
-        width: control.width + 10
-        height: control.height + 10
-        visible: control.alarmEnabled
+        width: control.width - 2 * control.trackWidth
+        height: control.height
+        visible: control.alarmEnabled && root.width >= root.height
 
         Behavior on opacity {NumberAnimation{}}
         opacity: root.model.value >= root.model.alarmValue ? 1 : 0.5
@@ -126,7 +130,7 @@ Item {
     // Spacer
     //
     Item {
-      implicitWidth: 4
+      implicitHeight: 4
     }
 
     //
@@ -136,22 +140,20 @@ Item {
       id: range
       value: model.value
       units: model.units
+      rangeVisible: false
       maxValue: model.maxValue
       minValue: model.minValue
       maximumWidth: root.width * 0.3
-      rangeVisible: root.height >= 120
-      alarm: root.model.alarmValue !== 0 && root.model.value >= root.model.alarmValue
-
-      Layout.fillHeight: true
+      Layout.alignment: Qt.AlignHCenter
       Layout.minimumWidth: implicitWidth
-      Layout.maximumWidth: implicitWidth
+      alarm: root.model.alarmValue !== 0 && root.model.value >= root.model.alarmValue
     }
 
     //
     // Spacer
     //
     Item {
-      implicitWidth: 8
+      implicitHeight: 8
     }
   }
 }

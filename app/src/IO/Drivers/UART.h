@@ -1,22 +1,22 @@
 /*
- * UART Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 #pragma once
@@ -26,8 +26,6 @@
 #include <QSettings>
 #include <QByteArray>
 #include <QtSerialPort>
-#include <QTextCursor>
-#include <QQuickTextDocument>
 
 #include "IO/HAL_Driver.h"
 
@@ -83,7 +81,7 @@ class UART : public HAL_Driver
              NOTIFY languageChanged)
   Q_PROPERTY(QStringList baudRateList
              READ baudRateList
-             NOTIFY baudRateListChanged)
+             NOTIFY baudRateChanged)
   Q_PROPERTY(QStringList dataBitsList
              READ dataBitsList
              NOTIFY languageChanged)
@@ -144,7 +142,7 @@ public:
   [[nodiscard]] quint8 flowControlIndex() const;
 
   [[nodiscard]] QStringList portList() const;
-  [[nodiscard]] const QStringList &baudRateList() const;
+  [[nodiscard]] QStringList baudRateList() const;
 
   [[nodiscard]] QStringList parityList() const;
   [[nodiscard]] QStringList dataBitsList() const;
@@ -164,7 +162,6 @@ public slots:
   void setParity(const quint8 parityIndex);
   void setPortIndex(const quint8 portIndex);
   void registerDevice(const QString &device);
-  void appendBaudRate(const QString &baudRate);
   void setDataBits(const quint8 dataBitsIndex);
   void setStopBits(const quint8 stopBitsIndex);
   void setAutoReconnect(const bool autoreconnect);
@@ -172,8 +169,6 @@ public slots:
 
 private slots:
   void onReadyRead();
-  void readSettings();
-  void writeSettings();
   void populateErrors();
   void refreshSerialDevices();
   void handleError(QSerialPort::SerialPortError error);
@@ -191,7 +186,6 @@ private:
   int m_lastSerialDeviceIndex;
 
   qint32 m_baudRate;
-  QSettings m_settings;
   QSerialPort::Parity m_parity;
   QSerialPort::DataBits m_dataBits;
   QSerialPort::StopBits m_stopBits;
@@ -203,11 +197,12 @@ private:
   quint8 m_stopBitsIndex;
   quint8 m_flowControlIndex;
 
+  QSettings m_settings;
   QStringList m_deviceNames;
   QStringList m_customDevices;
   QStringList m_deviceLocations;
 
-  QStringList m_baudRateList;
+  QMutex m_errorHandlerMutex;
   QMap<QSerialPort::SerialPortError, QString> m_errorDescriptions;
 };
 } // namespace Drivers

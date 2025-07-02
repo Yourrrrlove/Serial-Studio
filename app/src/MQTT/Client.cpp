@@ -1,22 +1,22 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 #include <QFile>
@@ -36,6 +36,9 @@ MQTT::Client::Client()
   : m_publisher(false)
   , m_sslEnabled(false)
 {
+  // Set initial random client ID
+  regenerateClientId();
+
   // Initialize MQTT versions model
   m_mqttVersions.insert(tr("MQTT 3.1"), QMqttClient::MQTT_3_1);
   m_mqttVersions.insert(tr("MQTT 3.1.1"), QMqttClient::MQTT_3_1_1);
@@ -80,7 +83,7 @@ MQTT::Client::Client()
           });
 
   // Publish incoming data frames
-  connect(&IO::Manager::instance(), &IO::Manager::dataReceived, this,
+  connect(&IO::Manager::instance(), &IO::Manager::frameReceived, this,
           &MQTT::Client::publishMessage);
 
   // Set default parameters
@@ -148,7 +151,7 @@ bool MQTT::Client::cleanSession() const
  */
 QString MQTT::Client::clientId() const
 {
-  return m_client.clientId();
+  return m_clientId;
 }
 
 /**
@@ -457,6 +460,10 @@ void MQTT::Client::openConnection()
     }
   }
 
+  // Use random client ID if needed
+  if (clientId().isEmpty())
+    regenerateClientId();
+
   // Connect the client
   if (m_sslEnabled)
     m_client.connectToHostEncrypted(m_sslConfiguration);
@@ -490,6 +497,32 @@ void MQTT::Client::toggleConnection()
 }
 
 /**
+ * @brief Regenerates and sets a new random MQTT client ID.
+ *
+ * This method creates a new client ID using a pseudo-random sequence of
+ * lowercase alphanumeric characters. The generated ID is 16 characters long
+ * and is assigned to the client using setClientId().
+ *
+ * This helps ensure uniqueness across MQTT client sessions and can be used
+ * to recover or randomize identity without requiring external input.
+ *
+ * @note The character set used includes only lowercase letters and digits.
+ */
+void MQTT::Client::regenerateClientId()
+{
+  QString clientId;
+  constexpr int length = 16;
+  const QString charset = "abcdefghijklmnopqrstuvwxyz0123456789";
+  for (int i = 0; i < length; ++i)
+  {
+    int index = QRandomGenerator::global()->bounded(charset.length());
+    clientId.append(charset.at(index));
+  }
+
+  setClientId(clientId);
+}
+
+/**
  * @brief Sets the client mode (0=subscriber, 1=publisher).
  * @param mode Index of the desired mode.
  */
@@ -516,6 +549,7 @@ void MQTT::Client::setTopic(const QString &topic)
  */
 void MQTT::Client::setClientId(const QString &id)
 {
+  m_clientId = id;
   m_client.setClientId(id);
   Q_EMIT mqttConfigurationChanged();
 }

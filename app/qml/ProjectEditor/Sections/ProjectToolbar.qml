@@ -1,22 +1,22 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 import QtQuick
@@ -134,6 +134,7 @@ Rectangle {
       text: qsTr("New")
       Layout.alignment: Qt.AlignVCenter
       onClicked: Cpp_JSON_ProjectModel.newJsonFile()
+      ToolTip.text: qsTr("Create a new JSON project")
       icon.source: "qrc:/rcc/icons/project-editor/toolbar/new.svg"
     }
 
@@ -153,6 +154,7 @@ Rectangle {
         horizontalLayout: true
         Layout.alignment: Qt.AlignLeft
         onClicked: Cpp_JSON_ProjectModel.openJsonFile()
+        ToolTip.text: qsTr("Open an existing JSON project")
         icon.source: "qrc:/rcc/icons/project-editor/toolbar/open.svg"
       }
 
@@ -161,6 +163,7 @@ Rectangle {
         text: qsTr("Save")
         horizontalLayout: true
         Layout.alignment: Qt.AlignLeft
+        ToolTip.text: qsTr("Save the current project")
         onClicked: Cpp_JSON_ProjectModel.saveJsonFile(false)
         icon.source: "qrc:/rcc/icons/project-editor/toolbar/save.svg"
         enabled: Cpp_JSON_ProjectModel.modified && Cpp_JSON_ProjectModel.groupCount > 0 && Cpp_JSON_ProjectModel.datasetCount > 0
@@ -172,6 +175,7 @@ Rectangle {
         horizontalLayout: true
         Layout.alignment: Qt.AlignLeft
         onClicked: Cpp_JSON_ProjectModel.saveJsonFile(true)
+        ToolTip.text: qsTr("Save the current project under a new name")
         icon.source: "qrc:/rcc/icons/project-editor/toolbar/save-as.svg"
         enabled: Cpp_JSON_ProjectModel.groupCount > 0 && Cpp_JSON_ProjectModel.datasetCount > 0
       }
@@ -195,6 +199,7 @@ Rectangle {
       text: qsTr("Action")
       Layout.alignment: Qt.AlignVCenter
       onClicked: Cpp_JSON_ProjectModel.addAction()
+      ToolTip.text: qsTr("Add a new action to the project")
       icon.source: "qrc:/rcc/icons/project-editor/toolbar/add-action.svg"
     }
 
@@ -215,6 +220,7 @@ Rectangle {
     Widgets.ToolbarButton {
       text: qsTr("Dataset")
       Layout.alignment: Qt.AlignVCenter
+      ToolTip.text: qsTr("Add a generic dataset")
       icon.source: "qrc:/rcc/icons/project-editor/toolbar/add-dataset.svg"
       onClicked: Cpp_JSON_ProjectModel.addDataset(SerialStudio.DatasetGeneric)
     }
@@ -235,6 +241,7 @@ Rectangle {
         iconSize: 16
         horizontalLayout: true
         Layout.alignment: Qt.AlignLeft
+        ToolTip.text: qsTr("Add a 2D plot dataset")
         icon.source: "qrc:/rcc/icons/project-editor/toolbar/add-plot.svg"
         onClicked: Cpp_JSON_ProjectModel.addDataset(SerialStudio.DatasetPlot)
       }
@@ -245,6 +252,7 @@ Rectangle {
         iconSize: 16
         horizontalLayout: true
         Layout.alignment: Qt.AlignLeft
+        ToolTip.text: qsTr("Add a Fast Fourier Transform plot")
         icon.source: "qrc:/rcc/icons/project-editor/toolbar/add-fft.svg"
         onClicked: Cpp_JSON_ProjectModel.addDataset(SerialStudio.DatasetFFT)
       }
@@ -255,6 +263,7 @@ Rectangle {
         iconSize: 16
         horizontalLayout: true
         Layout.alignment: Qt.AlignLeft
+        ToolTip.text: qsTr("Add a gauge widget for numeric data")
         icon.source: "qrc:/rcc/icons/project-editor/toolbar/add-gauge.svg"
         onClicked: Cpp_JSON_ProjectModel.addDataset(SerialStudio.DatasetGauge)
       }
@@ -265,6 +274,7 @@ Rectangle {
         iconSize: 16
         horizontalLayout: true
         Layout.alignment: Qt.AlignLeft
+        ToolTip.text: qsTr("Add a vertical bar level indicator")
         icon.source: "qrc:/rcc/icons/project-editor/toolbar/add-bar.svg"
         onClicked: Cpp_JSON_ProjectModel.addDataset(SerialStudio.DatasetBar)
       }
@@ -275,6 +285,7 @@ Rectangle {
         iconSize: 16
         horizontalLayout: true
         Layout.alignment: Qt.AlignLeft
+        ToolTip.text: qsTr("Add a compass widget for directional data")
         icon.source: "qrc:/rcc/icons/project-editor/toolbar/add-compass.svg"
         onClicked: Cpp_JSON_ProjectModel.addDataset(SerialStudio.DatasetCompass)
       }
@@ -285,6 +296,7 @@ Rectangle {
         iconSize: 16
         horizontalLayout: true
         Layout.alignment: Qt.AlignLeft
+        ToolTip.text: qsTr("Add an LED-style status indicator")
         icon.source: "qrc:/rcc/icons/project-editor/toolbar/add-led.svg"
         onClicked: Cpp_JSON_ProjectModel.addDataset(SerialStudio.DatasetLED)
       }
@@ -307,6 +319,7 @@ Rectangle {
     Widgets.ToolbarButton {
       text: qsTr("Group")
       Layout.alignment: Qt.AlignVCenter
+      ToolTip.text: qsTr("Add a dataset container group")
       icon.source: "qrc:/rcc/icons/project-editor/toolbar/add-group.svg"
       onClicked: Cpp_JSON_ProjectModel.addGroup(qsTr("Dataset Container"), SerialStudio.NoGroupWidget)
     }
@@ -327,6 +340,7 @@ Rectangle {
         iconSize: 16
         horizontalLayout: true
         Layout.alignment: Qt.AlignLeft
+        ToolTip.text: qsTr("Add a data table view")
         icon.source: "qrc:/rcc/icons/project-editor/toolbar/add-datagrid.svg"
         onClicked: Cpp_JSON_ProjectModel.addGroup(qsTr("Data Grid"), SerialStudio.DataGrid)
       }
@@ -337,6 +351,7 @@ Rectangle {
         iconSize: 16
         horizontalLayout: true
         Layout.alignment: Qt.AlignLeft
+        ToolTip.text: qsTr("Add a 2D plot with multiple signals")
         icon.source: "qrc:/rcc/icons/project-editor/toolbar/add-multiplot.svg"
         onClicked: Cpp_JSON_ProjectModel.addGroup(qsTr("Multiple Plot"), SerialStudio.MultiPlot)
       }
@@ -347,6 +362,7 @@ Rectangle {
         iconSize: 16
         horizontalLayout: true
         Layout.alignment: Qt.AlignLeft
+        ToolTip.text: qsTr("Add a 3D plot visualization")
         icon.source: "qrc:/rcc/icons/project-editor/toolbar/add-plot3d.svg"
         onClicked: Cpp_JSON_ProjectModel.addGroup(qsTr("3D Plot"), SerialStudio.Plot3D)
       }
@@ -357,6 +373,7 @@ Rectangle {
         iconSize: 16
         horizontalLayout: true
         Layout.alignment: Qt.AlignLeft
+        ToolTip.text: qsTr("Add a group for 3-axis accelerometer data")
         icon.source: "qrc:/rcc/icons/project-editor/toolbar/add-accelerometer.svg"
         onClicked: Cpp_JSON_ProjectModel.addGroup(qsTr("Accelerometer"), SerialStudio.Accelerometer)
       }
@@ -369,6 +386,7 @@ Rectangle {
         Layout.alignment: Qt.AlignLeft
         icon.source: "qrc:/rcc/icons/project-editor/toolbar/add-gyroscope.svg"
         onClicked: Cpp_JSON_ProjectModel.addGroup(qsTr("Gyroscope"), SerialStudio.Gyroscope)
+       ToolTip.text: qsTr("Add a group for 3-axis gyroscope data (angular rates are integrated into orientation automatically)")
       }
 
       Widgets.ToolbarButton {
@@ -377,6 +395,7 @@ Rectangle {
         iconSize: 16
         horizontalLayout: true
         Layout.alignment: Qt.AlignLeft
+        ToolTip.text: qsTr("Add a map widget for GPS data")
         icon.source: "qrc:/rcc/icons/project-editor/toolbar/add-gps.svg"
         onClicked: Cpp_JSON_ProjectModel.addGroup(qsTr("GPS Map"), SerialStudio.GPS)
       }
@@ -400,6 +419,7 @@ Rectangle {
       text: qsTr("Help")
       Layout.alignment: Qt.AlignVCenter
       icon.source: "qrc:/rcc/icons/project-editor/toolbar/help.svg"
+      ToolTip.text: qsTr("Open the online Project Editor documentation")
       onClicked: Qt.openUrlExternally("https://github.com/Serial-Studio/Serial-Studio/wiki/Project-Editor")
     }
 

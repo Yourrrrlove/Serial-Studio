@@ -1,22 +1,22 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 import QtQuick
@@ -26,6 +26,11 @@ import QtQuick.Controls
 
 Item {
   id: root
+
+  //
+  // Constants
+  //
+  property int maxButtonWidth: 128
 
   //
   // Signals
@@ -40,6 +45,7 @@ Item {
   property alias font: _label.font
   property alias text: _label.text
   property bool toolbarButton: true
+  property bool checkBgVisible: true
   property bool horizontalLayout: false
   property alias background: _background
 
@@ -53,13 +59,22 @@ Item {
   // Layout preferences
   //
   Layout.minimumWidth: implicitWidth
-  Layout.maximumWidth: implicitWidth
+  Layout.maximumWidth: maxButtonWidth
   implicitHeight: horizontalLayout ?
-                    Math.max(root.iconSize, _label.implicitHeight)  :
+                    Math.max(root.iconSize, _label.implicitHeight) :
                     root.iconSize + _label.implicitHeight + 20
-  implicitWidth: horizontalLayout ?
-                   Math.min(128, root.iconSize + Math.ceil(metrics.width + 16)) :
-                   Math.max(Math.ceil(metrics.width + 16), icon.width / 32 * 72)
+  implicitWidth: Math.min(
+                   maxButtonWidth,
+                   horizontalLayout
+                   ? root.iconSize + Math.ceil(metrics.width + 16)
+                   : Math.max(Math.ceil(metrics.width + 16), icon.width / 32 * 72)
+                   )
+
+  //
+  // Tooltip
+  //
+  ToolTip.delay: 700
+  ToolTip.visible: _mouseArea.containsMouse && ToolTip.text !== ""
 
   //
   // Animations
@@ -79,7 +94,9 @@ Item {
     visible: root.toolbarButton && !root.horizontalLayout
     color: Cpp_ThemeManager.colors["toolbar_checked_button_background"]
     border.color: Cpp_ThemeManager.colors["toolbar_checked_button_border"]
-    opacity: (root.checked || _mouseArea.pressed) ? Cpp_ThemeManager.colors["toolbar_checked_button_opacity"] : 0.0
+    opacity: (root.checked || _mouseArea.pressed)
+             ? Cpp_ThemeManager.colors["toolbar_checked_button_opacity"]
+             : 0.0
 
     Behavior on opacity { NumberAnimation {} }
   }
@@ -90,14 +107,13 @@ Item {
   ToolButton {
     checked: true
     anchors.fill: parent
-    visible: !root.toolbarButton
+    visible: !root.toolbarButton && root.checkBgVisible
     opacity: (root.checked || _mouseArea.pressed) ? 1 : 0
-
     Behavior on opacity { NumberAnimation {} }
   }
 
   //
-  // Button layout (Grid-based dynamic layout)
+  // Button layout
   //
   GridLayout {
     id: _layout
@@ -107,6 +123,7 @@ Item {
     columns: horizontalLayout ? 2 : 1
     rowSpacing: horizontalLayout ? 0 : 4
     columnSpacing: horizontalLayout ? 4 : 0
+    anchors.leftMargin: horizontalLayout ? 8 : 0
     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
 
     Item {
@@ -115,8 +132,7 @@ Item {
       Layout.column: 0
       implicitWidth: root.iconSize
       implicitHeight: root.iconSize
-      Layout.alignment: horizontalLayout ? Qt.AlignLeft | Qt.AlignVCenter :
-                                           Qt.AlignCenter
+      Layout.alignment: horizontalLayout ? Qt.AlignLeft | Qt.AlignVCenter : Qt.AlignCenter
 
       Image {
         id: _icon
@@ -143,15 +159,17 @@ Item {
       Layout.fillWidth: horizontalLayout
       Layout.row: horizontalLayout ? 0 : 1
       Layout.column: horizontalLayout ? 1 : 0
+      Layout.maximumWidth: root.maxButtonWidth - (horizontalLayout ? root.iconSize + 4 : 0)
       Layout.alignment: horizontalLayout ? Qt.AlignLeft : Qt.AlignCenter
       horizontalAlignment: horizontalLayout ? Qt.AlignLeft : Qt.AlignHCenter
-      color: root.toolbarButton ? Cpp_ThemeManager.colors["toolbar_text"] :
-                                  Cpp_ThemeManager.colors["button_text"]
+      color: root.toolbarButton
+             ? Cpp_ThemeManager.colors["toolbar_text"]
+             : Cpp_ThemeManager.colors["button_text"]
     }
   }
 
   //
-  // Button width calculation
+  // Width calculation for layout
   //
   TextMetrics {
     id: metrics
@@ -160,7 +178,7 @@ Item {
   }
 
   //
-  // Mouse Area
+  // Mouse interaction
   //
   MouseArea {
     id: _mouseArea

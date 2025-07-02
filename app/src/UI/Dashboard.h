@@ -1,22 +1,22 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 #pragma once
@@ -61,13 +61,14 @@ class Dashboard : public QObject
   Q_OBJECT
   Q_PROPERTY(QString title READ title NOTIFY widgetCountChanged)
   Q_PROPERTY(bool available READ available NOTIFY widgetCountChanged)
-  Q_PROPERTY(int actionCount READ actionCount NOTIFY actionCountChanged)
-  Q_PROPERTY(QVariantList actions READ actions NOTIFY actionCountChanged)
+  Q_PROPERTY(int actionCount READ actionCount NOTIFY widgetCountChanged)
   Q_PROPERTY(int points READ points WRITE setPoints NOTIFY pointsChanged)
+  Q_PROPERTY(QVariantList actions READ actions NOTIFY actionStatusChanged)
   Q_PROPERTY(int totalWidgetCount READ totalWidgetCount NOTIFY widgetCountChanged)
   Q_PROPERTY(int precision READ precision WRITE setPrecision NOTIFY precisionChanged)
   Q_PROPERTY(bool pointsWidgetVisible READ pointsWidgetVisible NOTIFY widgetCountChanged)
   Q_PROPERTY(bool precisionWidgetVisible READ precisionWidgetVisible NOTIFY widgetCountChanged)
+  Q_PROPERTY(bool showActionPanel READ showActionPanel WRITE setShowActionPanel NOTIFY showActionPanelChanged)
   Q_PROPERTY(bool terminalEnabled READ terminalEnabled WRITE setTerminalEnabled NOTIFY terminalEnabledChanged)
   Q_PROPERTY(bool containsCommercialFeatures READ containsCommercialFeatures NOTIFY containsCommercialFeaturesChanged)
   // clang-format on
@@ -77,8 +78,9 @@ signals:
   void dataReset();
   void pointsChanged();
   void precisionChanged();
-  void actionCountChanged();
   void widgetCountChanged();
+  void actionStatusChanged();
+  void showActionPanelChanged();
   void terminalEnabledChanged();
   void containsCommercialFeaturesChanged();
 
@@ -91,10 +93,11 @@ private:
 
 public:
   static Dashboard &instance();
-  static qreal smartInterval(const qreal min, const qreal max,
-                             const qreal multiplier = 0.2);
+  static double smartInterval(const double min, const double max,
+                              const double multiplier = 0.2);
 
   [[nodiscard]] bool available() const;
+  [[nodiscard]] bool showActionPanel() const;
   [[nodiscard]] bool streamAvailable() const;
   [[nodiscard]] bool terminalEnabled() const;
   [[nodiscard]] bool pointsWidgetVisible() const;
@@ -124,19 +127,21 @@ public:
   [[nodiscard]] const JSON::Frame &rawFrame();
   [[nodiscard]] const JSON::Frame &processedFrame();
   [[nodiscard]] const PlotDataY &fftData(const int index) const;
+  [[nodiscard]] const GpsSeries &gpsSeries(const int index) const;
   [[nodiscard]] const LineSeries &plotData(const int index) const;
   [[nodiscard]] const MultiLineSeries &multiplotData(const int index) const;
 
-#ifdef USE_QT_COMMERCIAL
+#ifdef BUILD_COMMERCIAL
   [[nodiscard]] const PlotData3D &plotData3D(const int index) const;
 #endif
 
 public slots:
   void setPoints(const int points);
-  void activateAction(const int index);
   void setPrecision(const int precision);
   void resetData(const bool notify = true);
+  void setShowActionPanel(const bool enabled);
   void setTerminalEnabled(const bool enabled);
+  void activateAction(const int index, const bool guiTrigger = false);
 
 private slots:
   void processFrame(const JSON::Frame &frame);
@@ -145,16 +150,20 @@ private:
   void updateDashboardData(const JSON::Frame &frame);
   void reconfigureDashboard(const JSON::Frame &frame);
 
-  void updatePlots();
+  void updateDataSeries();
+  void configureGpsSeries();
   void configureFftSeries();
   void configureLineSeries();
+  void configurePlot3DSeries();
   void configureMultiLineSeries();
+  void configureActions(const JSON::Frame &frame);
 
 private:
   int m_points;           // Number of plot points to retain
   int m_precision;        // Decimal display precision
   int m_widgetCount;      // Total number of active widgets
   bool m_updateRequired;  // Flag to trigger plot/UI update
+  bool m_showActionPanel; // Whenever the UI shall display an action panel
   bool m_terminalEnabled; // Whether terminal group is enabled
 
   PlotDataX m_pltXAxis;      // Default X-axis data for line plots
@@ -163,13 +172,15 @@ private:
   QMap<int, PlotDataX> m_xAxisData; // X-axis data per dataset index
   QMap<int, PlotDataY> m_yAxisData; // Y-axis data per dataset index
 
+  QVector<GpsSeries> m_gpsValues;            // GPS data per GPS widget
   QVector<PlotDataY> m_fftValues;            // FFT data per dataset
   QVector<LineSeries> m_pltValues;           // Line plot data
   QVector<MultiLineSeries> m_multipltValues; // Multi-line plot data
-#ifdef USE_QT_COMMERCIAL
+#ifdef BUILD_COMMERCIAL
   QVector<PlotData3D> m_plotData3D; // 3D plot data (commercial only)
 #endif
 
+  QMap<int, QTimer *> m_timers;        // Timers for dashboard actions
   QVector<JSON::Action> m_actions;     // User-defined dashboard actions
   SerialStudio::WidgetMap m_widgetMap; // Maps window ID index to widget type
   QMap<int, JSON::Dataset> m_datasets; // Raw input datasets (by dataset index)

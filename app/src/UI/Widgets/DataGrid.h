@@ -1,66 +1,55 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 #pragma once
 
-#include <QtQuick>
+#include "JSON/Dataset.h"
+#include "UI/DeclarativeWidgets/StaticTable.h"
 
 namespace Widgets
 {
-class DataGrid : public QQuickItem
+class DataGrid : public StaticTable
 {
   Q_OBJECT
-  Q_PROPERTY(int count READ count CONSTANT)
-  Q_PROPERTY(QStringList units READ units CONSTANT)
-  Q_PROPERTY(QStringList titles READ titles CONSTANT)
-  Q_PROPERTY(QStringList values READ values NOTIFY updated)
-  Q_PROPERTY(QList<bool> alarms READ alarms NOTIFY updated)
-  Q_PROPERTY(QStringList colors READ colors NOTIFY themeChanged)
+  Q_PROPERTY(bool paused READ paused WRITE setPaused NOTIFY pausedChanged)
 
 signals:
-  void updated();
-  void themeChanged();
+  void pausedChanged();
 
 public:
   explicit DataGrid(const int index = -1, QQuickItem *parent = nullptr);
 
-  [[nodiscard]] int count() const;
-  [[nodiscard]] const QList<bool> &alarms() const;
+  [[nodiscard]] bool paused() const;
 
-  [[nodiscard]] const QStringList &units() const;
-  [[nodiscard]] const QStringList &colors() const;
-  [[nodiscard]] const QStringList &titles() const;
-  [[nodiscard]] const QStringList &values() const;
+public slots:
+  void setPaused(const bool paused);
 
 private slots:
   void updateData();
-  void onThemeChanged();
+
+private:
+  QStringList getRow(const JSON::Dataset &dataset);
 
 private:
   int m_index;
-  QList<bool> m_alarms;
-
-  QStringList m_units;
-  QStringList m_titles;
-  QStringList m_values;
-  QStringList m_colors;
+  bool m_paused;
 };
 } // namespace Widgets

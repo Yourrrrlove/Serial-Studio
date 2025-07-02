@@ -1,22 +1,22 @@
 /*
- * Serial Studio - https://serial-studio.github.io/
+ * Serial Studio
+ * https://serial-studio.com/
  *
- * Copyright (C) 2020-2025 Alex Spataru <https://aspatru.com>
+ * Copyright (C) 2020–2025 Alex Spataru
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This file is dual-licensed:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
  *
- * SPDX-License-Identifier: GPL-3.0-or-later
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSE_COMMERCIAL.md in the project root.
+ *
+ * SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-SerialStudio-Commercial
  */
 
 import QtQuick
@@ -47,28 +47,23 @@ Item {
   //
   // Widget layout
   //
-  RowLayout {
+  ColumnLayout {
     spacing: 0
     anchors.margins: 8
     anchors.fill: parent
-
-    //
-    // Spacer
-    //
-    Item {
-      Layout.fillWidth: true
-    }
 
     //
     // Create the widget background
     //
     Item {
       id: container
-      Layout.alignment: Qt.AlignVCenter
-      Layout.minimumWidth: Math.min(root.width, root.height) * 0.8
-      Layout.maximumWidth: Math.min(root.width, root.height) * 0.8
-      Layout.minimumHeight: Math.min(root.width, root.height) * 0.8
-      Layout.maximumHeight: Math.min(root.width, root.height) * 0.8
+      readonly property real gaugeSize: Math.min(root.width, root.height) - range.implicitHeight - 12
+
+      Layout.minimumWidth: gaugeSize
+      Layout.maximumWidth: gaugeSize
+      Layout.minimumHeight: gaugeSize
+      Layout.maximumHeight: gaugeSize
+      Layout.alignment: Qt.AlignHCenter
 
       //
       // Background gradient + glow
@@ -227,36 +222,31 @@ Item {
     // Spacer
     //
     Item {
-      Layout.fillWidth: true
-    }
-
-    //
-    // Spacer
-    //
-    Item {
-      implicitWidth: 4
+      implicitHeight: 4
     }
 
     //
     // Range/scale + current value display
     //
     VisualRange {
+      id: range
       units: "G"
       minValue: 0
       maxValue: 16
       alarm: value > 12
+      rangeVisible: false
       Layout.fillHeight: true
       value: root.model.magnitude
       maximumWidth: root.width * 0.3
-      rangeVisible: root.height >= 120
       Layout.minimumWidth: implicitWidth
+      Layout.alignment: Qt.AlignHCenter
     }
 
     //
     // Spacer
     //
     Item {
-      implicitWidth: 8
+      implicitHeight: 8
     }
   }
 }
