@@ -55,9 +55,10 @@ jobs:
       run: |
         set -euo pipefail
         base="https://github.com/google/osv-scanner/releases/download/${OSV_SCANNER_VERSION}"
-        curl -sSfL -o osv-scanner "${base}/osv-scanner_linux_amd64"
+        curl -sSfL -O "${base}/osv-scanner_linux_amd64"
         curl -sSfL -o SHA256SUMS "${base}/osv-scanner_SHA256SUMS"
         grep 'osv-scanner_linux_amd64$' SHA256SUMS | sha256sum --check --strict -
+        mv osv-scanner_linux_amd64 osv-scanner
         chmod +x osv-scanner
 
     #

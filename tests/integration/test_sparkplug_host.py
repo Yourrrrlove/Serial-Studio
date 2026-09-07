@@ -41,14 +41,16 @@ NODE_B = "edgeB"
 
 WIRE_VERSION = 1
 WIRE_F64 = 10
+WIRE_STR = 11
+WIRE_WIDTHS = {0: 1, 1: 1, 2: 1, 3: 2, 4: 2, 5: 4, 6: 4, 7: 8, 8: 8, 9: 4, 10: 8}
 
 METRIC_NAME = 1
 METRIC_ALIAS = 2
 METRIC_DATATYPE = 4
-METRIC_DOUBLE = 5
+METRIC_DOUBLE = 13
 PAYLOAD_TIMESTAMP = 1
 PAYLOAD_METRICS = 2
-PAYLOAD_SEQ = 5
+PAYLOAD_SEQ = 3
 DATATYPE_DOUBLE = 10
 
 
@@ -93,7 +95,11 @@ def _payload(seq: int, metrics: list) -> bytes:
 
 
 def _decode_delta(frame: bytes) -> dict:
-    """Decodes an OpcUaWire delta frame into {wire index: float}; unknown types end the walk."""
+    """Decodes an OpcUaWire delta frame into {wire index: float} for its F64 entries.
+
+    Every other entry is stepped over by its wire width: each node also owns a boolean "online"
+    slot, born before its metrics, so a frame that opens with a Bool is the normal case.
+    """
     if not frame or frame[0] != WIRE_VERSION:
         return {}
 
@@ -103,11 +109,19 @@ def _decode_delta(frame: bytes) -> dict:
         index = frame[pos] | (frame[pos + 1] << 8)
         wire_type = frame[pos + 2]
         pos += 3
-        if wire_type != WIRE_F64 or pos + 8 > len(frame):
+        if wire_type == WIRE_STR:
+            if pos + 2 > len(frame):
+                return out
+            pos += 2 + (frame[pos] | (frame[pos + 1] << 8))
+            continue
+
+        width = WIRE_WIDTHS.get(wire_type)
+        if width is None or pos + width > len(frame):
             return out
 
-        out[index] = struct.unpack("<d", frame[pos : pos + 8])[0]
-        pos += 8
+        if wire_type == WIRE_F64:
+            out[index] = struct.unpack("<d", frame[pos : pos + 8])[0]
+        pos += width
 
     return out
 
