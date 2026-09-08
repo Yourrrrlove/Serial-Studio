@@ -2690,7 +2690,7 @@ jobs:
         path: |
           ${{github.workspace}}/Qt-${{env.QT_VERSION_WINDOWS}}-${{runner.os}}-x64
           ~/.qt-license
-        key: qt-${{runner.os}}-${{env.QT_VERSION_WINDOWS}}-x64-msvc2022_64
+        key: qt-${{runner.os}}-${{env.QT_VERSION_WINDOWS}}-x64-msvc2022_64-v2
 
     #
     # Qt comes from the online installer driven by scripts/install-qt.sh, using the account
@@ -2718,7 +2718,7 @@ jobs:
         path: |
           ${{github.workspace}}/Qt-${{env.QT_VERSION_WINDOWS}}-${{runner.os}}-x64
           ~/.qt-license
-        key: qt-${{runner.os}}-${{env.QT_VERSION_WINDOWS}}-x64-msvc2022_64
+        key: qt-${{runner.os}}-${{env.QT_VERSION_WINDOWS}}-x64-msvc2022_64-v2
 
     #
     # Publishes bin/, libexec/ and CMAKE_PREFIX_PATH through GITHUB_PATH / GITHUB_ENV so every
