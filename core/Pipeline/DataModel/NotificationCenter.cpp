@@ -37,12 +37,15 @@ extern "C" {
 #include <QSystemTrayIcon>
 #include <QThread>
 
+#include "Core/Bus/MessageBus.h"
+#include "Core/Bus/Messages.h"
 #include "Core/SSAssert.h"
-#include "SessionContext.h"
 
 #ifdef BUILD_COMMERCIAL
-#  include "Licensing/CommercialToken.h"
+#  include "Core/Licensing/CommercialToken.h"
 #endif
+
+DataModel::NotificationCenter* DataModel::NotificationCenter::s_instance = nullptr;
 
 //--------------------------------------------------------------------------------------------------
 // Settings keys
@@ -60,8 +63,9 @@ static const QString kSettingsKeyRouteWarnings =
 /**
  * @brief Constructs the NotificationCenter singleton and restores user preferences.
  */
-DataModel::NotificationCenter::NotificationCenter()
+DataModel::NotificationCenter::NotificationCenter(Core::Bus::MessageBus& bus)
   : QObject(nullptr)
+  , m_bus(bus)
   , m_unreadCount(0)
   , m_systemNotificationsEnabled(false)
   , m_routeWarningsToNotifications(false)
@@ -81,13 +85,30 @@ DataModel::NotificationCenter::NotificationCenter()
 DataModel::NotificationCenter::~NotificationCenter() = default;
 
 /**
- * @brief Returns this session's notification center. The object is owned by the SessionContext
- *        and built by the composition root, so a reach before adoption is a named fatal instead
- *        of an out-of-order lazy construction (spec 0039 M2, wave A).
+ * @brief Returns this session's notification center, bound by the session context right after
+ * adoption; a reach before that is a named fatal (spec 0039 M2, spec 0077 T66).
  */
 DataModel::NotificationCenter& DataModel::NotificationCenter::instance()
 {
-  return SessionContext::current().notifications();
+  SS_ASSERT(s_instance != nullptr, qFatal("NotificationCenter::instance() before adoption"));
+  return *s_instance;
+}
+
+/**
+ * @brief Subscribes the center to the bus topics the lower libraries raise notifications through
+ *        (spec 0077 T30). AutoConnection queues a post from the pipeline thread or a driver onto
+ *        this GUI-affine object, which is what the queued invokeMethod it replaces did.
+ */
+void DataModel::NotificationCenter::setupExternalConnections()
+{
+  SS_ASSERT(!m_raisedSubscription.isActive(), return);
+
+  m_raisedSubscription = m_bus.subscribe<Core::Bus::NotificationRaised>(
+    this,
+    [this](const std::shared_ptr<const Core::Bus::NotificationRaised>& raised) {
+      post(raised->severity, raised->channel, raised->title, raised->text);
+    },
+    Qt::AutoConnection);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -422,6 +443,7 @@ void DataModel::NotificationCenter::appendEvent(Event&& e)
   const QString chan     = e.channel;
   const bool newChannel  = !chan.isEmpty() && !m_channelCounts.contains(chan);
   const int level        = e.level;
+  const qint64 timestamp = e.timestampMs;
   const QString title    = e.title;
   const QString subtitle = e.subtitle;
 
@@ -447,6 +469,7 @@ void DataModel::NotificationCenter::appendEvent(Event&& e)
   }
 
   Q_EMIT notificationPosted(variant);
+  m_bus.publish<Core::Bus::NotificationPosted>(timestamp, level, chan, title, subtitle);
   if (newChannel)
     Q_EMIT channelsChanged();
 

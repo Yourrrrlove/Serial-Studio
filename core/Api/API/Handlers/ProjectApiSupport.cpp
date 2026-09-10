@@ -24,10 +24,12 @@
 #include <QHash>
 #include <QStringList>
 
-#include "API/EnumLabels.h"
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/EnumLabels.h"
+#include "Core/SerialStudio.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
-#include "SerialStudio.h"
+#include "DataModel/WidgetResolution.h"
 
 namespace API::Handlers::ProjectApiSupport {
 
@@ -37,7 +39,7 @@ namespace API::Handlers::ProjectApiSupport {
  */
 [[nodiscard]] static DatasetMatch findDatasetByAlias(const QString& alias)
 {
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
   for (const auto& group : projectModel.groups()) {
     for (const auto& dataset : group.datasets)
       if (dataset.alias == alias)
@@ -52,7 +54,7 @@ namespace API::Handlers::ProjectApiSupport {
  */
 [[nodiscard]] static DatasetMatch findDatasetByUniqueId(int uniqueId)
 {
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
   for (const auto& group : projectModel.groups()) {
     for (const auto& dataset : group.datasets)
       if (dataset.uniqueId == uniqueId)
@@ -260,7 +262,7 @@ void API::Handlers::ProjectApiSupport::attachWindowInfo(QJsonObject& result,
  */
 void API::Handlers::ProjectApiSupport::attachProjectEpoch(QJsonObject& result)
 {
-  static auto& projectModel              = DataModel::ProjectModel::instance();
+  auto& projectModel                     = DataModel::pipelineModules().projectModel;
   result[QStringLiteral("projectEpoch")] = static_cast<qint64>(projectModel.mutationEpoch());
 }
 
@@ -269,7 +271,7 @@ void API::Handlers::ProjectApiSupport::attachProjectEpoch(QJsonObject& result)
  */
 qint64 API::Handlers::ProjectApiSupport::captureProjectEpoch()
 {
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
   return projectModel.mutationEpoch();
 }
 

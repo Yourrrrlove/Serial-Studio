@@ -23,11 +23,11 @@
 
 #include <algorithm>
 
-#include "AppState.h"
+#include "Core/Bus/Messages.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/IO/FrameConfigBuilder.h"
+#include "Core/IO/HAL_Driver.h"
 #include "Core/SSAssert.h"
-#include "DataModel/Frame.h"
-#include "DataModel/ProjectModel.h"
-#include "IO/HAL_Driver.h"
 
 #ifdef BUILD_COMMERCIAL
 #  include "IO/Drivers/Audio.h"
@@ -38,13 +38,15 @@
 //--------------------------------------------------------------------------------------------------
 
 /**
- * @brief Binds the builder to the two modules every derivation reads. Both are constructed
- *        ahead of ConnectionManager in the pinned order, so the facade captures them in its own
- *        constructor and this object is usable before any wiring pass runs.
+ * @brief Binds the builder to the facade's cached mode, source-0 framing and project snapshot
+ *        (all seeded from the bus in the facade's constructor), so this object is usable before
+ *        any wiring pass runs.
  */
-IO::StreamConfigBuilder::StreamConfigBuilder(AppState& appState,
-                                             DataModel::ProjectModel& projectModel)
-  : m_appState(appState), m_projectModel(projectModel)
+IO::StreamConfigBuilder::StreamConfigBuilder(
+  const SerialStudio::OperationMode& operationMode,
+  const FrameConfig& source0Config,
+  const std::shared_ptr<const Core::Bus::ProjectStructureSnapshot>& project)
+  : m_operationMode(operationMode), m_source0Config(source0Config), m_project(project)
 {}
 
 //--------------------------------------------------------------------------------------------------
@@ -57,48 +59,8 @@ IO::StreamConfigBuilder::StreamConfigBuilder(AppState& appState,
 IO::FrameConfig IO::StreamConfigBuilder::frameConfig(int deviceId) const
 {
   SS_ASSERT_LOG(deviceId >= 0);
-
-  const auto opMode = m_appState.operationMode();
-  if (opMode == SerialStudio::QuickPlot || opMode == SerialStudio::ConsoleOnly)
-    return m_appState.frameConfig();
-
-  FrameConfig cfg;
-  cfg.operationMode = opMode;
-
-  const auto& sources = m_projectModel.sources();
-  for (const auto& src : sources) {
-    if (src.sourceId != deviceId)
-      continue;
-
-    QByteArray start, end;
-    QString checksum;
-    DataModel::read_io_settings(start, end, checksum, DataModel::serialize(src));
-
-    cfg.startSequences    = start.isEmpty() ? QList<QByteArray>{} : QList<QByteArray>{start};
-    cfg.finishSequences   = end.isEmpty() ? QList<QByteArray>{} : QList<QByteArray>{end};
-    cfg.checksumAlgorithm = checksum;
-    cfg.frameDetection    = static_cast<SerialStudio::FrameDetection>(src.frameDetection);
-
-    if ((cfg.frameDetection == SerialStudio::StartDelimiterOnly
-         || cfg.frameDetection == SerialStudio::StartAndEndDelimiter)
-        && cfg.startSequences.isEmpty()) [[unlikely]]
-      cfg.frameDetection =
-        cfg.finishSequences.isEmpty() ? SerialStudio::NoDelimiters : SerialStudio::EndDelimiterOnly;
-
-    if (cfg.frameDetection == SerialStudio::EndDelimiterOnly && cfg.finishSequences.isEmpty())
-      [[unlikely]]
-      cfg.frameDetection = SerialStudio::NoDelimiters;
-
-    return cfg;
-  }
-
-  SS_ASSERT_LOG(cfg.operationMode == opMode);
-
-  cfg.startSequences    = {QByteArray("/*")};
-  cfg.finishSequences   = {QByteArray("*/")};
-  cfg.checksumAlgorithm = QString();
-  cfg.frameDetection    = m_projectModel.frameDetection();
-  return cfg;
+  SS_ASSERT(m_project != nullptr, return m_source0Config);
+  return FrameConfigBuilder::build(*m_project, m_operationMode, m_source0Config, deviceId);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -112,10 +74,10 @@ QString IO::StreamConfigBuilder::streamLane(int deviceId) const
 {
   SS_ASSERT_LOG(deviceId >= 0);
 
-  if (m_appState.operationMode() != SerialStudio::ProjectFile)
+  if (m_operationMode != SerialStudio::ProjectFile)
     return QString();
 
-  for (const auto& src : m_projectModel.sources())
+  for (const auto& src : m_project->sources)
     if (src.sourceId == deviceId)
       return src.streamLane;
 
@@ -143,9 +105,9 @@ IO::StreamConfig IO::StreamConfigBuilder::streamConfig(int deviceId, HAL_Driver*
   }
 #endif
 
-  config.luaFastMode = m_projectModel.luaFastMode();
+  config.luaFastMode = m_project->luaFastMode;
 
-  if (m_appState.operationMode() == SerialStudio::ProjectFile)
+  if (m_operationMode == SerialStudio::ProjectFile)
     appendProjectChannels(deviceId, config);
   else
     appendQuickPlotChannels(config);
@@ -162,7 +124,7 @@ void IO::StreamConfigBuilder::appendProjectChannels(int deviceId, StreamConfig& 
   SS_ASSERT_LOG(deviceId >= 0);
   SS_ASSERT_LOG(config.sourceId == deviceId);
 
-  for (const auto& group : m_projectModel.groups()) {
+  for (const auto& group : m_project->groups) {
     if (group.sourceId != deviceId)
       continue;
 

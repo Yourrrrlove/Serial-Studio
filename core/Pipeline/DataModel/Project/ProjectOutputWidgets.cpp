@@ -23,16 +23,15 @@
 
 #include <algorithm>
 #include <QMap>
-#include <QMessageBox>
 
-#include "AppInfo.h"
-#include "DataModel/Editors/OutputCodeEditor.h"
+#include "Core/AppInfo.h"
+#include "Core/Prompt/UserPrompt.h"
+#include "DataModel/Editors/ScriptTemplateCatalog.h"
 #include "DataModel/Project/ProjectEntities.h"
 #include "DataModel/Project/ProjectHistory.h"
 #include "DataModel/Project/ProjectNaming.h"
 #include "DataModel/Project/ProjectWorkspaces.h"
 #include "DataModel/ProjectModel.h"
-#include "Misc/Utilities.h"
 
 //--------------------------------------------------------------------------------------------------
 // Construction
@@ -127,7 +126,7 @@ void DataModel::ProjectOutputWidgets::addOutputControl(const SerialStudio::Outpu
   ow.sourceId         = group.sourceId;
   ow.title            = title;
   ow.type             = static_cast<DataModel::OutputWidgetType>(type);
-  ow.transmitFunction = DataModel::OutputCodeEditor::defaultTemplate();
+  ow.transmitFunction = DataModel::defaultOutputWidgetTemplate();
 
   group.outputWidgets.push_back(ow);
   m_model.m_selectedOutputWidget = ow;
@@ -234,15 +233,15 @@ void DataModel::ProjectOutputWidgets::updateOutputWidget(int groupId,
 void DataModel::ProjectOutputWidgets::deleteCurrentOutputWidget()
 {
   if (!m_model.m_suppressMessageBoxes) {
-    const auto ret = Misc::Utilities::showMessageBox(
+    const auto ret = Core::Prompt::showMessageBox(
       ProjectModel::tr("Do you want to delete output widget \"%1\"?")
         .arg(m_model.m_selectedOutputWidget.title),
       ProjectModel::tr("This action cannot be undone. Do you wish to proceed?"),
-      QMessageBox::Question,
+      Core::Prompt::Question,
       APP_NAME,
-      QMessageBox::Yes | QMessageBox::No);
+      Core::Prompt::Yes | Core::Prompt::No);
 
-    if (ret != QMessageBox::Yes)
+    if (ret != Core::Prompt::Yes)
       return;
   }
 

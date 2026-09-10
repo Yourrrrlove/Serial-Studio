@@ -22,8 +22,8 @@
 #include <QVariantMap>
 
 #include "AI/Logging.h"
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
-#include "SerialStudio.h"
 
 //--------------------------------------------------------------------------------------------------
 // Path helpers

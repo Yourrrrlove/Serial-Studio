@@ -16,11 +16,12 @@
 #  include <QJsonObject>
 
 #  include "API/CommandRegistry.h"
+#  include "API/HandlerContext.h"
 #  include "API/SchemaBuilder.h"
+#  include "Core/Crypto/CredentialVault.h"
 #  include "Core/SSAssert.h"
 #  include "IO/ConnectionManager.h"
 #  include "IO/Drivers/MQTT.h"
-#  include "MQTT/CredentialVault.h"
 #  include "MQTT/Publisher.h"
 
 //--------------------------------------------------------------------------------------------------
@@ -226,7 +227,7 @@ API::CommandResponse API::Handlers::MqttHandler::publisherGetConfig(const QStrin
 {
   Q_UNUSED(params)
 
-  static const auto& p = MQTT::Publisher::instance();
+  static const auto& p = API::handlerContext().mqttPublisher;
 
   MQTT::CredentialVault vault;
   const bool hasCreds = vault.hasCredentials(p.hostname(), p.port());
@@ -402,7 +403,7 @@ API::CommandResponse API::Handlers::MqttHandler::publisherGetConfig(const QStrin
 API::CommandResponse API::Handlers::MqttHandler::publisherSetConfig(const QString& id,
                                                                     const QJsonObject& params)
 {
-  static auto& p = MQTT::Publisher::instance();
+  auto& p = API::handlerContext().mqttPublisher;
 
   if (auto err = applyPublisherEndpoint(p, params); err)
     return CommandResponse::makeError(id, ErrorCode::InvalidParam, *err);
@@ -429,7 +430,7 @@ API::CommandResponse API::Handlers::MqttHandler::publisherGetStatus(const QStrin
 {
   Q_UNUSED(params)
 
-  static const auto& p = MQTT::Publisher::instance();
+  static const auto& p = API::handlerContext().mqttPublisher;
 
   QJsonObject result;
   result[QStringLiteral("enabled")]        = p.enabled();
@@ -449,7 +450,7 @@ API::CommandResponse API::Handlers::MqttHandler::publisherGetStatus(const QStrin
  */
 [[nodiscard]] static IO::Drivers::MQTT* subscriber()
 {
-  static auto& connectionManager = IO::ConnectionManager::instance();
+  auto& connectionManager = API::handlerContext().connectionManager;
   return connectionManager.mqtt();
 }
 

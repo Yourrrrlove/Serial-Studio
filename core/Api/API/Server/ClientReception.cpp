@@ -25,8 +25,8 @@
 #include <QJsonDocument>
 #include <QJsonParseError>
 
-#include "API/CommandProtocol.h"
 #include "API/MCPProtocol.h"
+#include "Core/Api/CommandProtocol.h"
 #include "Core/SSAssert.h"
 
 //--------------------------------------------------------------------------------------------------

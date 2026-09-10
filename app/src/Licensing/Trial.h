@@ -27,7 +27,7 @@
 #include <QObject>
 #include <QSettings>
 
-#include "SimpleCrypt.h"
+#include "Core/Crypto/SimpleCrypt.h"
 
 namespace Licensing {
 /**

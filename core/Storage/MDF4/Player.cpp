@@ -26,25 +26,30 @@
 #include <limits>
 #include <QApplication>
 #include <QDeadlineTimer>
+#include <QDebug>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QGuiApplication>
-#include <QMessageBox>
 #include <QScopedValueRollback>
 #include <QTimer>
 #include <unordered_map>
 
 #include "AppState.h"
+#include "Core/Bus/MessageBus.h"
+#include "Core/Bus/Messages.h"
+#include "Core/IO/IPayloadInjector.h"
+#include "Core/Prompt/UserPrompt.h"
+#include "Core/Services.h"
 #include "Core/SSAssert.h"
+#include "Core/WorkspaceManager.h"
+#include "DataModel/IReplayPlotSink.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
 #include "DataModel/Scripting/FrameParserPipeline.h"
-#include "IO/ConnectionManager.h"
-#include "Misc/Utilities.h"
-#include "Misc/WorkspaceManager.h"
-#include "UI/Dashboard.h"
+#include "Replay/LinkGate.h"
 
 #ifdef BUILD_COMMERCIAL
-#  include "Licensing/CommercialToken.h"
+#  include "Core/Licensing/CommercialToken.h"
 #endif
 
 //--------------------------------------------------------------------------------------------------
@@ -67,6 +72,9 @@ MDF4::Player::Player()
   , m_decodeGeneration(0)
   , m_loaderThread(nullptr)
   , m_loader(nullptr)
+  , m_bus(nullptr)
+  , m_plotSink(nullptr)
+  , m_payloadInjector(nullptr)
 {
   qApp->installEventFilter(this);
   qRegisterMetaType<MDF4::PlayerDecodePayloadPtr>();
@@ -95,6 +103,15 @@ MDF4::Player& MDF4::Player::instance()
 {
   static Player singleton;
   return singleton;
+}
+
+/**
+ * @brief Adopts the root-owned message bus this module publishes on and subscribes to.
+ */
+void MDF4::Player::attachMessageBus(Core::Bus::MessageBus& bus)
+{
+  SS_ASSERT(m_bus == nullptr, return);
+  m_bus = &bus;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -236,11 +253,11 @@ void MDF4::Player::toggle()
  */
 void MDF4::Player::openFile()
 {
-  static auto& workspaceManager = Misc::WorkspaceManager::instance();
-  auto* dialog                  = new QFileDialog(qApp->activeWindow(),
-                                                  tr("Select MDF4 file"),
-                                                  workspaceManager.path("MDF4"),
-                                                  tr("MDF4 files (*.mf4 *.dat)"));
+  auto& workspaceManager = Core::services().workspaceManager;
+  auto* dialog           = new QFileDialog(qApp->activeWindow(),
+                                 tr("Select MDF4 file"),
+                                 workspaceManager.path("MDF4"),
+                                 tr("MDF4 files (*.mf4 *.dat)"));
 
   dialog->setFileMode(QFileDialog::ExistingFile);
   dialog->setAttribute(Qt::WA_DeleteOnClose);
@@ -270,26 +287,19 @@ void MDF4::Player::openFile(const QString& filePath)
 #endif
 
   if (!licensed) {
-    Misc::Utilities::showMessageBox(
+    Core::Prompt::showMessageBox(
       tr("MDF4 Playback is a Pro feature."),
       tr("Activate Serial Studio Pro or start the free trial to enable MDF4 playback."));
     return;
   }
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  if (connectionManager.isConnected()) {
-    int response = Misc::Utilities::showMessageBox(
-      tr("Disconnect from device?"),
-      tr("You must disconnect from the current device before opening a MDF4 file."),
-      QMessageBox::Question,
-      "",
-      QMessageBox::Yes | QMessageBox::No);
-
-    if (response == QMessageBox::Yes)
-      connectionManager.disconnectDevice();
-    else
-      return;
-  }
+  if (!Replay::ensureLinkReleased(
+        m_bus,
+        tr("Disconnect from device?"),
+        tr("You must disconnect from the current device before opening a MDF4 file."),
+        Core::Prompt::Question,
+        QString()))
+    return;
 
   closeFile();
   startDecoding(filePath);
@@ -346,11 +356,14 @@ void MDF4::Player::closeFile()
   m_sourceChannelsByIndex.clear();
   m_typedCells = {};
 
-  static auto& frameBuilder = DataModel::FrameBuilder::instance();
+  auto& frameBuilder = DataModel::pipelineModules().frameBuilder;
   frameBuilder.registerQuickPlotHeaders(QStringList());
   frameBuilder.setReplayColumnMap({});
 
   if (was_open) {
+    if (m_bus)
+      m_bus->publishState<Core::Bus::ReplayPlayerStateChanged>(1, isOpen());
+
     Q_EMIT openChanged();
     Q_EMIT playerStateChanged();
   }
@@ -468,15 +481,15 @@ void MDF4::Player::onDecodeFinished(const MDF4::PlayerDecodePayloadPtr& payload)
   }
 
   if (!payload->ok) {
-    Misc::Utilities::showMessageBox(payload->errorTitle, payload->errorBody, QMessageBox::Critical);
+    Core::Prompt::showMessageBox(payload->errorTitle, payload->errorBody, Core::Prompt::Critical);
     Q_EMIT indexingChanged();
     return;
   }
 
   if (payload->timestamps.empty() || payload->channelNames.isEmpty()) {
-    Misc::Utilities::showMessageBox(tr("No data in file"),
-                                    tr("The MDF4 file contains no measurement data."),
-                                    QMessageBox::Critical);
+    Core::Prompt::showMessageBox(tr("No data in file"),
+                                 tr("The MDF4 file contains no measurement data."),
+                                 Core::Prompt::Critical);
     Q_EMIT indexingChanged();
     return;
   }
@@ -496,15 +509,18 @@ void MDF4::Player::onDecodeFinished(const MDF4::PlayerDecodePayloadPtr& payload)
 
   sendHeaderFrame();
 
+  if (m_bus)
+    m_bus->publishState<Core::Bus::ReplayPlayerStateChanged>(1, isOpen());
+
   Q_EMIT openChanged();
   Q_EMIT playerStateChanged();
   Q_EMIT indexingChanged();
 
   if (payload->partialData) [[unlikely]]
-    Misc::Utilities::showMessageBox(
+    Core::Prompt::showMessageBox(
       tr("MDF4 data may be incomplete"),
       tr("Part of the file's data section could not be read; the recording may be truncated."),
-      QMessageBox::Warning);
+      Core::Prompt::Warning);
 }
 
 /**
@@ -521,7 +537,7 @@ void MDF4::Player::nextFrame()
   if (m_framePos < frameCount() - 1) {
     ++m_framePos;
 
-    static auto& dashboard = UI::Dashboard::instance();
+    auto& dashboard = plotSink();
     dashboard.clearPlotData();
 
     int framesToLoad = dashboard.points();
@@ -547,7 +563,7 @@ void MDF4::Player::previousFrame()
   if (m_framePos > 0) {
     --m_framePos;
 
-    static auto& dashboard = UI::Dashboard::instance();
+    auto& dashboard = plotSink();
     dashboard.clearPlotData();
 
     int framesToLoad = dashboard.points();
@@ -599,7 +615,7 @@ int MDF4::Player::seekWindowStartRow(int target) const
   SS_ASSERT(target >= 0, return 0);
   SS_ASSERT(target < frameCount(), return qMax(0, frameCount() - 1));
 
-  static auto& dashboard = UI::Dashboard::instance();
+  auto& dashboard = plotSink();
   return DataModel::ReplayPlaybackEngine::seekWindowStartRow(
     target, dashboard.points(), dashboard.plotTimeRange(), [this](int row) {
       return m_timestamps[static_cast<size_t>(row)];
@@ -625,9 +641,9 @@ void MDF4::Player::performSeekTick()
     return;
   }
 
-  static auto& dashboard = UI::Dashboard::instance();
-  const int target       = m_framePos;
-  const int start        = seekWindowStartRow(target);
+  auto& dashboard  = plotSink();
+  const int target = m_framePos;
+  const int start  = seekWindowStartRow(target);
 
   QVector<double> times;
   QHash<qint64, QVector<double>> series;
@@ -651,7 +667,7 @@ void MDF4::Player::performSeekSettle()
   SS_ASSERT(m_framePos >= 0, return);
   SS_ASSERT(m_framePos < frameCount(), return);
 
-  static auto& dashboard = UI::Dashboard::instance();
+  auto& dashboard = plotSink();
   dashboard.clearPlotData();
 
   const int window = qMin(dashboard.points(), m_framePos + 1);
@@ -713,10 +729,10 @@ void MDF4::Player::buildSeekWindow(int startRow,
       times[k] = qMax(times[k], times[k - 1]);
   }
 
-  static auto& dashboard = UI::Dashboard::instance();
-  const auto pairs       = dashboard.replaySeekSeries();
+  auto& dashboard  = plotSink();
+  const auto pairs = dashboard.replaySeekSeries();
   for (const auto& pair : pairs) {
-    const qint64 key = UI::Dashboard::replaySeekKey(pair.first, pair.second);
+    const qint64 key = DataModel::replaySeekKey(pair.first, pair.second);
     const int column = m_seekColumnByKey.value(key, -1);
     if (column < 0)
       continue;
@@ -730,7 +746,7 @@ void MDF4::Player::buildSeekWindow(int startRow,
     for (int k = 0; k < n; ++k) {
       const auto row = static_cast<size_t>(startRow + k);
       const bool ok  = numeric_col && row < m_numeric[static_cast<size_t>(column)].size()
-                    && channelActive(column, startRow + k);
+                   && channelActive(column, startRow + k);
       values[k] =
         ok ? m_numeric[static_cast<size_t>(column)][row] : std::numeric_limits<double>::quiet_NaN();
     }
@@ -778,7 +794,7 @@ void MDF4::Player::catchUpToTarget(double targetTime)
   backfillSparseSources();
 
   if (stride > 2 && !m_seekColumnByKey.isEmpty() && m_engine.catchUpFillDue()) {
-    static auto& dashboard = UI::Dashboard::instance();
+    auto& dashboard = plotSink();
     QVector<double> times;
     QHash<qint64, QVector<double>> series;
     buildSeekWindow(seekWindowStartRow(m_framePos), m_framePos, times, series);
@@ -897,7 +913,7 @@ void MDF4::Player::sendHeaderFrame()
   if (m_channelNames.isEmpty())
     return;
 
-  static auto& appState = AppState::instance();
+  auto& appState = DataModel::pipelineModules().appState;
   if (appState.operationMode() == SerialStudio::ProjectFile) {
     buildReplayLayout();
     if (m_multiSource)
@@ -917,14 +933,14 @@ void MDF4::Player::sendHeaderFrame()
   if (appState.operationMode() != SerialStudio::ProjectFile) {
     m_seekColumnByKey.clear();
     for (int i = 0; i < headers.size(); ++i) {
-      m_seekColumnByKey.insert(
-        UI::Dashboard::replaySeekKey(0, DataModel::dataset_unique_id(0, 0, i)), i);
-      m_seekColumnByKey.insert(
-        UI::Dashboard::replaySeekKey(0, DataModel::dataset_unique_id(0, 1, i)), i);
+      m_seekColumnByKey.insert(DataModel::replaySeekKey(0, DataModel::dataset_unique_id(0, 0, i)),
+                               i);
+      m_seekColumnByKey.insert(DataModel::replaySeekKey(0, DataModel::dataset_unique_id(0, 1, i)),
+                               i);
     }
   }
 
-  static auto& frameBuilder = DataModel::FrameBuilder::instance();
+  auto& frameBuilder = DataModel::pipelineModules().frameBuilder;
   frameBuilder.registerQuickPlotHeaders(headers);
 }
 
@@ -1056,12 +1072,12 @@ QVector<quint8> MDF4::Player::buildChannelSourceBits()
 {
   m_bitSourceIds.clear();
 
-  static auto& appState = AppState::instance();
+  auto& appState = DataModel::pipelineModules().appState;
   if (appState.operationMode() != SerialStudio::ProjectFile)
     return {};
 
   QVector<quint8> bits;
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
   for (const auto& g : projectModel.groups()) {
     if (g.widget == QLatin1String("image"))
       continue;
@@ -1100,9 +1116,9 @@ void MDF4::Player::injectSourceRow(int frameIndex, int sourceId)
   if (it == m_sourceChannelsByIndex.constEnd())
     return;
 
-  static auto& frameBuilder = DataModel::FrameBuilder::instance();
-  const auto timestamp      = rowSteadyTimestamp(frameIndex);
-  const auto& orderedChs    = it.value();
+  auto& frameBuilder     = DataModel::pipelineModules().frameBuilder;
+  const auto timestamp   = rowSteadyTimestamp(frameIndex);
+  const auto& orderedChs = it.value();
   QVarLengthArray<DataModel::FrameBuilder::ReplayCell, 128> cells;
   cells.reserve(orderedChs.size());
   for (int ch : orderedChs) {
@@ -1173,7 +1189,7 @@ void MDF4::Player::injectRow(int frameIndex)
 
   const QScopedValueRollback<bool> reentry_guard(m_injecting, true);
 
-  static auto& appState = AppState::instance();
+  auto& appState = DataModel::pipelineModules().appState;
   if (appState.operationMode() != SerialStudio::ProjectFile) {
     injectFrame(getFrame(frameIndex), frameIndex);
     return;
@@ -1183,8 +1199,8 @@ void MDF4::Player::injectRow(int frameIndex)
   if (count <= 0) [[unlikely]]
     return;
 
-  static auto& frameBuilder = DataModel::FrameBuilder::instance();
-  const auto timestamp      = rowSteadyTimestamp(frameIndex);
+  auto& frameBuilder   = DataModel::pipelineModules().frameBuilder;
+  const auto timestamp = rowSteadyTimestamp(frameIndex);
 
   if (!m_multiSource) {
     frameBuilder.replayChannelsTyped(0, m_typedCells.constData(), count, timestamp);
@@ -1235,7 +1251,7 @@ void MDF4::Player::buildReplayLayout()
   };
 
   QVector<ChMeta> chs;
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
   for (const auto& g : projectModel.groups()) {
     if (g.widget == QLatin1String("image"))
       continue;
@@ -1249,7 +1265,7 @@ void MDF4::Player::buildReplayLayout()
     localCounter[m.sourceId];
 
   for (int ch = 0; ch < chs.size(); ++ch)
-    m_seekColumnByKey.insert(UI::Dashboard::replaySeekKey(chs[ch].sourceId, chs[ch].uid), ch);
+    m_seekColumnByKey.insert(DataModel::replaySeekKey(chs[ch].sourceId, chs[ch].uid), ch);
 
   m_multiSource = localCounter.size() > 1;
 
@@ -1270,7 +1286,7 @@ void MDF4::Player::buildReplayLayout()
     }
   }
 
-  static auto& frameBuilder = DataModel::FrameBuilder::instance();
+  auto& frameBuilder = DataModel::pipelineModules().frameBuilder;
   frameBuilder.setReplayColumnMap(std::move(replay));
 }
 
@@ -1283,7 +1299,7 @@ void MDF4::Player::injectFrame(const QByteArray& frame, int frameIndex)
     return;
 
   if (!m_multiSource) {
-    static auto& connectionManager = IO::ConnectionManager::instance();
+    auto& connectionManager = payloadInjector();
     connectionManager.processPayload(frame);
     return;
   }
@@ -1318,7 +1334,7 @@ void MDF4::Player::injectFrame(const QByteArray& frame, int frameIndex)
   }
 
   if (!sourcePayloads.isEmpty()) {
-    static auto& connectionManager = IO::ConnectionManager::instance();
+    auto& connectionManager = payloadInjector();
     connectionManager.processMultiSourcePayload(frame, sourcePayloads);
   }
 }

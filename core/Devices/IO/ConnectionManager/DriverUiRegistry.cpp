@@ -86,6 +86,16 @@ void IO::DriverUiRegistry::releaseAll()
 }
 
 /**
+ * @brief Hands the root-owned message bus to every configuration driver, so a warning raised
+ *        while QML or a project load edits one reaches the notification center (spec 0077 T30).
+ */
+void IO::DriverUiRegistry::attachMessageBus(Core::Bus::MessageBus& bus) const
+{
+  for (auto* driver : all())
+    driver->attachMessageBus(bus);
+}
+
+/**
  * @brief Runs the post-singleton wiring of the drivers that need it. Only the five listed here
  *        declare the hook; the rest are fully configured by their constructors.
  */

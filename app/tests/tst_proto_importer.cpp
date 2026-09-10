@@ -25,9 +25,9 @@
 #include <QTemporaryDir>
 #include <QTest>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/SerialStudio.h"
 #include "DataModel/Importers/ProtoImporter.h"
-#include "SerialStudio.h"
 #include "SessionContext.h"
 
 // The point of this suite is the seam, not the parser: a SessionContext and a ProtoImporter are

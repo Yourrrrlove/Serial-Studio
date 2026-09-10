@@ -29,6 +29,7 @@
 #  include <QPermissions>
 #endif
 
+#include "API/HandlerContext.h"
 #include "IO/ConnectionManager.h"
 
 //--------------------------------------------------------------------------------------------------
@@ -100,7 +101,7 @@ static void reportMissingSelection(const QStringList& devices, QList<Result>& ou
  */
 static void reportBackend(QList<Result>& out)
 {
-  static auto& manager = IO::ConnectionManager::instance();
+  auto& manager = API::handlerContext().connectionManager;
 
   auto* audio = manager.audio();
   if (audio == nullptr)

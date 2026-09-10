@@ -27,8 +27,9 @@
 #include <QUrl>
 
 #include "API/CommandRegistry.h"
-#include "API/EnumLabels.h"
+#include "API/HandlerContext.h"
 #include "API/SchemaBuilder.h"
+#include "Core/EnumLabels.h"
 #include "IO/ConnectionManager.h"
 #include "IO/Drivers/OpcUaTagModel.h"
 
@@ -37,7 +38,7 @@
  */
 [[nodiscard]] static IO::Drivers::OpcUa* opcUaDriver()
 {
-  static auto& connectionManager = IO::ConnectionManager::instance();
+  auto& connectionManager = API::handlerContext().connectionManager;
   return connectionManager.opcUa();
 }
 

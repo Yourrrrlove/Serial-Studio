@@ -179,6 +179,7 @@ void IO::Drivers::Network::appendUdpProperties(QList<IO::DriverProperty>& props)
   udpLocal.value = m_udpLocalPort;
   udpLocal.min   = 0;
   udpLocal.max   = 65535;
+  udpLocal.showWhen(QStringLiteral("socketTypeIndex"), {static_cast<int>(Udp)});
   props.append(udpLocal);
 
   IO::DriverProperty udpRemote;
@@ -188,6 +189,8 @@ void IO::Drivers::Network::appendUdpProperties(QList<IO::DriverProperty>& props)
   udpRemote.value = m_udpRemotePort;
   udpRemote.min   = 1;
   udpRemote.max   = 65535;
+  udpRemote.showWhen(QStringLiteral("socketTypeIndex"), {static_cast<int>(Udp)});
+  udpRemote.showWhen(QStringLiteral("udpMulticast"), {false});
   props.append(udpRemote);
 
   IO::DriverProperty multicast;
@@ -195,6 +198,7 @@ void IO::Drivers::Network::appendUdpProperties(QList<IO::DriverProperty>& props)
   multicast.label = tr("UDP Multicast");
   multicast.type  = IO::DriverProperty::CheckBox;
   multicast.value = m_udpMulticast;
+  multicast.showWhen(QStringLiteral("socketTypeIndex"), {static_cast<int>(Udp)});
   props.append(multicast);
 }
 

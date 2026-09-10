@@ -140,7 +140,7 @@
 ## Project File JSON Keys — `Keys::` Namespace
 
 Every JSON key used in `.json`/`.ssproj` files is declared in `namespace Keys` in
-**`core/Pipeline/DataModel/FrameKeys.h`** (which `Frame.h` includes — the namespace has not been in
+**`core/Core/DataModel/FrameKeys.h`** (which `Frame.h` includes — the namespace has not been in
 `Frame.h` itself since spec 0070) as `inline constexpr QLatin1StringView` (alias `KeyView`).
 
 - **Never hardcode** `"busType"`, `"frameStart"`, etc. in writers/readers or MCP handlers —
@@ -169,7 +169,7 @@ and row, validator, enablement predicate, and API field name plus typed schema.
 - **Four checked-in TUs are generated from it**, never hand-edited:
   `DataModel/Generated/DatasetRegistry.h` (descriptor table + form-id enum),
   `DataModel/Generated/DatasetSerialization.cpp` (project-JSON write/read),
-  `DataModel/Generated/DatasetForm.cpp` (editor rows + commit dispatcher), and
+  `ProjectEditor/Generated/DatasetForm.cpp` (editor rows + commit dispatcher, `core/Ui`), and
   `API/Generated/DatasetApiFields.cpp` (API field appliers + typed schema).
 - **Generator**: `scripts/generate-property-registry.py`; `--check` is gated in
   `sanitize-commit.py`, so a manifest edit that was not regenerated fails the pipeline. Output is
@@ -193,11 +193,11 @@ and row, validator, enablement predicate, and API field name plus typed schema.
   non-generated file spells out four or more dataset property keys — the hand-written field map
   growing back. Both list their exceptions inline, with a reason each.
 - **The multi-selection harvest reads the table, not a throwaway model.**
-  `ProjectEditor::datasetEditValues()` walks `kDatasetProperties` and asks the generated
+  `EditorMultiSelect::datasetEditValues()` walks `kDatasetProperties` and asks the generated
   `Registry::datasetFormValue()` for each row's value; a row whose `visibleWhen` predicate is
   false yields an invalid `QVariant` and is skipped, exactly as the row builders omit it.
 - **Undo is unchanged by the derivation.** `applyDatasetFormEdit()` only mutates the struct;
-  `ProjectEditor::commitDatasetFormEdit()` is the single choke point that calls
+  `EditorCommit::commitDatasetFormEdit()` is the single choke point that calls
   `setNextUndoHint()` + `ProjectModel::updateDataset()`, taking the coalesce key and the
   rebuild-tree flag from the property's descriptor rather than from a per-field `if`.
 

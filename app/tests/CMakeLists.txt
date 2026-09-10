@@ -31,9 +31,12 @@
 # deliberately NOT a dependency: qt_add_executable(), the QML module, and the two-stage PGO/LTO flow
 # stay untouched, and a suite links in seconds.
 #
-# A file that lives under core/ is never recompiled here: the suite links the archive the
-# application links, so the test and the shipped binary exercise the same objects and the same
-# definitions. Listing such a .cpp again would be a duplicate-symbol link error.
+# A file that lives under core/Core or core/Protocols is never recompiled here: the suite links
+# the archive the application links, so the test and the shipped binary exercise the same objects
+# and the same definitions, and listing such a .cpp again would be a duplicate-symbol link error.
+# Sources of the five partition layers (core/Pipeline, Devices, Storage, Api, Ui) are still
+# recompiled per suite via the core/<Layer> include roots, because linking a partition archive
+# would drag the whole singleton cycle; spec 0077 flips those registrations to the archives.
 #
 # This directory is a subdirectory of app/, so it inherits CMAKE_AUTOMOC, include_directories(src),
 # and the directory-level sanitizer/optimization options. That inheritance is why the tests live
@@ -63,32 +66,17 @@ endif()
 #
 # BUILD_COMMERCIAL is a global add_compile_definitions(), so a Pro configure of this tier compiles
 # every #ifdef BUILD_COMMERCIAL branch in the production TUs a suite links -- which is the whole
-# point of the sanitizer legs building Pro. Those branches reach two symbols no link set carried,
-# because until then the tier had only ever been configured GPL:
-#
-#   SS_LICENSING_SRC   CommercialToken::current()/isValid()/featureTier(), reached from the
-#                      isProTierActive() helpers in NotificationCenter.cpp and Translator.cpp. That
-#                      TU is small and QtCore-only, so the real thing links; SS_LICENSE_GUARD is a
-#                      generated-header macro and needs nothing at link time.
-#
-#   SS_MQTT_STUB_SRC   MQTT::Publisher, reached from TableApiBridge::mqttPublish() in DataTable.cpp.
-#                      Stubbed, not linked: Publisher.cpp pulls FrameBuilder and ProjectModel in.
-#
-# Both are empty in a GPL configure, where the branches do not compile and the files may not even
-# ship in the source tarball -- ss_add_unit_test() fails the configure on a source that is not on
-# disk, so an unconditional entry would break the GPL build outright.
+# point of the sanitizer legs building Pro. Those branches reach CommercialToken, which spec 0077
+# moved into SerialStudio::Core (core/Core/Licensing/), so every suite that links the Core archive
+# has it in a Pro configure and nothing in a GPL one; the SS_LICENSING_SRC recompile this list once
+# carried is gone, as is the MQTT publisher stub (DataTable.cpp reaches the publisher through
+# IO::IMqttPublisher). Only tst_commercial_token still compiles the token itself, under its own
+# build salt, so the suite stays independent of how the application was configured.
 #
 #---------------------------------------------------------------------------------------------------
 
-set(SS_LICENSING_SRC "")
-set(SS_MQTT_STUB_SRC "")
-set(SS_MQTT_LIBS "")
-
 if(BUILD_COMMERCIAL)
   find_package(Qt6 REQUIRED COMPONENTS Mqtt Network)
-  set(SS_LICENSING_SRC "${SS_APP_SRC}/Licensing/CommercialToken.cpp")
-  set(SS_MQTT_STUB_SRC "${CMAKE_CURRENT_SOURCE_DIR}/mqtt_publisher_stub.cpp")
-  set(SS_MQTT_LIBS Qt6::Mqtt Qt6::Network)
 endif()
 
 #---------------------------------------------------------------------------------------------------
@@ -98,10 +86,10 @@ endif()
 # -fsanitize=vptr instruments every call through a polymorphic reference with a check that names
 # the class, so the object file ends up with a reference to `typeinfo for <class>`. That symbol
 # lives in the TU holding the class's key function, and this tier deliberately does not link those
-# TUs: session_context_stub.cpp supplies SessionContext::current() alone, because linking the real
-# SessionContext.cpp drags the dtor closure of all eight core modules (the tst_proto_importer trap
-# below). NotificationCenter.cpp calls a virtual on SessionContext, so tst_frame_delimiters failed
-# to link in the sanitizer tier -- in that tier only, on a suite that is green everywhere else.
+# TUs: session_context_stub.cpp supplies SerialStudio::staticMetaObject alone (spec 0077 retired its
+# SessionContext::current() stand-in, since no library TU reaches the context). Before that,
+# NotificationCenter.cpp called a virtual on SessionContext, so tst_frame_delimiters failed to link in
+# the sanitizer tier -- in that tier only, on a suite that is green everywhere else.
 #
 # vptr is the one UBSan check a link-set carve-out cannot satisfy; every other check stays on, and
 # the application target keeps vptr too. Only the suites drop it. The SerialStudio::Core /
@@ -287,8 +275,7 @@ ss_add_unit_test(tst_value_widget_hasdata
 #
 ss_add_unit_test(tst_layout_patterns
   SOURCES tst_layout_patterns.cpp
-          ${SS_CORE_SRC}/Ui/UI/LayoutPatterns.cpp
-  LIBS    Qt6::Core Qt6::Gui
+  LIBS    Qt6::Core Qt6::Gui SerialStudio::Core
 )
 
 #
@@ -304,23 +291,15 @@ ss_add_unit_test(tst_lua_migration
 )
 
 #
-# SerialStudioFrameSupport.cpp holds the four SerialStudio statics Frame.cpp reaches (commercialCfg,
-# resolveEscapeSequences, hexToBytes, encodeText). They live apart from SerialStudio.cpp so this
-# suite links without the icon registry, theme manager and player singletons. Core5Compat comes with
-# them: the East-Asian encodings go through QTextCodec.
-#
-# serialize(Dataset) / read(Dataset&, ...) are generated (spec 0036), so DatasetSerialization.cpp is
-# mandatory here. It calls two PropertyHooks validators, and PropertyHooks.cpp reaches
-# ProjectModel::groups() / datasetCount(), which would drag the whole application in; the
-# ProjectModel-free validators therefore live in PropertyValidators.cpp and that is the TU this
-# suite links. Adding PropertyHooks.cpp instead is the move that breaks the seconds-long link.
+# The frame value types, the generated serializer and the ProjectModel-free validators all live in
+# SerialStudio::Core (spec 0077), so the suite links without the icon registry, theme manager and
+# player singletons. Core5Compat comes with TextCodec.cpp: the East-Asian encodings go through
+# QTextCodec. PropertyHooks.cpp reaches ProjectModel::groups() / datasetCount() and would drag the
+# whole application in; adding it is the move that breaks the seconds-long link.
 #
 ss_add_unit_test(tst_frame_serialization
   SOURCES tst_frame_serialization.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Frame.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Generated/DatasetSerialization.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Project/PropertyValidators.cpp
-          ${SS_APP_SRC}/SerialStudioFrameSupport.cpp
+          ${SS_CORE_SRC}/Pipeline/DataModel/TextCodec.cpp
   LIBS    Qt6::Core
           Qt6::Core5Compat
           Qt6::Gui
@@ -388,11 +367,9 @@ ss_add_unit_test(tst_message_bus
 # FileOpenEventFilter, the one class there that reached AppState and the project model, lives in its
 # own TU that this suite deliberately does not link.
 #
-# session_context_stub.cpp carries the link-only stand-ins that keep the carve-out honest: the
-# SessionContext::current() reference inside NotificationCenter::instance() (linking the real
-# SessionContext.cpp would drag the dtor closure described below) and SerialStudio::staticMetaObject
-# for the Q_ENUM inlines in FrameReader's moc (compiling moc_SerialStudio.cpp instead would pull
-# the whole invokable surface and with it SerialStudio.cpp).
+# session_context_stub.cpp carries the one link-only stand-in that keeps the carve-out honest:
+# SerialStudio::staticMetaObject for the Q_ENUM inlines in FrameReader's moc (compiling
+# moc_SerialStudio.cpp instead would pull the whole invokable surface and with it SerialStudio.cpp).
 #
 ss_add_unit_test(tst_frame_delimiters
   SOURCES tst_frame_delimiters.cpp
@@ -400,7 +377,6 @@ ss_add_unit_test(tst_frame_delimiters
           ${SS_CORE_SRC}/Pipeline/IO/FrameReader.cpp
           ${SS_CORE_SRC}/Pipeline/DataModel/NotificationCenter.cpp
           ${SS_CORE_SRC}/Pipeline/Platform/AppPlatform.cpp
-          ${SS_LICENSING_SRC}
   LIBS    Qt6::Core
           Qt6::Gui
           Qt6::Qml
@@ -506,7 +482,7 @@ ss_add_unit_test(tst_expression_transform
 #
 # Frame annotation layer (spec 0059): the model, filter proxy, payload extraction, CSV export and
 # the JS decoder with carry-over. Console/Annotations.cpp reaches JsWatchdog, SSAssert and the
-# ScriptTemplates manifest helpers (which localise names through Misc::Translator, hence Widgets);
+# ScriptTemplates manifest helpers (which localise names through Misc::Translator, now in Core);
 # QtQml for the QJSEngine the decoder embeds.
 #
 ss_add_unit_test(tst_console_annotations
@@ -515,9 +491,6 @@ ss_add_unit_test(tst_console_annotations
           ${SS_CORE_SRC}/Pipeline/DataModel/Scripting/JsWatchdog.cpp
           ${SS_CORE_SRC}/Pipeline/DataModel/Scripting/JsWatchdogThread.cpp
           ${SS_CORE_SRC}/Pipeline/DataModel/Scripting/ScriptTemplates.cpp
-          ${SS_CORE_SRC}/Ui/Misc/Translator.cpp
-          ${SS_CORE_SRC}/Ui/Misc/LanguageTable.cpp
-          ${SS_LICENSING_SRC}
   LIBS    Qt6::Core
           Qt6::Gui
           Qt6::Qml
@@ -605,8 +578,6 @@ ss_add_unit_test(tst_stream_block_codec
 #
 ss_add_unit_test(tst_enum_labels
   SOURCES tst_enum_labels.cpp
-          ${SS_CORE_SRC}/Api/API/EnumLabels.cpp
-          ${SS_CORE_SRC}/Ui/UI/LayoutPatterns.cpp
   LIBS    Qt6::Core
           Qt6::Gui
           SerialStudio::Core
@@ -618,18 +589,20 @@ ss_add_unit_test(tst_enum_labels
 # otherwise never be tested. The #ifdef BUILD_COMMERCIAL rows in tst_enum_labels.cpp swap the
 # "falls back to unknown" gap assertions for the real commercial round-trip and uniqueness sweeps.
 # The define is set on the target (like tst_opcua_wire) so the tier stays independent of the
-# application's own configuration.
+# application's own configuration. Both TUs are compiled here rather than taken from
+# SerialStudio::Core: a library object is built with the configure's define, not this target's,
+# and linking the library as well would put a second definition of every label next to these.
 #
 ss_add_unit_test(tst_enum_labels_commercial
   SOURCES tst_enum_labels.cpp
-          ${SS_CORE_SRC}/Api/API/EnumLabels.cpp
-          ${SS_CORE_SRC}/Ui/UI/LayoutPatterns.cpp
+          ${SS_CORE_SRC}/Core/EnumLabels.cpp
+          ${SS_CORE_SRC}/Core/LayoutPatterns.cpp
   LIBS    Qt6::Core
           Qt6::Gui
-          SerialStudio::Core
 )
 if(TARGET tst_enum_labels_commercial)
   target_compile_definitions(tst_enum_labels_commercial PRIVATE BUILD_COMMERCIAL)
+  target_include_directories(tst_enum_labels_commercial PRIVATE ${SS_CORE_SRC})
 endif()
 
 #
@@ -638,7 +611,7 @@ endif()
 #
 ss_add_unit_test(tst_password_hash
   SOURCES tst_password_hash.cpp
-          ${SS_CORE_SRC}/Ui/Misc/PasswordHash.cpp
+          ${SS_CORE_SRC}/Pipeline/Misc/PasswordHash.cpp
   LIBS    Qt6::Core
           Qt6::Network
           SerialStudio::Core
@@ -657,13 +630,12 @@ ss_add_unit_test(tst_legacy_icons
 )
 
 #
-# Boundary sweep of the four ProjectModel-free validators in PropertyValidators.cpp. The hooks that
-# do reach ProjectModel live in PropertyHooks.cpp and are deliberately not linked: that TU is what
-# would pull the application in (same reasoning as tst_frame_serialization above).
+# Boundary sweep of the four ProjectModel-free validators in Core's PropertyValidators.cpp. The hooks
+# that do reach ProjectModel live in PropertyHooks.cpp and are deliberately not linked: that TU is
+# what would pull the application in (same reasoning as tst_frame_serialization above).
 #
 ss_add_unit_test(tst_property_validators
   SOURCES tst_property_validators.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Project/PropertyValidators.cpp
   LIBS    Qt6::Core
           Qt6::Gui
           SerialStudio::Core
@@ -721,7 +693,7 @@ ss_add_unit_test(tst_zmodem
 #
 ss_add_unit_test(tst_tls_identity
   SOURCES tst_tls_identity.cpp
-          ${SS_CORE_SRC}/Devices/MQTT/TlsIdentity.cpp
+          ${SS_CORE_SRC}/Protocols/Tls/TlsIdentity.cpp
   LIBS    Qt6::Core
           Qt6::Network
 )
@@ -766,7 +738,7 @@ ss_add_unit_test(tst_sparkplug_session
 #
 ss_add_unit_test(tst_sparkplug_publisher
   SOURCES tst_sparkplug_publisher.cpp
-          ${SS_CORE_SRC}/Devices/MQTT/SparkplugPublisher.cpp
+          ${SS_CORE_SRC}/Storage/MQTT/SparkplugPublisher.cpp
   LIBS    Qt6::Core
           Qt6::Gui
           SerialStudio::Protocols
@@ -820,11 +792,7 @@ ss_add_unit_test(tst_s7comm_pdu
 ss_add_unit_test(tst_export_structure
   SOURCES tst_export_structure.cpp
           ${SS_CORE_SRC}/Pipeline/DataModel/ExportStructure.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Frame.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Generated/DatasetSerialization.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Project/PropertyValidators.cpp
-          ${SS_CORE_SRC}/Ui/Misc/WorkspaceManager.cpp
-          ${SS_APP_SRC}/SerialStudioFrameSupport.cpp
+          ${SS_CORE_SRC}/Pipeline/DataModel/TextCodec.cpp
   LIBS    Qt6::Core
           Qt6::Core5Compat
           Qt6::Gui
@@ -973,7 +941,7 @@ ss_add_unit_test(tst_opcua_wire
           ${SS_CORE_SRC}/Pipeline/DataModel/Scripting/NativeTemplates/TextYamlData.cpp
           ${SS_CORE_SRC}/Pipeline/DataModel/Scripting/NativeTemplates/MultiFrameBatchedSensor.cpp
           ${SS_CORE_SRC}/Pipeline/DataModel/Scripting/NativeTemplates/MultiFrameTimeSeries2d.cpp
-          ${SS_APP_SRC}/SerialStudioFrameSupport.cpp
+          ${SS_CORE_SRC}/Pipeline/DataModel/TextCodec.cpp
   LIBS    Qt6::Core
           Qt6::Core5Compat
           Qt6::Gui
@@ -1094,7 +1062,7 @@ ss_add_unit_test(tst_js_watchdog
 #
 ss_add_unit_test(tst_stream_worker
   SOURCES tst_stream_worker.cpp
-          ${SS_CORE_SRC}/Devices/IO/HAL_Driver.h
+          ${SS_CORE_SRC}/Core/IO/HAL_Driver.h
           ${SS_CORE_SRC}/Pipeline/IO/StreamWorker.cpp
           ${SS_CORE_SRC}/Pipeline/DataModel/Scripting/ExpressionTransform.cpp
           ${SS_CORE_SRC}/Pipeline/DataModel/Scripting/JsWatchdog.cpp
@@ -1117,14 +1085,32 @@ ss_add_unit_test(tst_stream_worker
 #
 ss_add_unit_test(tst_frame_consumer
   SOURCES tst_frame_consumer.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/FrameConsumer.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Frame.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Generated/DatasetSerialization.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Project/PropertyValidators.cpp
-          ${SS_APP_SRC}/SerialStudioFrameSupport.cpp
+          ${SS_CORE_SRC}/Pipeline/DataModel/TextCodec.cpp
   LIBS    Qt6::Core
           Qt6::Core5Compat
           Qt6::Gui
+          SerialStudio::Core
+)
+
+#
+# The ingest seam (spec 0077): a DeviceManager talks to the pipeline only through IIngestBinder, so
+# the suite records the binder calls each lifecycle step makes against a stub driver. The pipeline
+# host's side of the seam is exercised by the ctest-free runtime checks at the phase checkpoint.
+#
+ss_add_unit_test(tst_ingest_binder
+  SOURCES tst_ingest_binder.cpp
+          ${SS_CORE_SRC}/Devices/IO/DeviceManager.cpp
+  LIBS    Qt6::Core
+          SerialStudio::Core
+)
+
+#
+# The block-sink contract (spec 0077): ingestion through the base pointer, the activity verdict and
+# its edge signal, and FrameConsumer's inheritance of all three.
+#
+ss_add_unit_test(tst_block_sink
+  SOURCES tst_block_sink.cpp
+  LIBS    Qt6::Core
           SerialStudio::Core
 )
 
@@ -1134,13 +1120,29 @@ ss_add_unit_test(tst_frame_consumer
 #
 ss_add_unit_test(tst_frame_support
   SOURCES tst_frame_support.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Frame.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Generated/DatasetSerialization.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Project/PropertyValidators.cpp
-          ${SS_APP_SRC}/SerialStudioFrameSupport.cpp
+          ${SS_CORE_SRC}/Pipeline/DataModel/TextCodec.cpp
   LIBS    Qt6::Core
           Qt6::Core5Compat
           Qt6::Gui
+          SerialStudio::Core
+)
+
+#
+# Pins the persisted ordinals and the id/name round trips of the SerialStudio vocabulary now that
+# it is a Core namespace (spec 0077): header-only enums plus the Core helpers, nothing else.
+#
+ss_add_unit_test(tst_serialstudio_enums
+  SOURCES tst_serialstudio_enums.cpp
+  LIBS    Qt6::Core
+          SerialStudio::Core
+)
+
+#
+# Contract of the Core licensing flag the composition root publishes (spec 0077).
+#
+ss_add_unit_test(tst_license_state
+  SOURCES tst_license_state.cpp
+  LIBS    Qt6::Core
           SerialStudio::Core
 )
 
@@ -1151,10 +1153,8 @@ ss_add_unit_test(tst_frame_support
 #
 ss_add_unit_test(tst_frame_json_legacy
   SOURCES tst_frame_json_legacy.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Frame.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Generated/DatasetSerialization.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Project/PropertyValidators.cpp
-          ${SS_APP_SRC}/SerialStudioFrameSupport.cpp
+          ${SS_CORE_SRC}/Pipeline/DataModel/ActionBytes.cpp
+          ${SS_CORE_SRC}/Pipeline/DataModel/TextCodec.cpp
   LIBS    Qt6::Core
           Qt6::Core5Compat
           Qt6::Gui
@@ -1200,7 +1200,7 @@ ss_add_unit_test(tst_cframe_parser
           ${SS_CORE_SRC}/Pipeline/DataModel/Scripting/NativeTemplates/TextYamlData.cpp
           ${SS_CORE_SRC}/Pipeline/DataModel/Scripting/NativeTemplates/MultiFrameBatchedSensor.cpp
           ${SS_CORE_SRC}/Pipeline/DataModel/Scripting/NativeTemplates/MultiFrameTimeSeries2d.cpp
-          ${SS_APP_SRC}/SerialStudioFrameSupport.cpp
+          ${SS_CORE_SRC}/Pipeline/DataModel/TextCodec.cpp
           ${SS_CORE_SRC}/Ui/Misc/Utilities.cpp
   LIBS    Qt6::Core
           Qt6::Core5Compat
@@ -1213,7 +1213,7 @@ ss_add_unit_test(tst_cframe_parser
 #
 # Companion to tst_frame_delimiters: the operation modes and the reader paths that suite leaves
 # alone. Same four-TU carve-out and the same session_context_stub.cpp, for the reasons spelled out
-# above -- linking the real SessionContext.cpp would pull its dtor closure in.
+# above.
 #
 ss_add_unit_test(tst_frame_reader_modes
   SOURCES tst_frame_reader_modes.cpp
@@ -1221,7 +1221,6 @@ ss_add_unit_test(tst_frame_reader_modes
           ${SS_CORE_SRC}/Pipeline/IO/FrameReader.cpp
           ${SS_CORE_SRC}/Pipeline/DataModel/NotificationCenter.cpp
           ${SS_CORE_SRC}/Pipeline/Platform/AppPlatform.cpp
-          ${SS_LICENSING_SRC}
   LIBS    Qt6::Core
           Qt6::Gui
           Qt6::Qml
@@ -1531,11 +1530,7 @@ ss_add_unit_test(tst_grpc_pending_call
 ss_add_unit_test(tst_server_worker_caps
   SOURCES tst_server_worker_caps.cpp
           ${SS_CORE_SRC}/Api/API/Server/ServerWorker.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/FrameConsumer.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Frame.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Generated/DatasetSerialization.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Project/PropertyValidators.cpp
-          ${SS_APP_SRC}/SerialStudioFrameSupport.cpp
+          ${SS_CORE_SRC}/Pipeline/DataModel/TextCodec.cpp
   LIBS    Qt6::Core
           Qt6::Core5Compat
           Qt6::Gui
@@ -1551,10 +1546,7 @@ ss_add_unit_test(tst_server_worker_caps
 ss_add_unit_test(tst_modbus_generation
   SOURCES tst_modbus_generation.cpp
           ${SS_CORE_SRC}/Devices/IO/Drivers/Modbus/ModbusProjectGenerator.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Frame.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Generated/DatasetSerialization.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Project/PropertyValidators.cpp
-          ${SS_APP_SRC}/SerialStudioFrameSupport.cpp
+          ${SS_CORE_SRC}/Pipeline/DataModel/TextCodec.cpp
   LIBS    Qt6::Core
           Qt6::Core5Compat
           Qt6::Gui
@@ -1607,7 +1599,7 @@ ss_add_unit_test(tst_opcua_endpoint_selection
 #
 ss_add_unit_test(tst_mqtt_csv_expansion
   SOURCES tst_mqtt_csv_expansion.cpp
-          ${SS_CORE_SRC}/Devices/MQTT/CsvExpansion.cpp
+          ${SS_CORE_SRC}/Storage/MQTT/CsvExpansion.cpp
   LIBS    Qt6::Core
           SerialStudio::Core
 )
@@ -1666,11 +1658,8 @@ ss_add_unit_test(tst_widget_manifest
 #
 ss_add_unit_test(tst_language_table
   SOURCES tst_language_table.cpp
-          ${SS_CORE_SRC}/Ui/Misc/LanguageTable.cpp
-          ${SS_CORE_SRC}/Ui/Misc/Translator.cpp
-          ${SS_LICENSING_SRC}
   LIBS    Qt6::Core
-          Qt6::Widgets
+          SerialStudio::Core
 )
 
 #
@@ -1680,7 +1669,6 @@ ss_add_unit_test(tst_language_table
 ss_add_unit_test(tst_theme_catalog
   SOURCES tst_theme_catalog.cpp
           ${SS_CORE_SRC}/Ui/Misc/ThemeCatalog.cpp
-          ${SS_CORE_SRC}/Ui/Misc/LanguageTable.cpp
   LIBS    Qt6::Core
           SerialStudio::Core
 )
@@ -1830,7 +1818,7 @@ ss_add_unit_test(tst_dashboard_viewstate
 #
 ss_add_unit_test(tst_project_nav_history
   SOURCES tst_project_nav_history.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Project/ProjectNavHistory.cpp
+          ${SS_CORE_SRC}/Ui/ProjectEditor/ProjectNavHistory.cpp
   LIBS    Qt6::Core
           SerialStudio::Core
 )
@@ -1891,7 +1879,7 @@ ss_add_unit_test(tst_cli_spec_parsers
 ss_add_unit_test(tst_latest_frame_tap
   SOURCES tst_latest_frame_tap.cpp
           ${SS_CORE_SRC}/Pipeline/DataModel/FrameBuilder/LatestFrameTap.cpp
-          ${SS_CORE_SRC}/Devices/IO/HAL_Driver.h
+          ${SS_CORE_SRC}/Core/IO/HAL_Driver.h
   LIBS    Qt6::Core
           SerialStudio::Core
 )
@@ -1904,12 +1892,8 @@ ss_add_unit_test(tst_table_snapshot_channel
   SOURCES tst_table_snapshot_channel.cpp
           ${SS_CORE_SRC}/Pipeline/DataModel/FrameBuilder/TableSnapshotChannel.cpp
           ${SS_CORE_SRC}/Pipeline/DataModel/DataTable.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Frame.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Generated/DatasetSerialization.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Project/PropertyValidators.cpp
-          ${SS_APP_SRC}/SerialStudioFrameSupport.cpp
-          ${SS_MQTT_STUB_SRC}
-  LIBS    Qt6::Core Qt6::Core5Compat Qt6::Gui Qt6::Qml ${SS_MQTT_LIBS}
+          ${SS_CORE_SRC}/Pipeline/DataModel/TextCodec.cpp
+  LIBS    Qt6::Core Qt6::Core5Compat Qt6::Gui Qt6::Qml
           SerialStudio::Core
 )
 
@@ -1962,10 +1946,7 @@ endif()
 ss_add_unit_test(tst_opcua_project_builder
   SOURCES tst_opcua_project_builder.cpp
           ${SS_CORE_SRC}/Devices/IO/Drivers/OpcUa/OpcUaProjectBuilder.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Frame.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Generated/DatasetSerialization.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Project/PropertyValidators.cpp
-          ${SS_APP_SRC}/SerialStudioFrameSupport.cpp
+          ${SS_CORE_SRC}/Pipeline/DataModel/TextCodec.cpp
   LIBS    Qt6::Core
           Qt6::Core5Compat
           Qt6::Gui
@@ -2003,7 +1984,7 @@ ss_add_unit_test(tst_test_doubles
           support/FakeDriver.cpp
           support/FakeProvider.cpp
           support/FakeTransport.cpp
-          ${SS_CORE_SRC}/Devices/IO/HAL_Driver.h
+          ${SS_CORE_SRC}/Core/IO/HAL_Driver.h
           ${SS_CORE_SRC}/Ui/AI/Providers/Provider.h
   LIBS    Qt6::Core
           Qt6::Gui
@@ -2098,7 +2079,6 @@ ss_add_unit_test(tst_file_sandbox
           ${SS_CORE_SRC}/Ui/AI/Tools/ToolFilesystemTools.cpp
           ${SS_CORE_SRC}/Ui/AI/Tools/ToolSchemas.cpp
           ${SS_CORE_SRC}/Ui/AI/Logging.cpp
-          ${SS_CORE_SRC}/Ui/Misc/WorkspaceManager.cpp
   LIBS    Qt6::Core
           Qt6::Gui
           Qt6::Widgets
@@ -2124,7 +2104,6 @@ ss_add_unit_test(tst_reply_state_machine
           ${SS_CORE_SRC}/Ui/AI/KeyVault.cpp
           ${SS_CORE_SRC}/Ui/AI/Logging.cpp
           ${SS_APP_SRC}/Licensing/MachineID.cpp
-          ${SS_APP_SRC}/Licensing/SimpleCrypt.cpp
   LIBS    Qt6::Core
           Qt6::Gui
           Qt6::Network
@@ -2143,7 +2122,6 @@ ss_add_unit_test(tst_extension_installer
           support/FakeTransport.cpp
           ${SS_CORE_SRC}/Ui/Misc/Extensions/ExtensionInstaller.cpp
           ${SS_CORE_SRC}/Ui/Misc/Extensions/ExtensionCatalog.cpp
-          ${SS_CORE_SRC}/Ui/Misc/WorkspaceManager.cpp
   LIBS    Qt6::Core
           Qt6::Gui
           Qt6::Network
@@ -2177,8 +2155,8 @@ ss_add_unit_test(tst_conversation_turn
 #
 ss_add_unit_test(tst_simplecrypt
   SOURCES tst_simplecrypt.cpp
-          ${SS_APP_SRC}/Licensing/SimpleCrypt.cpp
   LIBS    Qt6::Core
+          SerialStudio::Core
 )
 
 #
@@ -2191,10 +2169,10 @@ ss_add_unit_test(tst_monotonic_clock
   SOURCES tst_monotonic_clock.cpp
           ${SS_APP_SRC}/Licensing/MonotonicClock.cpp
           ${SS_APP_SRC}/Licensing/MachineID.cpp
-          ${SS_APP_SRC}/Licensing/SimpleCrypt.cpp
   LIBS    Qt6::Core
           Qt6::Gui
           Qt6::Widgets
+          SerialStudio::Core
 )
 
 #
@@ -2204,7 +2182,7 @@ ss_add_unit_test(tst_monotonic_clock
 #
 ss_add_unit_test(tst_commercial_token
   SOURCES tst_commercial_token.cpp
-          ${SS_APP_SRC}/Licensing/CommercialToken.cpp
+          ${SS_CORE_SRC}/Core/Licensing/CommercialToken.cpp
   LIBS    Qt6::Core
 )
 if(TARGET tst_commercial_token)
@@ -2219,10 +2197,10 @@ endif()
 ss_add_unit_test(tst_machine_id_identity
   SOURCES tst_machine_id_identity.cpp
           ${SS_APP_SRC}/Licensing/MachineID.cpp
-          ${SS_APP_SRC}/Licensing/SimpleCrypt.cpp
   LIBS    Qt6::Core
           Qt6::Gui
           Qt6::Widgets
+          SerialStudio::Core
 )
 
 # The dashboard's uniform-grid block ingest (spec 0075): the sample-ring, GPS and multiplot feeds a
@@ -2235,10 +2213,7 @@ ss_add_unit_test(tst_machine_id_identity
 ss_add_unit_test(tst_dashboard_ingest
   SOURCES tst_dashboard_ingest.cpp
           ${SS_CORE_SRC}/Ui/UI/Dashboard/DashboardIngest.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Frame.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Generated/DatasetSerialization.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Project/PropertyValidators.cpp
-          ${SS_APP_SRC}/SerialStudioFrameSupport.cpp
+          ${SS_CORE_SRC}/Pipeline/DataModel/TextCodec.cpp
           ${SS_CORE_SRC}/Pipeline/Platform/AppPlatform.cpp
   LIBS    Qt6::Core
           Qt6::Core5Compat
@@ -2387,10 +2362,7 @@ ss_add_unit_test(tst_project_history
 ss_add_unit_test(tst_frame_builder_staging
   SOURCES tst_frame_builder_staging.cpp
           ${SS_CORE_SRC}/Pipeline/DataModel/FrameBuilder/BlockStager.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Frame.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Generated/DatasetSerialization.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Project/PropertyValidators.cpp
-          ${SS_APP_SRC}/SerialStudioFrameSupport.cpp
+          ${SS_CORE_SRC}/Pipeline/DataModel/TextCodec.cpp
   LIBS    Qt6::Core
           Qt6::Core5Compat
           Qt6::Gui
@@ -2415,11 +2387,7 @@ ss_add_unit_test(tst_sessions_export_worker
 #
 ss_add_unit_test(tst_csv_export_times
   SOURCES tst_csv_export_times.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/FrameConsumer.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Frame.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Generated/DatasetSerialization.cpp
-          ${SS_CORE_SRC}/Pipeline/DataModel/Project/PropertyValidators.cpp
-          ${SS_APP_SRC}/SerialStudioFrameSupport.cpp
+          ${SS_CORE_SRC}/Pipeline/DataModel/TextCodec.cpp
   LIBS    Qt6::Core
           Qt6::Core5Compat
           Qt6::Gui
@@ -2518,7 +2486,7 @@ ss_add_unit_test(tst_connect_fanout
 ss_add_unit_test(tst_connection_verdicts
   SOURCES tst_connection_verdicts.cpp
           support/FakeDriver.cpp
-          ${SS_CORE_SRC}/Devices/IO/HAL_Driver.h
+          ${SS_CORE_SRC}/Core/IO/HAL_Driver.h
           ${SS_CORE_SRC}/Devices/IO/ConnectionManager/ConnectFanOut.cpp
   LIBS    Qt6::Core
           Qt6::Gui
@@ -2529,16 +2497,16 @@ ss_add_unit_test(tst_connection_verdicts
 #
 # Licensing::MachineID's startup contract (spec 0075): a machine that already has a persisted
 # fingerprint must answer from it instead of spawning ioreg/reg/powershell inside the composition
-# root. SimpleCrypt.cpp comes with it because the store is encrypted; QtWidgets because
-# MachineID.cpp reaches qApp through <QApplication>.
+# root. SerialStudio::Core comes with it for the SimpleCrypt the store sits under; QtWidgets
+# because MachineID.cpp reaches qApp through <QApplication>.
 #
 ss_add_unit_test(tst_machine_id
   SOURCES tst_machine_id.cpp
           ${SS_APP_SRC}/Licensing/MachineID.cpp
-          ${SS_APP_SRC}/Licensing/SimpleCrypt.cpp
   LIBS    Qt6::Core
           Qt6::Gui
           Qt6::Widgets
+          SerialStudio::Core
 )
 
 #

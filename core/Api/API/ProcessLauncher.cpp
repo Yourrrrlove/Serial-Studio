@@ -32,7 +32,9 @@
 #include <QTimer>
 #include <QVariantMap>
 
+#include "API/HandlerContext.h"
 #include "Core/SSAssert.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
 #include "IO/ConnectionManager.h"
 
@@ -60,8 +62,8 @@ API::ProcessLauncher& API::ProcessLauncher::instance()
  */
 void API::ProcessLauncher::setupExternalConnections()
 {
-  m_connectionManager = &IO::ConnectionManager::instance();
-  m_projectModel      = &DataModel::ProjectModel::instance();
+  m_connectionManager = &API::handlerContext().connectionManager;
+  m_projectModel      = &DataModel::pipelineModules().projectModel;
 
   m_lastProjectPath = m_projectModel->jsonFilePath();
 

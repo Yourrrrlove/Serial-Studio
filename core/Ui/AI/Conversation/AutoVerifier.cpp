@@ -15,7 +15,7 @@
 #include "AI/CommandRegistry.h"
 #include "AI/Logging.h"
 #include "AI/ToolDispatcher.h"
-#include "DataModel/FrameKeys.h"
+#include "Core/DataModel/FrameKeys.h"
 
 //--------------------------------------------------------------------------------------------------
 // Construction / wiring

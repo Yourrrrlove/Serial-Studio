@@ -23,12 +23,16 @@
 
 #include <memory>
 
-#include "IO/HAL_Driver.h"
-#include "SerialStudio.h"
+#include "Core/IO/HAL_Driver.h"
+#include "Core/SerialStudio.h"
 
 namespace Misc::Diagnostics {
 enum class Bus : int;
 }  // namespace Misc::Diagnostics
+
+namespace Core::Bus {
+class MessageBus;
+}  // namespace Core::Bus
 
 namespace IO {
 
@@ -42,7 +46,7 @@ class DriverUiRegistry;
  */
 class DriverFactory {
 public:
-  explicit DriverFactory(DriverUiRegistry& uiDrivers);
+  DriverFactory(DriverUiRegistry& uiDrivers, Core::Bus::MessageBus& bus);
   DriverFactory(DriverFactory&&)                 = delete;
   DriverFactory(const DriverFactory&)            = delete;
   DriverFactory& operator=(DriverFactory&&)      = delete;
@@ -53,6 +57,7 @@ public:
   [[nodiscard]] static bool diagnosticsBus(HAL_Driver* driver, Misc::Diagnostics::Bus& bus);
 
 private:
+  [[nodiscard]] std::unique_ptr<HAL_Driver> build(SerialStudio::BusType type) const;
 #ifdef BUILD_COMMERCIAL
   [[nodiscard]] std::unique_ptr<HAL_Driver> createMqtt() const;
   [[nodiscard]] std::unique_ptr<HAL_Driver> createOpcUa() const;
@@ -62,6 +67,7 @@ private:
 #ifdef BUILD_COMMERCIAL
   DriverUiRegistry& m_uiDrivers;
 #endif
+  Core::Bus::MessageBus& m_bus;
 };
 
 }  // namespace IO

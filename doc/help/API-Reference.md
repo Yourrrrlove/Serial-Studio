@@ -17,6 +17,9 @@
 >   [examples/API Test/](../../examples/API%20Test/).
 > - **From the AI Assistant**: `meta.listCategories` followed by
 >   `meta.listCommands` and `meta.describeCommand`.
+> - **In the app**: the [Macros](Macros.md) window lists the live
+>   catalog with parameters, and runs commands and scripts in process
+>   without the API server.
 
 ## Table of Contents
 
@@ -3913,7 +3916,8 @@ is written.
 Read-only diagnostics. Serial Studio runs a set of checkers over the loaded project, the
 live link counters, and the parser/transform scripts, and keeps the result as a standing
 list: a finding stays until its cause is fixed, then disappears on the next run. Start here
-when a dashboard is blank, a widget stays empty, or values look wrong.
+when a dashboard is blank, a widget stays empty, or values look wrong. The in-app view of the
+same list is the [Problem Center](Problem-Center.md) window.
 
 Each finding carries:
 
@@ -3926,7 +3930,7 @@ Each finding carries:
 | `explanation` | One or two sentences naming the concrete cause |
 | `remedy` | What to change to fix it (may be empty) |
 | `entityUniqueId` | The project entity to fix, or `-1` when there is none |
-| `jump` | `dataset`, `group`, `action`, `source`, `settings/<page>`, or empty |
+| `jump` | `dataset`, `group`, `action`, `source`, or empty |
 
 #### 🟢 `problems.list`
 List the diagnostics currently reported.

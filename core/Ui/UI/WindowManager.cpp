@@ -29,9 +29,10 @@
 #include <QStandardPaths>
 #include <QUrl>
 
+#include "Core/LayoutPatterns.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
 #include "UI/Dashboard.h"
-#include "UI/LayoutPatterns.h"
 #include "UI/SnapGuides.h"
 #include "UI/Taskbar.h"
 #include "UI/UISessionRegistry.h"
@@ -540,8 +541,8 @@ void UI::WindowManager::refreshLayoutChoice()
   if (!m_taskbar)
     return;
 
-  static auto& project = DataModel::ProjectModel::instance();
-  const auto choice    = project.layoutChoice(m_taskbar->layoutScope(), m_taskbar->activeGroupId());
+  auto& project     = DataModel::pipelineModules().projectModel;
+  const auto choice = project.layoutChoice(m_taskbar->layoutScope(), m_taskbar->activeGroupId());
 
   m_layoutPattern = choice.value(QStringLiteral("pattern")).toString();
   m_layoutRatio   = qBound(1, choice.value(QStringLiteral("ratio")).toInt(), 15);
@@ -635,7 +636,7 @@ void UI::WindowManager::selectLayoutPattern(const QString& pattern, const int ra
   m_layoutRatio   = qBound(1, ratio, Layouts::kRatioDenominator - 1);
 
   if (m_taskbar) {
-    static auto& project = DataModel::ProjectModel::instance();
+    auto& project = DataModel::pipelineModules().projectModel;
     project.setLayoutChoice(
       m_taskbar->layoutScope(), m_taskbar->activeGroupId(), m_layoutPattern, m_layoutRatio);
   }
@@ -1239,12 +1240,12 @@ bool UI::WindowManager::startManualPress(const QPointF& pos, Qt::MouseButton but
     return true;
   }
 
-  const auto local      = m_focusedWindow->mapFromItem(this, m_initialMousePos);
-  const int captionH    = m_focusedWindow->property("captionHeight").toInt();
-  const int menuCtlW    = m_focusedWindow->property("menuControlWidth").toInt();
-  const int buttonsW    = m_focusedWindow->property("windowControlsWidth").toInt();
-  const bool onCaption  = local.y() <= captionH && local.x() > menuCtlW
-                       && local.x() <= m_focusedWindow->width() - buttonsW;
+  const auto local     = m_focusedWindow->mapFromItem(this, m_initialMousePos);
+  const int captionH   = m_focusedWindow->property("captionHeight").toInt();
+  const int menuCtlW   = m_focusedWindow->property("menuControlWidth").toInt();
+  const int buttonsW   = m_focusedWindow->property("windowControlsWidth").toInt();
+  const bool onCaption = local.y() <= captionH && local.x() > menuCtlW
+                      && local.x() <= m_focusedWindow->width() - buttonsW;
   const bool onControls = local.y() <= captionH && !onCaption;
   if (onControls)
     return false;

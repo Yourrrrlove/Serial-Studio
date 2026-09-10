@@ -29,6 +29,7 @@
 #include <QRect>
 #include <QTimer>
 
+#include "Core/Bus/Subscription.h"
 #include "UI/Widgets/Terminal/AnsiPalette.h"
 #include "UI/Widgets/Terminal/AnsiStateMachine.h"
 #include "UI/Widgets/Terminal/TerminalBuffer.h"
@@ -41,12 +42,6 @@ class Handler;
 namespace IO {
 class ConnectionManager;
 }  // namespace IO
-
-#ifdef BUILD_COMMERCIAL
-namespace Licensing {
-class LemonSqueezy;
-}  // namespace Licensing
-#endif
 
 namespace Misc {
 class ThemeManager;
@@ -285,11 +280,9 @@ private:
   Console::Handler& m_consoleHandler;
   Misc::ThemeManager& m_themeManager;
   IO::ConnectionManager& m_connectionManager;
-#ifdef BUILD_COMMERCIAL
-  Licensing::LemonSqueezy& m_lemonSqueezy;
-#endif
   Misc::Translator& m_translator;
   Misc::TimerEvents& m_timerEvents;
+  Core::Bus::Subscription m_licenseWatch;
 
   QPalette m_palette;
 

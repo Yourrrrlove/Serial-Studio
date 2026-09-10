@@ -25,8 +25,8 @@
 #include <QVariantList>
 #include <vector>
 
-#include "DataModel/Frame.h"
-#include "SerialStudio.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/SerialStudio.h"
 
 namespace DataModel {
 

@@ -23,7 +23,7 @@
 #include <QString>
 #include <QTest>
 
-#include "DataModel/Project/ProjectNavHistory.h"
+#include "ProjectEditor/ProjectNavHistory.h"
 
 // Every test function here builds its own ProjectNavHistory: no state is carried between slots, so
 // Qt Test's declaration-order execution is never load-bearing. Out-of-range setCursor()/entryAt()

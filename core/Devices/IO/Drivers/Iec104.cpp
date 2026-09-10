@@ -25,18 +25,15 @@
 #include <chrono>
 #include <QHash>
 #include <QJsonDocument>
-#include <QMessageBox>
 #include <QStringList>
 #include <QTcpSocket>
 #include <QTimer>
 #include <utility>
 
-#include "AppState.h"
+#include "Core/Prompt/UserPrompt.h"
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
-#include "DataModel/ProjectModel.h"
 #include "IO/ConnectionManager.h"
-#include "Misc/Utilities.h"
-#include "SerialStudio.h"
 
 using namespace IO::Drivers::Iec104Proto;
 
@@ -77,8 +74,7 @@ static constexpr qint64 kIec104NsPerMs             = 1000000;
  * @brief Constructs the driver, restores persisted settings and wires the configuration signals.
  */
 IO::Drivers::Iec104::Iec104()
-  : m_appState(AppState::instance())
-  , m_projectModel(DataModel::ProjectModel::instance())
+  : m_generatedProject(this)
   , m_open(false)
   , m_loading(true)
   , m_started(false)
@@ -1384,7 +1380,7 @@ QJsonObject IO::Drivers::Iec104::buildProject() const
   source[Keys::FrameParserLanguage]   = static_cast<int>(SerialStudio::Native);
   source[Keys::FrameParserTemplate]   = QStringLiteral("iec104");
   source[Keys::FrameParserParams]     = QJsonObject{
-    {QStringLiteral("schema"), wireSchema()}
+        {QStringLiteral("schema"), wireSchema()}
   };
 
   QJsonObject conn;
@@ -1427,21 +1423,19 @@ QJsonObject IO::Drivers::Iec104::buildProject() const
 /**
  * @brief Builds the project and loads it into the editor (no save dialog); the API path.
  */
-DataModel::ProjectModel* IO::Drivers::Iec104::loadGeneratedProject()
+bool IO::Drivers::Iec104::loadGeneratedProject()
 {
   adoptDiscoveredPoints();
   if (pointTable().isEmpty())
-    return nullptr;
+    return false;
 
-  m_appState.setOperationMode(SerialStudio::ProjectFile);
-  if (!m_projectModel.loadFromJsonDocument(QJsonDocument(buildProject()), QString())) {
+  if (!m_generatedProject.load(messageBus(), QJsonDocument(buildProject()))) {
     logDriverError(tr("Failed to load generated project"),
                    tr("The generated project JSON could not be loaded."));
-    return nullptr;
+    return false;
   }
 
-  m_projectModel.setModified(true);
-  return &m_projectModel;
+  return true;
 }
 
 /**
@@ -1451,34 +1445,30 @@ void IO::Drivers::Iec104::generateProject()
 {
   adoptDiscoveredPoints();
   if (pointTable().isEmpty()) {
-    Misc::Utilities::showMessageBox(
+    Core::Prompt::showMessageBox(
       tr("No points discovered"),
       tr("Connect to the station and let the interrogation finish before generating a project."),
-      QMessageBox::Warning,
+      Core::Prompt::Warning,
       tr("IEC 60870-5-104 Project Generator"));
     return;
   }
 
-  auto* pm = loadGeneratedProject();
-  if (!pm)
-    return;
-
   const int datasets = wireSchema().size();
-  QObject::connect(
-    pm,
-    &DataModel::ProjectModel::saveDialogCompleted,
-    this,
-    [datasets](bool accepted) {
+  m_generatedProject.loadAndSave(
+    messageBus(), QJsonDocument(buildProject()), [this, datasets](bool loaded, bool accepted) {
+      if (!loaded) {
+        logDriverError(tr("Failed to load generated project"),
+                       tr("The generated project JSON could not be loaded."));
+        return;
+      }
+
       if (!accepted)
         return;
 
-      Misc::Utilities::showMessageBox(
+      Core::Prompt::showMessageBox(
         tr("Successfully generated project with %1 datasets.").arg(datasets),
         tr("The project editor is now open for customization."),
-        QMessageBox::Information,
+        Core::Prompt::Information,
         tr("IEC 60870-5-104 Project Generator"));
-    },
-    Qt::SingleShotConnection);
-
-  (void)pm->saveJsonFile(true);
+    });
 }

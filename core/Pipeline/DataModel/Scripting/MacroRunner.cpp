@@ -43,6 +43,7 @@ extern "C" {
 #include <QStandardPaths>
 #include <stdexcept>
 
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
 #include "DataModel/DataTable.h"
 #include "DataModel/FrameBuilder.h"
@@ -53,7 +54,6 @@ extern "C" {
 #include "DataModel/Scripting/ScriptApiCall.h"
 #include "DataModel/Scripting/ScriptDryRun.h"
 #include "IO/PipelineHost.h"
-#include "SerialStudio.h"
 
 //--------------------------------------------------------------------------------------------------
 // Constants
@@ -384,7 +384,8 @@ QVariantMap DataModel::MacroRunner::verify(const QString& source, int language) 
 
 /**
  * @brief Parses JS by evaluating a function-expression wrapper, so the macro body is compiled
- *        but never run; the wrapper adds one line, subtracted from reported line numbers. The
+ *        but never run; the wrapper adds one line, subtracted from reported line numbers, and the
+ *        error text carries the line in the same "Line N:" shape as a run-time error. The
  *        evaluation is deadline-guarded because a source that closes the wrapper early does run.
  */
 QVariantMap DataModel::MacroRunner::verifyJs(const QString& source) const
@@ -410,9 +411,11 @@ QVariantMap DataModel::MacroRunner::verifyJs(const QString& source) const
   out.insert(QStringLiteral("ok"), !result.isError());
   if (result.isError()) {
     const int source_lines = static_cast<int>(source.count(QLatin1Char('\n'))) + 1;
-    const int line         = result.property(QStringLiteral("lineNumber")).toInt() - 1;
-    out.insert(QStringLiteral("line"), qBound(1, line, source_lines));
-    out.insert(QStringLiteral("error"), result.toString());
+    const int line =
+      qBound(1, result.property(QStringLiteral("lineNumber")).toInt() - 1, source_lines);
+    out.insert(QStringLiteral("line"), line);
+    out.insert(QStringLiteral("error"),
+               tr("Line %1: %2").arg(QString::number(line), result.toString()));
   }
 
   return out;
@@ -509,9 +512,9 @@ void DataModel::MacroRunner::saveMacro(const QString& source, int language)
 {
   const bool lua = (language == SerialStudio::Lua);
   auto* dialog   = new QFileDialog(nullptr,
-                                   tr("Save macro"),
-                                   macrosDirectory(),
-                                   lua ? QStringLiteral("*.lua") : QStringLiteral("*.js"));
+                                 tr("Save macro"),
+                                 macrosDirectory(),
+                                 lua ? QStringLiteral("*.lua") : QStringLiteral("*.js"));
   dialog->setAcceptMode(QFileDialog::AcceptSave);
   dialog->setDefaultSuffix(lua ? QStringLiteral("lua") : QStringLiteral("js"));
   dialog->setAttribute(Qt::WA_DeleteOnClose);

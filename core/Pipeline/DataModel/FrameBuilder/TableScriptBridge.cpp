@@ -41,7 +41,7 @@ extern "C" {
 #include "IO/PipelineHost.h"
 
 #ifdef BUILD_COMMERCIAL
-#  include "MQTT/Publisher.h"
+#  include "Core/IO/IMqttPublisher.h"
 #endif
 
 //--------------------------------------------------------------------------------------------------
@@ -390,10 +390,12 @@ static int luaMqttPublish(lua_State* L)
   if (lua_gettop(L) >= 4 && !lua_isnil(L, 4))
     retain = lua_toboolean(L, 4) != 0;
 
-  static auto& publisher = MQTT::Publisher::instance();
-
-  const auto id = publisher.mqttPublish(
-    QString::fromUtf8(topic), QByteArray(payload_d, static_cast<qsizetype>(len)), qos, retain);
+  auto* publisher = DataModel::mqttPublisher();
+  const qint64 id =
+    publisher
+      ? publisher->mqttPublish(
+          QString::fromUtf8(topic), QByteArray(payload_d, static_cast<qsizetype>(len)), qos, retain)
+      : -1;
 
   lua_pushinteger(L, static_cast<lua_Integer>(id));
   return 1;

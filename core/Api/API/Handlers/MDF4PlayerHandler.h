@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "API/CommandProtocol.h"
+#include "Core/Api/CommandProtocol.h"
 
 namespace API {
 namespace Handlers {

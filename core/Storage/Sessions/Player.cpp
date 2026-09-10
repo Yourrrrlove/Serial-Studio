@@ -31,15 +31,28 @@
 #  include <span>
 
 #  include "AppState.h"
+#  include "Core/Bus/MessageBus.h"
+#  include "Core/Bus/Messages.h"
+#  include "Core/IO/IPayloadInjector.h"
+#  include "Core/Prompt/UserPrompt.h"
+#  include "Core/Services.h"
 #  include "Core/SSAssert.h"
+#  include "Core/WorkspaceManager.h"
 #  include "DataModel/FrameBuilder.h"
-#  include "DataModel/NotificationCenter.h"
+#  include "DataModel/IReplayPlotSink.h"
+#  include "DataModel/PipelineModules.h"
 #  include "DataModel/ProjectModel.h"
-#  include "IO/ConnectionManager.h"
-#  include "Misc/Utilities.h"
-#  include "Misc/WorkspaceManager.h"
+#  include "Replay/LinkGate.h"
 #  include "Sessions/Player/ReplayAlignment.h"
-#  include "UI/Dashboard.h"
+
+//--------------------------------------------------------------------------------------------------
+// Constants
+//--------------------------------------------------------------------------------------------------
+
+/**
+ * @brief Warning severity of a Core::Bus::NotificationRaised (NotificationCenter::Warning).
+ */
+static constexpr int kNotificationWarning = 1;
 
 //--------------------------------------------------------------------------------------------------
 // Constructor & singleton access
@@ -59,6 +72,9 @@ Sessions::Player::Player()
   , m_startTimestampSeconds(0.0)
   , m_layout()
   , m_restorePending(false)
+  , m_bus(nullptr)
+  , m_plotSink(nullptr)
+  , m_payloadInjector(nullptr)
 {
   qRegisterMetaType<Sessions::PlayerSessionPayloadPtr>("Sessions::PlayerSessionPayloadPtr");
 
@@ -97,6 +113,15 @@ Sessions::Player& Sessions::Player::instance()
 }
 
 /**
+ * @brief Adopts the root-owned message bus this module publishes on and subscribes to.
+ */
+void Sessions::Player::attachMessageBus(Core::Bus::MessageBus& bus)
+{
+  SS_ASSERT(m_bus == nullptr, return);
+  m_bus = &bus;
+}
+
+/**
  * @brief Builds the frame synthesis on first use and returns it. Deferred rather than built in the
  *        constructor because the pipeline objects it takes are singletons the composition root is
  *        still ordering when the player itself is created; first use is always a playback action,
@@ -105,12 +130,11 @@ Sessions::Player& Sessions::Player::instance()
 Sessions::ReplaySynthesis& Sessions::Player::synthesis()
 {
   if (!m_synthesis) {
-    static auto& appState          = AppState::instance();
-    static auto& frameBuilder      = DataModel::FrameBuilder::instance();
-    static auto& connectionManager = IO::ConnectionManager::instance();
+    auto& appState     = DataModel::pipelineModules().appState;
+    auto& frameBuilder = DataModel::pipelineModules().frameBuilder;
 
     m_synthesis = std::make_unique<ReplaySynthesis>(
-      m_reader, m_layout, appState, frameBuilder, connectionManager);
+      m_reader, m_layout, appState, frameBuilder, payloadInjector());
   }
 
   return *m_synthesis;
@@ -308,11 +332,11 @@ void Sessions::Player::toggle()
  */
 void Sessions::Player::openFile()
 {
-  static auto& workspaceManager = Misc::WorkspaceManager::instance();
-  auto* dialog                  = new QFileDialog(qApp->activeWindow(),
-                                                  tr("Open Session File"),
-                                                  workspaceManager.path("Session Databases"),
-                                                  tr("Session files (*.db)"));
+  auto& workspaceManager = Core::services().workspaceManager;
+  auto* dialog           = new QFileDialog(qApp->activeWindow(),
+                                 tr("Open Session File"),
+                                 workspaceManager.path("Session Databases"),
+                                 tr("Session files (*.db)"));
 
   dialog->setFileMode(QFileDialog::ExistingFile);
   dialog->setAttribute(Qt::WA_DeleteOnClose);
@@ -353,7 +377,7 @@ void Sessions::Player::closeFile()
 
   clearLocalState();
 
-  static auto& frameBuilder = DataModel::FrameBuilder::instance();
+  auto& frameBuilder = DataModel::pipelineModules().frameBuilder;
   frameBuilder.registerQuickPlotHeaders(QStringList());
   frameBuilder.setReplayColumnMap({});
 
@@ -361,6 +385,9 @@ void Sessions::Player::closeFile()
 
   if (wasLoading)
     Q_EMIT loadingChanged();
+
+  if (m_bus)
+    m_bus->publishState<Core::Bus::ReplayPlayerStateChanged>(2, isOpen());
 
   Q_EMIT openChanged();
   Q_EMIT timestampChanged();
@@ -390,21 +417,13 @@ void Sessions::Player::openFile(const QString& filePath, int sessionId)
   m_restorePending = false;
   capturePreSessionState();
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  if (connectionManager.isConnected()) {
-    auto response =
-      Misc::Utilities::showMessageBox(tr("Device Connection Active"),
-                                      tr("To use this feature, you must disconnect from the "
-                                         "device. Do you want to proceed?"),
-                                      QMessageBox::Warning,
-                                      qAppName(),
-                                      QMessageBox::No | QMessageBox::Yes);
-
-    if (response == QMessageBox::Yes)
-      connectionManager.disconnectDevice();
-    else
-      return;
-  }
+  if (!Replay::ensureLinkReleased(m_bus,
+                                  tr("Device Connection Active"),
+                                  tr("To use this feature, you must disconnect from the "
+                                     "device. Do you want to proceed?"),
+                                  Core::Prompt::Warning,
+                                  qAppName()))
+    return;
 
   m_filePath         = filePath;
   m_pendingSessionId = sessionId;
@@ -442,14 +461,17 @@ void Sessions::Player::onLoadFinished(const PlayerSessionPayloadPtr& payload)
   }
 
   if (!payload->ok) {
-    Misc::Utilities::showMessageBox(tr("Cannot open session file"),
-                                    payload->error.isEmpty() ? tr("Unknown error") : payload->error,
-                                    QMessageBox::Critical);
+    Core::Prompt::showMessageBox(tr("Cannot open session file"),
+                                 payload->error.isEmpty() ? tr("Unknown error") : payload->error,
+                                 Core::Prompt::Critical);
 
     m_loading = false;
     Q_EMIT loadingChanged();
     clearLocalState();
     schedulePreSessionRestore();
+    if (m_bus)
+      m_bus->publishState<Core::Bus::ReplayPlayerStateChanged>(2, isOpen());
+
     Q_EMIT openChanged();
     Q_EMIT playerStateChanged();
     return;
@@ -459,21 +481,24 @@ void Sessions::Player::onLoadFinished(const PlayerSessionPayloadPtr& payload)
     (void)restoreProjectFromJson(payload->projectJson);
     applyBundledViewState(payload->viewState, payload->projectJson);
   } else {
-    Misc::Utilities::showMessageBox(tr("No project data"),
-                                    tr("This session does not contain an embedded project file — "
-                                       "the dashboard falls back to a quick-plot layout."),
-                                    QMessageBox::Warning);
+    Core::Prompt::showMessageBox(tr("No project data"),
+                                 tr("This session does not contain an embedded project file — "
+                                    "the dashboard falls back to a quick-plot layout."),
+                                 Core::Prompt::Warning);
   }
 
   if (!m_reader.open(m_filePath, payload->sessionId)) {
-    Misc::Utilities::showMessageBox(tr("Cannot open session file"),
-                                    tr("Check file permissions and try again."),
-                                    QMessageBox::Critical);
+    Core::Prompt::showMessageBox(tr("Cannot open session file"),
+                                 tr("Check file permissions and try again."),
+                                 Core::Prompt::Critical);
 
     m_loading = false;
     Q_EMIT loadingChanged();
     clearLocalState();
     schedulePreSessionRestore();
+    if (m_bus)
+      m_bus->publishState<Core::Bus::ReplayPlayerStateChanged>(2, isOpen());
+
     Q_EMIT openChanged();
     Q_EMIT playerStateChanged();
     return;
@@ -484,7 +509,7 @@ void Sessions::Player::onLoadFinished(const PlayerSessionPayloadPtr& payload)
   synthesis().setStreamBlocks(payload->streamBlocks);
   ReplayAlignment::mergeStreamBlockTimes(m_timestampsNs, payload->streamBlocks);
 
-  static auto& appState = AppState::instance();
+  auto& appState = DataModel::pipelineModules().appState;
   if (appState.operationMode() == SerialStudio::ProjectFile)
     applyProjectLayout();
   else
@@ -500,6 +525,9 @@ void Sessions::Player::onLoadFinished(const PlayerSessionPayloadPtr& payload)
   Q_EMIT loadingChanged();
 
   updateData();
+  if (m_bus)
+    m_bus->publishState<Core::Bus::ReplayPlayerStateChanged>(2, isOpen());
+
   Q_EMIT openChanged();
   Q_EMIT playerStateChanged();
 }
@@ -537,7 +565,7 @@ void Sessions::Player::registerQuickPlotColumns()
   for (int uid : m_layout.columnUniqueIds)
     headers.append(QStringLiteral("uid_%1").arg(uid));
 
-  static auto& frameBuilder = DataModel::FrameBuilder::instance();
+  auto& frameBuilder = DataModel::pipelineModules().frameBuilder;
   frameBuilder.registerQuickPlotHeaders(headers);
 }
 
@@ -549,8 +577,8 @@ void Sessions::Player::registerQuickPlotColumns()
 void Sessions::Player::applyProjectLayout()
 {
   DatasetLocationMap locations;
-  static auto& projectModel = DataModel::ProjectModel::instance();
-  const auto& groups        = projectModel.groups();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
+  const auto& groups = projectModel.groups();
   for (const auto& g : groups)
     for (const auto& d : g.datasets)
       locations.insert(d.uniqueId, DatasetLocation{g.sourceId, d.index});
@@ -558,7 +586,7 @@ void Sessions::Player::applyProjectLayout()
   ReplayAlignment::alignColumnsToProject(m_layout, locations);
   auto replayMap = ReplayAlignment::buildMultiSourceMapping(m_layout, locations);
 
-  static auto& frameBuilder = DataModel::FrameBuilder::instance();
+  auto& frameBuilder = DataModel::pipelineModules().frameBuilder;
   frameBuilder.setReplayColumnMap(std::move(replayMap));
 }
 
@@ -574,19 +602,11 @@ void Sessions::Player::capturePreSessionState()
   if (m_preSession.captured())
     return;
 
-  static auto& appState     = AppState::instance();
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  auto& appState       = DataModel::pipelineModules().appState;
+  auto& projectModel   = DataModel::pipelineModules().projectModel;
+  const auto viewState = m_bus ? m_bus->latest<Core::Bus::DashboardViewState>() : nullptr;
   m_preSession.capture(
-    appState.operationMode(), projectModel.jsonFilePath(), viewStateDashboard().viewStateJson());
-}
-
-/**
- * @brief The dashboard the view-state bundle (spec 0062) is read from and applied to.
- */
-UI::Dashboard& Sessions::Player::viewStateDashboard()
-{
-  static auto& dashboard = UI::Dashboard::instance();
-  return dashboard;
+    appState.operationMode(), projectModel.jsonFilePath(), viewState ? viewState->json : QString());
 }
 
 /**
@@ -597,11 +617,11 @@ UI::Dashboard& Sessions::Player::viewStateDashboard()
  */
 void Sessions::Player::applyBundledViewState(const QString& viewState, const QString& projectJson)
 {
-  auto& dashboard = viewStateDashboard();
+  SS_ASSERT(m_bus != nullptr, return);
   if (viewState.isEmpty())
-    dashboard.clearViewState();
+    m_bus->publish<Core::Bus::DashboardViewStateClearRequested>(0);
   else
-    dashboard.setViewStateJson(viewState);
+    m_bus->publish<Core::Bus::DashboardViewStateRestoreRequested>(viewState);
 
   const auto& capturedProject = m_preSession.projectPath();
   if (projectJson.isEmpty() || capturedProject.isEmpty())
@@ -616,9 +636,11 @@ void Sessions::Player::applyBundledViewState(const QString& viewState, const QSt
   if (!live.isObject() || !embedded.isObject() || live.object() == embedded.object())
     return;
 
-  static auto& notifications = DataModel::NotificationCenter::instance();
-  notifications.postWarning(
+  SS_ASSERT(m_bus != nullptr, return);
+  m_bus->publish<Core::Bus::NotificationRaised>(
+    kNotificationWarning,
     tr("Sessions"),
+    QString(),
     tr("Recording uses an older copy of the project"),
     tr("The dashboard shown is the one embedded in the recording; the project on disk has "
        "changed since. Close the session to return to the current project."));
@@ -659,17 +681,18 @@ void Sessions::Player::restorePreSessionState()
   if (!m_preSession.captured())
     return;
 
-  static auto& pm         = DataModel::ProjectModel::instance();
+  auto& pm                = DataModel::pipelineModules().projectModel;
   const auto& projectPath = m_preSession.projectPath();
   if (!projectPath.isEmpty() && QFileInfo::exists(projectPath))
     (void)pm.openJsonFile(projectPath);
   else
     pm.newJsonFile();
 
-  static auto& appState = AppState::instance();
+  auto& appState = DataModel::pipelineModules().appState;
   appState.setOperationMode(m_preSession.operationMode());
 
-  viewStateDashboard().setViewStateJson(m_preSession.viewState());
+  if (m_bus)
+    m_bus->publish<Core::Bus::DashboardViewStateRestoreRequested>(m_preSession.viewState());
 
   m_preSession.clear();
 }
@@ -690,10 +713,10 @@ bool Sessions::Player::restoreProjectFromJson(const QString& json)
     return false;
   }
 
-  static auto& appState = AppState::instance();
+  auto& appState = DataModel::pipelineModules().appState;
   appState.setOperationMode(SerialStudio::ProjectFile);
 
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
   if (!projectModel.loadFromJsonDocument(doc)) {
     qWarning() << "[Sessions::Player] ProjectModel rejected the embedded JSON";
     return false;
@@ -741,7 +764,7 @@ int Sessions::Player::seekWindowStartRow(int target) const
   SS_ASSERT(target < static_cast<int>(m_timestampsNs.size()),
             return qMax(0, static_cast<int>(m_timestampsNs.size()) - 1));
 
-  static auto& dashboard = UI::Dashboard::instance();
+  auto& dashboard = plotSink();
   return DataModel::ReplayPlaybackEngine::seekWindowStartRow(
     target, dashboard.points(), dashboard.plotTimeRange(), [this](int row) {
       return m_timestampsNs[static_cast<size_t>(row)] / 1e9;
@@ -762,15 +785,15 @@ void Sessions::Player::performSeekTick()
   SS_ASSERT(m_framePos >= 0, return);
   SS_ASSERT(m_framePos < frameCount(), return);
 
-  static auto& appState = AppState::instance();
+  auto& appState = DataModel::pipelineModules().appState;
   if (appState.operationMode() != SerialStudio::ProjectFile || m_layout.uidToColumn.isEmpty()) {
     performSeekSettle();
     return;
   }
 
-  static auto& dashboard = UI::Dashboard::instance();
-  const int target       = m_framePos;
-  const int start        = seekWindowStartRow(target);
+  auto& dashboard  = plotSink();
+  const int target = m_framePos;
+  const int start  = seekWindowStartRow(target);
 
   QVector<double> times;
   QHash<qint64, QVector<double>> series;
@@ -794,14 +817,14 @@ void Sessions::Player::performSeekSettle()
   SS_ASSERT(m_framePos >= 0, return);
   SS_ASSERT(m_framePos < frameCount(), return);
 
-  static auto& dashboard = UI::Dashboard::instance();
+  auto& dashboard = plotSink();
   dashboard.clearPlotData();
 
   const int window = qMin(dashboard.points(), m_framePos + 1);
   const int start  = qMax(0, m_framePos - window + 1);
   processFrameBatch(start, m_framePos);
 
-  static auto& appState = AppState::instance();
+  auto& appState = DataModel::pipelineModules().appState;
   if (appState.operationMode() == SerialStudio::ProjectFile && !m_layout.uidToColumn.isEmpty()) {
     QVector<double> times;
     QHash<qint64, QVector<double>> series;
@@ -835,15 +858,15 @@ void Sessions::Player::buildSeekWindow(int startRow,
   if (!m_reader.isOpen()) [[unlikely]]
     return;
 
-  static auto& dashboard = UI::Dashboard::instance();
-  const auto pairs       = dashboard.replaySeekSeries();
+  auto& dashboard  = plotSink();
+  const auto pairs = dashboard.replaySeekSeries();
   QHash<int, qint64> keyByUid;
   for (const auto& pair : pairs) {
     const auto colIt = m_layout.uidToColumn.constFind(pair.second);
     if (colIt == m_layout.uidToColumn.constEnd())
       continue;
 
-    const qint64 key = UI::Dashboard::replaySeekKey(pair.first, pair.second);
+    const qint64 key = DataModel::replaySeekKey(pair.first, pair.second);
     keyByUid.insert(pair.second, key);
     series.insert(key, QVector<double>(n, std::numeric_limits<double>::quiet_NaN()));
   }
@@ -863,7 +886,7 @@ void Sessions::Player::nextFrame()
 {
   if (m_framePos < frameCount() - 1) {
     ++m_framePos;
-    static auto& dashboard = UI::Dashboard::instance();
+    auto& dashboard = plotSink();
     dashboard.clearPlotData();
     const int toLoad   = dashboard.points();
     const int startIdx = std::max(0, m_framePos - toLoad);
@@ -879,7 +902,7 @@ void Sessions::Player::previousFrame()
 {
   if (m_framePos > 0) {
     --m_framePos;
-    static auto& dashboard = UI::Dashboard::instance();
+    auto& dashboard = plotSink();
     dashboard.clearPlotData();
     const int toLoad   = dashboard.points();
     const int startIdx = std::max(0, m_framePos - toLoad);

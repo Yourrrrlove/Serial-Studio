@@ -28,9 +28,9 @@
 #include <QDebug>
 #include <QSettings>
 
+#include "Core/Crypto/SimpleCrypt.h"
 #include "Licensing/MonotonicClock.h"
 #include "Licensing/OfflineCertificate.h"
-#include "Licensing/SimpleCrypt.h"
 
 //--------------------------------------------------------------------------------------------------
 // Embedded TEST vectors (throwaway key, NOT the production kOfflinePublicKey)
@@ -100,7 +100,7 @@ static constexpr auto kWrongTierCert =
 
   int fails  = 0;
   fails     += offlineExpect("good certificate accepted",
-                             statusIs(good, machine, kTestNowSecs, Licensing::CertStatus::Valid));
+                         statusIs(good, machine, kTestNowSecs, Licensing::CertStatus::Valid));
 
   auto decoded  = QByteArray::fromBase64(good);
   decoded[3]    = static_cast<char>(decoded[3] ^ 0x01);

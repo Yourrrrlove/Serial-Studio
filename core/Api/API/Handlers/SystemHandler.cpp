@@ -28,6 +28,7 @@
 #include "API/CommandRegistry.h"
 #include "API/ProcessLauncher.h"
 #include "API/SchemaBuilder.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
 
 /**
@@ -38,8 +39,8 @@ API::CommandResponse API::Handlers::SystemHandler::projectDir(const QString& id,
 {
   Q_UNUSED(params)
 
-  static auto& projectModel = DataModel::ProjectModel::instance();
-  const auto& path          = projectModel.jsonFilePath();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
+  const auto& path   = projectModel.jsonFilePath();
   if (path.isEmpty()) {
     return CommandResponse::makeError(
       id, ErrorCode::ExecutionError, QStringLiteral("No project file is loaded"));
@@ -71,8 +72,8 @@ API::CommandResponse API::Handlers::SystemHandler::exec(const QString& id,
 
   auto workingDir = params.value(QStringLiteral("workingDir")).toString();
   if (workingDir.isEmpty()) {
-    static auto& projectModel = DataModel::ProjectModel::instance();
-    const auto& projectPath   = projectModel.jsonFilePath();
+    auto& projectModel      = DataModel::pipelineModules().projectModel;
+    const auto& projectPath = projectModel.jsonFilePath();
     if (!projectPath.isEmpty())
       workingDir = QFileInfo(projectPath).absolutePath();
   }

@@ -30,10 +30,10 @@
 #include <QStringList>
 #include <QVariant>
 
+#include "Core/IO/HAL_Driver.h"
 #include "IO/Drivers/OpcUa/OpcUaTag.h"
 #include "IO/Drivers/OpcUaTypes.h"
-#include "IO/Drivers/OpcUaWire.h"
-#include "IO/HAL_Driver.h"
+#include "Protocols/OpcUa/OpcUaWire.h"
 
 namespace IO {
 namespace Drivers {

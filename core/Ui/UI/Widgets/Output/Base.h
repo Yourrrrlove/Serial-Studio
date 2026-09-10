@@ -16,10 +16,10 @@
 #include <QJSValue>
 #include <QQuickItem>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/SerialStudio.h"
 #include "DataModel/Scripting/JsWatchdog.h"
 #include "IO/ConnectionManager.h"
-#include "SerialStudio.h"
 
 namespace Widgets {
 namespace Output {

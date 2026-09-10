@@ -34,8 +34,8 @@
 #include <QTimer>
 
 #include "Core/SSAssert.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
-#include "SessionContext.h"
 
 static constexpr int kDebounceMs       = 5000;
 static constexpr int kRetentionDefault = 50;
@@ -74,10 +74,11 @@ static QString sanitiseLabel(const QString& label)
 }
 
 /**
- * @brief Construct a backup manager bound to one session. Debounce timer + initial state.
+ * @brief Construct a backup manager bound to one project model. Debounce timer + initial state;
+ *        the signal wiring waits for setupExternalConnections().
  */
-Misc::BackupManager::BackupManager(SessionContext& ctx)
-  : m_ctx(ctx), m_enabled(true), m_debounceTimer(new QTimer(this)), m_projectModel(nullptr)
+Misc::BackupManager::BackupManager(DataModel::ProjectModel& projectModel)
+  : m_enabled(true), m_debounceTimer(new QTimer(this)), m_projectModel(&projectModel)
 {
   m_debounceTimer->setSingleShot(true);
   m_debounceTimer->setInterval(kDebounceMs);
@@ -89,7 +90,7 @@ Misc::BackupManager::BackupManager(SessionContext& ctx)
  */
 Misc::BackupManager& Misc::BackupManager::instance()
 {
-  static BackupManager singleton(SessionContext::current());
+  static BackupManager singleton(DataModel::pipelineModules().projectModel);
   return singleton;
 }
 
@@ -98,8 +99,7 @@ Misc::BackupManager& Misc::BackupManager::instance()
  */
 void Misc::BackupManager::setupExternalConnections()
 {
-  auto& pm       = m_ctx.projectModel();
-  m_projectModel = &pm;
+  auto& pm = *m_projectModel;
 
   connect(
     &pm, &DataModel::ProjectModel::jsonFileChanged, this, &BackupManager::onProjectFileChanged);

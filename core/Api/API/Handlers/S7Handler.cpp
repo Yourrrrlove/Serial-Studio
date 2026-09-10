@@ -14,6 +14,7 @@
 #include <QJsonArray>
 
 #include "API/CommandRegistry.h"
+#include "API/HandlerContext.h"
 #include "API/SchemaBuilder.h"
 #include "IO/ConnectionManager.h"
 #include "IO/Drivers/S7.h"
@@ -97,7 +98,7 @@ API::CommandResponse API::Handlers::S7Handler::getStatus(const QString& id,
 {
   Q_UNUSED(params)
 
-  static auto& manager = IO::ConnectionManager::instance();
+  auto& manager = API::handlerContext().connectionManager;
   return CommandResponse::makeSuccess(id, manager.s7()->statusJson());
 }
 
@@ -109,8 +110,8 @@ API::CommandResponse API::Handlers::S7Handler::getConfig(const QString& id,
 {
   Q_UNUSED(params)
 
-  static auto& manager = IO::ConnectionManager::instance();
-  auto* driver         = manager.s7();
+  auto& manager = API::handlerContext().connectionManager;
+  auto* driver  = manager.s7();
 
   QJsonObject result;
   result[QStringLiteral("host")]         = driver->host();
@@ -145,8 +146,8 @@ API::CommandResponse API::Handlers::S7Handler::setProperty(const QString& id,
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: value"));
   }
 
-  static auto& manager = IO::ConnectionManager::instance();
-  auto* driver         = manager.s7();
+  auto& manager = API::handlerContext().connectionManager;
+  auto* driver  = manager.s7();
 
   const IO::DriverProperty* match = nullptr;
   const auto props                = driver->driverProperties();
@@ -202,8 +203,8 @@ API::CommandResponse API::Handlers::S7Handler::addVariable(const QString& id,
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: address"));
   }
 
-  static auto& manager = IO::ConnectionManager::instance();
-  auto* driver         = manager.s7();
+  auto& manager = API::handlerContext().connectionManager;
+  auto* driver  = manager.s7();
 
   const auto reason = driver->validateAddress(address);
   if (!reason.isEmpty())
@@ -237,8 +238,8 @@ API::CommandResponse API::Handlers::S7Handler::removeVariable(const QString& id,
       id, ErrorCode::InvalidParam, QStringLiteral("Parameter \"index\" must be an integer"));
   }
 
-  static auto& manager = IO::ConnectionManager::instance();
-  auto* driver         = manager.s7();
+  auto& manager = API::handlerContext().connectionManager;
+  auto* driver  = manager.s7();
 
   const int index = params.value(QStringLiteral("index")).toInt();
   if (index < 0 || index >= driver->variableCount()) {
@@ -261,8 +262,8 @@ API::CommandResponse API::Handlers::S7Handler::clearVariables(const QString& id,
 {
   Q_UNUSED(params)
 
-  static auto& manager = IO::ConnectionManager::instance();
-  auto* driver         = manager.s7();
+  auto& manager = API::handlerContext().connectionManager;
+  auto* driver  = manager.s7();
   driver->clearVariables();
 
   QJsonObject result;
@@ -278,8 +279,8 @@ API::CommandResponse API::Handlers::S7Handler::generateProject(const QString& id
 {
   Q_UNUSED(params)
 
-  static auto& manager = IO::ConnectionManager::instance();
-  auto* driver         = manager.s7();
+  auto& manager = API::handlerContext().connectionManager;
+  auto* driver  = manager.s7();
   if (!driver->loadGeneratedProject()) {
     return CommandResponse::makeError(
       id, ErrorCode::OperationFailed, QStringLiteral("The project could not be generated"));

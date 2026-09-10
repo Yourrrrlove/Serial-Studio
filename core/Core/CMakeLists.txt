@@ -42,6 +42,7 @@
 qt_add_library(
   SerialStudioCore STATIC
 
+  AppInfo.h
   SSAssert.h
   SSAssert.cpp
   Concepts.h
@@ -50,7 +51,54 @@ qt_add_library(
   ParseBudget.h
   CircularBuffer.h
   Checksum.h
+  JsonValidator.h
   Checksum.cpp
+  TimerEvents.h
+  TimerEvents.cpp
+  WorkspaceManager.h
+  WorkspaceManager.cpp
+  IconRegistry.h
+  IconRegistry.cpp
+  Translator.h
+  Translator.cpp
+  LanguageTable.h
+  LanguageTable.cpp
+  License.h
+  License.cpp
+  Runtime.h
+  Runtime.cpp
+  IO/FrameConfig.h
+  DataModel/Frame.h
+  DataModel/Frame.cpp
+  DataModel/FrameKeys.h
+  DataModel/DataBlock.h
+  DataModel/ExportSchema.h
+  DataModel/FrameConsumer.h
+  DataModel/FrameConsumer.cpp
+  DataModel/FrameSupport.h
+  DataModel/FrameSupport.cpp
+  DataModel/IBlockSink.h
+  DataModel/IBlockSink.cpp
+  DataModel/PropertyValidators.h
+  DataModel/PropertyValidators.cpp
+  DataModel/Generated/DatasetSerialization.cpp
+  IO/HAL_Driver.h
+  IO/StreamConfig.h
+  IO/LinkStats.h
+  IO/IIngestBinder.h
+  IO/IRawByteTap.h
+  IO/IRawFrameTap.h
+  IO/IMqttPublisher.h
+  Prompt/IUserPrompter.h
+  Prompt/UserPrompt.h
+  Prompt/UserPrompt.cpp
+  SerialStudio.h
+  SerialStudio.cpp
+  DiagnosticsTypes.h
+  EnumLabels.h
+  EnumLabels.cpp
+  LayoutPatterns.h
+  LayoutPatterns.cpp
   Async/AsyncClock.h
   Async/RetryPolicy.h
   Async/RetryPolicy.cpp
@@ -61,9 +109,50 @@ qt_add_library(
   Bus/Subscription.cpp
   Bus/MessageBus.h
   Bus/MessageBus.cpp
+  Services.h
+  Services.cpp
+  Api/CommandProtocol.h
+  Api/ICommandExecutor.h
+  IO/IDeviceWriter.h
+  IO/IPayloadInjector.h
+  IO/FrameConfigBuilder.h
+  IO/FrameConfigBuilder.cpp
+  Crypto/SimpleCrypt.h
+  Crypto/SimpleCrypt.cpp
+  Crypto/MachineKey.h
+  Crypto/MachineKey.cpp
+  Crypto/CredentialVault.h
+  Crypto/CredentialVault.cpp
+  ThirdParty/atomicops.h
+  ThirdParty/fast_float.h
+  ThirdParty/readerwriterqueue.h
+  ThirdParty/readerwritercircularbuffer.h
 )
 
 add_library(SerialStudio::Core ALIAS SerialStudioCore)
+
+#---------------------------------------------------------------------------------------------------
+# The commercial capability token (spec 0077 T67)
+#---------------------------------------------------------------------------------------------------
+#
+# Licensing/CommercialToken.{h,cpp} is the HMAC-sealed capability token every Pro guard site in the
+# libraries above reads. It depends on QtCore and the generated guards header only, which is what
+# lets it live here: the guard sites stay distinct and unchanged, and no library needs app/src for
+# them. The generated header's directory is PUBLIC because the token header includes it.
+#
+#---------------------------------------------------------------------------------------------------
+
+if(BUILD_COMMERCIAL)
+  target_sources(
+    SerialStudioCore PRIVATE
+
+    Licensing/CommercialToken.h
+    Licensing/CommercialToken.cpp
+  )
+  if(LICENSE_GUARDS_INCLUDE_DIR)
+    target_include_directories(SerialStudioCore PUBLIC ${LICENSE_GUARDS_INCLUDE_DIR})
+  endif()
+endif()
 
 target_include_directories(SerialStudioCore PUBLIC ${CMAKE_SOURCE_DIR}/core)
 target_link_libraries(SerialStudioCore PUBLIC Qt6::Core)

@@ -28,9 +28,10 @@
 
 #include "API/Handlers/ProjectApiSupport.h"
 #include "API/SchemaBuilder.h"
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/SerialStudio.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
-#include "SerialStudio.h"
 
 using namespace API::Handlers::ProjectApiSupport;
 
@@ -293,7 +294,7 @@ API::CommandResponse API::Handlers::ProjectDatasetFieldCommands::datasetSetVirtu
   const int datasetId = params.value(Keys::DatasetId).toInt();
   const bool isVirt   = params.value(Keys::Virtual).toBool();
 
-  static auto& pm    = DataModel::ProjectModel::instance();
+  auto& pm           = DataModel::pipelineModules().projectModel;
   const auto& groups = pm.groups();
   const auto git     = std::find_if(
     groups.begin(), groups.end(), [groupId](const auto& g) { return g.groupId == groupId; });
@@ -347,7 +348,7 @@ API::CommandResponse API::Handlers::ProjectDatasetFieldCommands::datasetSetTrans
   const int datasetId = params.value(Keys::DatasetId).toInt();
   const QString code  = params.value(QStringLiteral("code")).toString();
 
-  static auto& pm    = DataModel::ProjectModel::instance();
+  auto& pm           = DataModel::pipelineModules().projectModel;
   const auto& groups = pm.groups();
   const auto git     = std::find_if(
     groups.begin(), groups.end(), [groupId](const auto& g) { return g.groupId == groupId; });
@@ -443,7 +444,7 @@ API::CommandResponse API::Handlers::ProjectDatasetFieldCommands::datasetGetAlarm
   const int groupId   = params.value(Keys::GroupId).toInt();
   const int datasetId = params.value(Keys::DatasetId).toInt();
 
-  static auto& pm    = DataModel::ProjectModel::instance();
+  auto& pm           = DataModel::pipelineModules().projectModel;
   const auto& groups = pm.groups();
   const auto git     = std::find_if(
     groups.begin(), groups.end(), [groupId](const auto& g) { return g.groupId == groupId; });
@@ -494,7 +495,7 @@ API::CommandResponse API::Handlers::ProjectDatasetFieldCommands::datasetSetAlarm
   const int datasetId = params.value(Keys::DatasetId).toInt();
   const auto arr      = params.value(Keys::AlarmBands).toArray();
 
-  static auto& pm    = DataModel::ProjectModel::instance();
+  auto& pm           = DataModel::pipelineModules().projectModel;
   const auto& groups = pm.groups();
   const auto git     = std::find_if(
     groups.begin(), groups.end(), [groupId](const auto& g) { return g.groupId == groupId; });
@@ -555,7 +556,7 @@ API::CommandResponse API::Handlers::ProjectDatasetFieldCommands::datasetGetFFTMa
   const int groupId   = params.value(Keys::GroupId).toInt();
   const int datasetId = params.value(Keys::DatasetId).toInt();
 
-  static auto& pm    = DataModel::ProjectModel::instance();
+  auto& pm           = DataModel::pipelineModules().projectModel;
   const auto& groups = pm.groups();
   const auto git     = std::find_if(
     groups.begin(), groups.end(), [groupId](const auto& g) { return g.groupId == groupId; });
@@ -605,7 +606,7 @@ API::CommandResponse API::Handlers::ProjectDatasetFieldCommands::datasetSetFFTMa
   const int datasetId = params.value(Keys::DatasetId).toInt();
   const auto arr      = params.value(Keys::FFTMarkers).toArray();
 
-  static auto& pm    = DataModel::ProjectModel::instance();
+  auto& pm           = DataModel::pipelineModules().projectModel;
   const auto& groups = pm.groups();
   const auto git     = std::find_if(
     groups.begin(), groups.end(), [groupId](const auto& g) { return g.groupId == groupId; });

@@ -23,6 +23,7 @@
 #include "API/Handlers/CANBusHandler.h"
 
 #include "API/CommandRegistry.h"
+#include "API/HandlerContext.h"
 #include "API/SchemaBuilder.h"
 #include "IO/ConnectionManager.h"
 
@@ -142,10 +143,10 @@ API::CommandResponse API::Handlers::CANBusHandler::setPluginIndex(const QString&
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: pluginIndex"));
   }
 
-  const int pluginIndex          = params.value(QStringLiteral("pluginIndex")).toInt();
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* canbus                   = connectionManager.canBus();
-  const auto& pluginList         = canbus->pluginList();
+  const int pluginIndex   = params.value(QStringLiteral("pluginIndex")).toInt();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  auto* canbus            = connectionManager.canBus();
+  const auto& pluginList  = canbus->pluginList();
 
   if (pluginIndex < 0 || pluginIndex >= pluginList.count()) {
     return CommandResponse::makeError(id,
@@ -174,10 +175,10 @@ API::CommandResponse API::Handlers::CANBusHandler::setInterfaceIndex(const QStri
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: interfaceIndex"));
   }
 
-  const int interfaceIndex       = params.value(QStringLiteral("interfaceIndex")).toInt();
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* canbus                   = connectionManager.canBus();
-  const auto& interfaceList      = canbus->interfaceList();
+  const int interfaceIndex  = params.value(QStringLiteral("interfaceIndex")).toInt();
+  auto& connectionManager   = API::handlerContext().connectionManager;
+  auto* canbus              = connectionManager.canBus();
+  const auto& interfaceList = canbus->interfaceList();
 
   if (interfaceIndex < 0 || interfaceIndex >= interfaceList.count()) {
     return CommandResponse::makeError(
@@ -214,7 +215,7 @@ API::CommandResponse API::Handlers::CANBusHandler::setBitrate(const QString& id,
       id, ErrorCode::InvalidParam, QStringLiteral("bitrate must be positive"));
   }
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
+  auto& connectionManager = API::handlerContext().connectionManager;
   connectionManager.canBus()->setBitrate(static_cast<quint32>(bitrate));
 
   QJsonObject result;
@@ -233,8 +234,8 @@ API::CommandResponse API::Handlers::CANBusHandler::setCanFD(const QString& id,
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: enabled"));
   }
 
-  const bool enabled             = params.value(QStringLiteral("enabled")).toBool();
-  static auto& connectionManager = IO::ConnectionManager::instance();
+  const bool enabled      = params.value(QStringLiteral("enabled")).toBool();
+  auto& connectionManager = API::handlerContext().connectionManager;
   connectionManager.canBus()->setCanFD(enabled);
 
   QJsonObject result;
@@ -260,7 +261,7 @@ API::CommandResponse API::Handlers::CANBusHandler::setDataBitrate(const QString&
       id, ErrorCode::InvalidParam, QStringLiteral("dataBitrate must be positive"));
   }
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
+  auto& connectionManager = API::handlerContext().connectionManager;
   connectionManager.canBus()->setDataBitrate(static_cast<quint32>(dataBitrate));
 
   QJsonObject result;
@@ -279,8 +280,8 @@ API::CommandResponse API::Handlers::CANBusHandler::setLoopback(const QString& id
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: enabled"));
   }
 
-  const bool enabled             = params.value(QStringLiteral("enabled")).toBool();
-  static auto& connectionManager = IO::ConnectionManager::instance();
+  const bool enabled      = params.value(QStringLiteral("enabled")).toBool();
+  auto& connectionManager = API::handlerContext().connectionManager;
   connectionManager.canBus()->setLoopback(enabled);
 
   QJsonObject result;
@@ -299,8 +300,8 @@ API::CommandResponse API::Handlers::CANBusHandler::setListenOnly(const QString& 
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: enabled"));
   }
 
-  const bool enabled             = params.value(QStringLiteral("enabled")).toBool();
-  static auto& connectionManager = IO::ConnectionManager::instance();
+  const bool enabled      = params.value(QStringLiteral("enabled")).toBool();
+  auto& connectionManager = API::handlerContext().connectionManager;
   connectionManager.canBus()->setListenOnly(enabled);
 
   QJsonObject result;
@@ -320,8 +321,8 @@ API::CommandResponse API::Handlers::CANBusHandler::getConfiguration(const QStrin
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* canbus                   = connectionManager.canBus();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  auto* canbus            = connectionManager.canBus();
 
   QJsonObject result;
 
@@ -362,9 +363,9 @@ API::CommandResponse API::Handlers::CANBusHandler::getPluginList(const QString& 
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* canbus                   = connectionManager.canBus();
-  const auto& pluginList         = canbus->pluginList();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  auto* canbus            = connectionManager.canBus();
+  const auto& pluginList  = canbus->pluginList();
 
   QJsonArray plugins;
   for (int i = 0; i < pluginList.count(); ++i) {
@@ -389,9 +390,9 @@ API::CommandResponse API::Handlers::CANBusHandler::getInterfaceList(const QStrin
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* canbus                   = connectionManager.canBus();
-  const auto& interfaceList      = canbus->interfaceList();
+  auto& connectionManager   = API::handlerContext().connectionManager;
+  auto* canbus              = connectionManager.canBus();
+  const auto& interfaceList = canbus->interfaceList();
 
   QJsonArray interfaces;
   for (int i = 0; i < interfaceList.count(); ++i) {
@@ -415,8 +416,8 @@ API::CommandResponse API::Handlers::CANBusHandler::getBitrateList(const QString&
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  const auto& bitrateList        = connectionManager.canBus()->bitrateList();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  const auto& bitrateList = connectionManager.canBus()->bitrateList();
 
   QJsonArray bitrates;
   for (const auto& rate : bitrateList)
@@ -437,8 +438,8 @@ API::CommandResponse API::Handlers::CANBusHandler::getInterfaceError(const QStri
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  const QString error            = connectionManager.canBus()->interfaceError();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  const QString error     = connectionManager.canBus()->interfaceError();
 
   QJsonObject result;
   result[QStringLiteral("hasError")] = !error.isEmpty();

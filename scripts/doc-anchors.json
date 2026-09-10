@@ -9,6 +9,10 @@
         {
           "path": "CLAUDE.md",
           "must_contain": "qt 6.11.2"
+        },
+        {
+          "path": ".claude/hooks/canary-check.py",
+          "must_contain": "qt 6.11.2"
         }
       ]
     },
@@ -205,7 +209,7 @@
     {
       "name": "composition-root-players",
       "source": "app/src/Misc/ModuleManager.cpp",
-      "source_pattern": "\\(void\\)CSV::Player::instance\\(\\);\\n\\s*\\(void\\)MDF4::Player::instance\\(\\);",
+      "source_pattern": "CSV::Player::instance\\(\\)\\.attachMessageBus\\(messageBus\\);\\n\\s*MDF4::Player::instance\\(\\)\\.attachMessageBus\\(messageBus\\);",
       "docs": [
         {
           "path": "doc/claude/architecture/startup.md",
@@ -224,7 +228,7 @@
     {
       "name": "composition-root-exports",
       "source": "app/src/Misc/ModuleManager.cpp",
-      "source_pattern": "\\(void\\)CSV::Export::instance\\(\\);\\n\\s*\\(void\\)MDF4::Export::instance\\(\\);\\n\\s*\\(void\\)Console::Export::instance\\(\\);",
+      "source_pattern": "CSV::Export::instance\\(\\)\\.attachMessageBus\\(messageBus\\);\\n\\s*MDF4::Export::instance\\(\\)\\.attachMessageBus\\(messageBus\\);\\n\\s*Console::Export::instance\\(\\)\\.attachMessageBus\\(messageBus\\);",
       "docs": [
         {
           "path": "doc/claude/architecture/startup.md",

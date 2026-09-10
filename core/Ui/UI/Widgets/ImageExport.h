@@ -36,7 +36,7 @@
 #include <QUrl>
 #include <unordered_map>
 
-#include "DataModel/FrameConsumer.h"
+#include "Core/DataModel/FrameConsumer.h"
 
 class QMediaCaptureSession;
 class QMediaRecorder;

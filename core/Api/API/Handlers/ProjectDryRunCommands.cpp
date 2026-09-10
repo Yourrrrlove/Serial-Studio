@@ -34,13 +34,15 @@
 #include <QJsonObject>
 #include <QRegularExpression>
 
-#include "API/EnumLabels.h"
 #include "API/Handlers/ProjectApiSupport.h"
 #include "API/PathPolicy.h"
 #include "API/SchemaBuilder.h"
 #include "AppState.h"
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/EnumLabels.h"
+#include "Core/SerialStudio.h"
 #include "DataModel/FrameBuilder.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
 #include "DataModel/Scripting/CFrameParser.h"
 #include "DataModel/Scripting/FrameParser.h"
@@ -48,10 +50,9 @@
 #include "DataModel/Scripting/JsScriptEngine.h"
 #include "DataModel/Scripting/LuaScriptEngine.h"
 #include "DataModel/Scripting/NativeTemplates/NativeTemplate.h"
+#include "DataModel/Scripting/ScriptApiCall.h"
 #include "DataModel/Scripting/ScriptDryRun.h"
-#include "SerialStudio.h"
 #ifdef BUILD_COMMERCIAL
-#  include "UI/Widgets/Output/Base.h"
 #endif
 
 using namespace API::Handlers::ProjectApiSupport;
@@ -465,9 +466,9 @@ API::CommandResponse API::Handlers::ProjectDryRunCommands::frameParserDryRun(
   result[QStringLiteral("totalRows")]      = totalRows;
   result[QStringLiteral("hint")]           = QStringLiteral(
     "Bytes flow through extraction (delimiters / detection) -> decoder method -> parser, the "
-    "same path the live FrameBuilder uses. Pick the Binary decoder for non-text streams "
-    "(COBS, Modbus, custom binary) -- PlainText / Hex / Base64 route through "
-    "QString::fromUtf8 and mojibake non-ASCII bytes.");
+              "same path the live FrameBuilder uses. Pick the Binary decoder for non-text streams "
+              "(COBS, Modbus, custom binary) -- PlainText / Hex / Base64 route through "
+              "QString::fromUtf8 and mojibake non-ASCII bytes.");
 
   return CommandResponse::makeSuccess(id, result);
 }
@@ -748,8 +749,8 @@ API::CommandResponse API::Handlers::ProjectDryRunCommands::outputWidgetDryRun(
     return CommandResponse::makeError(
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: code"));
 
-  const auto code           = params.value(QStringLiteral("code")).toString();
-  static auto& frameBuilder = DataModel::FrameBuilder::instance();
+  const auto code    = params.value(QStringLiteral("code")).toString();
+  auto& frameBuilder = DataModel::pipelineModules().frameBuilder;
   frameBuilder.refreshTableStoreFromProjectModel();
 
   DataModel::ScriptDryRun session(DataModel::ScriptDryRun::Language::JavaScript,
@@ -762,7 +763,7 @@ API::CommandResponse API::Handlers::ProjectDryRunCommands::outputWidgetDryRun(
   QJSEngine& engine = *session.jsEngine();
   engine.installExtensions(QJSEngine::ConsoleExtension | QJSEngine::GarbageCollectionExtension);
 #ifdef BUILD_COMMERCIAL
-  Widgets::Output::Base::installProtocolHelpers(engine);
+  DataModel::ScriptApiCall::installAll(&engine, 0);
 #endif
   frameBuilder.injectTableApiJS(&engine);
 
@@ -964,7 +965,7 @@ static QJsonObject buildDryRunRow(
 API::CommandResponse API::Handlers::ProjectDryRunCommands::endToEndDryRun(const QString& id,
                                                                           const QJsonObject& params)
 {
-  static auto& pm    = DataModel::ProjectModel::instance();
+  auto& pm           = DataModel::pipelineModules().projectModel;
   const auto sources = pm.sources();
   const int sourceId = params.value(Keys::SourceId).toInt(0);
   if (sources.empty())

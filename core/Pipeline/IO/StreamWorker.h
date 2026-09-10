@@ -38,60 +38,19 @@ extern "C" {
 #include <QThread>
 #include <vector>
 
+#include "Core/DataModel/DataBlock.h"
 #include "Core/HotpathOptimization.h"
-#include "DataModel/DataBlock.h"
+#include "Core/IO/HAL_Driver.h"
+#include "Core/IO/StreamConfig.h"
+#include "Core/ThirdParty/readerwriterqueue.h"
 #include "DataModel/Scripting/ExpressionTransform.h"
 #include "DataModel/Scripting/JsWatchdog.h"
-#include "IO/HAL_Driver.h"
-#include "ThirdParty/readerwriterqueue.h"
 
 namespace DataModel {
 class FrameBuilder;
 }  // namespace DataModel
 
 namespace IO {
-
-/**
- * @brief Resolves the effective stream lane for a source: the per-source project override wins,
- *        otherwise the driver decides (stream-capable drivers stream by default, spec 0051 R6).
- */
-[[nodiscard]] inline bool streamLaneOn(const HAL_Driver* driver, const QString& lane)
-{
-  if (lane == QLatin1String("on"))
-    return true;
-
-  if (lane == QLatin1String("off"))
-    return false;
-
-  return driver && driver->isStreamCapable();
-}
-
-/**
- * @brief One dataset bound to a stream channel: dashboard identity, channel index, display
- *        reductions to run, and the optional per-dataset transform.
- */
-struct StreamChannelConfig {
-  int uniqueId          = -1;
-  int channel           = 0;
-  bool plot             = false;
-  bool fft              = false;
-  int fftSamples        = 0;
-  int transformLanguage = 0;
-  QString transformCode;
-  QString title;
-  QString alias;
-};
-
-/**
- * @brief Immutable per-source stream configuration handed to a worker at creation.
- */
-struct StreamConfig {
-  int sourceId      = 0;
-  int channels      = 1;
-  double sampleRate = 0.0;
-  bool luaFastMode  = false;
-  std::vector<StreamChannelConfig> datasets;
-};
 
 /**
  * @brief Samples per dense-lane block before publication (spec 0055 D6). Far above the frame

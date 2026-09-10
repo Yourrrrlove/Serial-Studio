@@ -28,14 +28,15 @@
 #include <QThread>
 #include <QTimer>
 
-#include "API/CommandHandler.h"
-#include "API/CommandProtocol.h"
-#include "API/CommandRegistry.h"
+#include "Core/Api/CommandProtocol.h"
+#include "Core/Api/ICommandExecutor.h"
+#include "Core/IO/IDeviceWriter.h"
 #include "Core/SSAssert.h"
+#include "DataModel/Scripting/DeviceWriteApi.h"
 #include "DataModel/Scripting/JsWatchdog.h"
+#include "DataModel/Scripting/ScriptApiCall.h"
 #include "DataModel/Scripting/ScriptDeviceWait.h"
 #include "DataModel/Scripting/ScriptResult.h"
-#include "IO/ConnectionManager.h"
 
 //--------------------------------------------------------------------------------------------------
 // Constants
@@ -76,8 +77,7 @@ QVariantMap DataModel::ControlApiMarshaller::dispatch(const QString& method,
   request.command = method;
   request.params  = QJsonObject::fromVariantMap(params);
 
-  static auto& commandHandler = API::CommandHandler::instance();
-  const auto response         = commandHandler.processCommand(request);
+  const auto response = DataModel::requireCommandExecutor().execute(request);
 
   QVariantMap out;
   out.insert(QStringLiteral("ok"), response.success);
@@ -101,8 +101,7 @@ qint64 DataModel::ControlApiMarshaller::writeAndArm(int sourceId, const QByteArr
   if (s_shutdownRequested.load(std::memory_order_acquire))
     return -1;
 
-  static auto& ioManager = IO::ConnectionManager::instance();
-  return ioManager.writeAndArmReply(sourceId, data);
+  return DataModel::requireDeviceWriter().writeAndArmReply(sourceId, data);
 }
 
 /**
@@ -110,8 +109,7 @@ qint64 DataModel::ControlApiMarshaller::writeAndArm(int sourceId, const QByteArr
  */
 QByteArray DataModel::ControlApiMarshaller::pollReply(int sourceId)
 {
-  static auto& ioManager = IO::ConnectionManager::instance();
-  return ioManager.pollReplyBuffer(sourceId);
+  return DataModel::requireDeviceWriter().pollReplyBuffer(sourceId);
 }
 
 /**
@@ -119,8 +117,7 @@ QByteArray DataModel::ControlApiMarshaller::pollReply(int sourceId)
  */
 void DataModel::ControlApiMarshaller::disarmReply(int sourceId)
 {
-  static auto& ioManager = IO::ConnectionManager::instance();
-  ioManager.disarmReplyCapture(sourceId);
+  DataModel::requireDeviceWriter().disarmReplyCapture(sourceId);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -179,11 +176,10 @@ QVariantMap DataModel::ControlApiBridge::call(const QString& method, const QVari
 QVariantList DataModel::ControlApiBridge::listCommands()
 {
   QVariantList result;
-  static auto& registry = API::CommandRegistry::instance();
-  const auto& commands  = registry.commands();
-  result.reserve(commands.size());
-  for (auto it = commands.constBegin(); it != commands.constEnd(); ++it)
-    result.append(it.key());
+  const auto names = DataModel::requireCommandExecutor().commandNames();
+  result.reserve(names.size());
+  for (const auto& name : names)
+    result.append(name);
 
   return result;
 }

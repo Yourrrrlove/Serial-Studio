@@ -31,12 +31,13 @@
 #include <QSettings>
 #include <QTimer>
 
-#include "API/CommandHandler.h"
 #include "API/CommandRegistry.h"
 #include "API/Server.h"
-#include "AppInfo.h"
 #include "AppState.h"
 #include "Benchmark/HotpathBenchmark.h"
+#include "Core/AppInfo.h"
+#include "Core/SerialStudio.h"
+#include "Core/TimerEvents.h"
 #include "DataModel/FrameBuilder.h"
 #include "DataModel/ProjectModel.h"
 #include "IO/ConnectionManager.h"
@@ -44,8 +45,6 @@
 #include "Misc/CLI/CliBusConfig.h"
 #include "Misc/CrashTracker.h"
 #include "Misc/ModuleManager.h"
-#include "Misc/TimerEvents.h"
-#include "SerialStudio.h"
 #include "SessionContext.h"
 #include "UI/Dashboard.h"
 #include "UI/TaskbarSettings.h"
@@ -59,6 +58,7 @@
 #  include <QFileInfo>
 #  include <QMessageBox>
 #  include <QPushButton>
+#  include <QStringList>
 
 #  include "Console/Export.h"
 #  include "CSV/Export.h"
@@ -370,8 +370,8 @@ void CLI::scheduleExitAfter(QApplication& app)
 /**
  * @brief Runs the frame-extraction throughput benchmark and maps the result to an exit code.
  *        The benchmark exits before any ModuleManager is built, so it runs the pinned module
- *        order itself, sink bind included: instantiateCoreModules() constructs the modules but
- *        binds nothing, and the publish path holds its pipeline as a pointer (spec 0039 M2).
+ *        order itself, interface bind included: instantiateCoreModules() constructs the modules
+ *        but binds nothing, and the publish path holds its pipeline as a pointer (spec 0039 M2).
  */
 CLI::ProcessResult CLI::runHotpathBenchmark()
 {
@@ -405,8 +405,8 @@ CLI::ProcessResult CLI::runHotpathBenchmark()
     output = m_parser.value(m_opts.benchmarkOutputOpt).trimmed();
 
   Misc::ModuleManager::instantiateCoreModules();
-  static auto& frameBuilder = DataModel::FrameBuilder::instance();
-  frameBuilder.bindBlockSinks();
+  Misc::ModuleManager::bindInterfaces();
+  Misc::ModuleManager::registerApiHandlers();
 
   const int rc = Benchmark::HotpathBenchmark::runAndReport(frames, minFps, seconds, output);
   return rc == EXIT_SUCCESS ? ProcessResult::ExitSuccess : ProcessResult::ExitFailure;
@@ -453,7 +453,7 @@ CLI::ProcessResult CLI::runSessionVerification()
   Misc::ModuleManager::instantiateCoreModules();
   Misc::ModuleManager::setupHeadlessSessionConnections();
 
-  Sessions::Verifier verifier(options);
+  Sessions::Verifier verifier(options, SessionContext::current().bus());
   const int code = verifier.run();
 
   std::fputs(QJsonDocument(verifier.report()).toJson(QJsonDocument::Indented).constData(), stdout);
@@ -502,7 +502,7 @@ CLI::ProcessResult CLI::runSessionRegression()
   Misc::ModuleManager::instantiateCoreModules();
   Misc::ModuleManager::setupHeadlessSessionConnections();
 
-  Sessions::Verifier verifier(options);
+  Sessions::Verifier verifier(options, SessionContext::current().bus());
   const int code = verifier.run();
 
   std::fputs(QJsonDocument(verifier.report()).toJson(QJsonDocument::Indented).constData(), stdout);
@@ -520,8 +520,8 @@ CLI::ProcessResult CLI::runSessionRegression()
  */
 CLI::ProcessResult CLI::dumpApiSchema(const QString& path)
 {
-  static auto& commandHandler = API::CommandHandler::instance();
-  (void)commandHandler;
+  Misc::ModuleManager::instantiateCoreModules();
+  Misc::ModuleManager::registerApiHandlers();
   static auto& commandRegistry = API::CommandRegistry::instance();
   const auto& commands         = commandRegistry.commands();
 
@@ -552,15 +552,16 @@ CLI::ProcessResult CLI::dumpApiSchema(const QString& path)
   }
 
   QFile file(path);
-  if (!file.open(QFile::WriteOnly | QFile::Truncate)) {
+  const bool opened = file.open(QFile::WriteOnly | QFile::Truncate);
+  if (opened) {
+    file.write(QJsonDocument(array).toJson(QJsonDocument::Indented));
+    file.close();
+    qDebug() << "Wrote" << array.size() << "commands to" << path;
+  } else
     qWarning() << "Failed to open" << path << "for writing";
-    return ProcessResult::ExitFailure;
-  }
 
-  file.write(QJsonDocument(array).toJson(QJsonDocument::Indented));
-  file.close();
-  qDebug() << "Wrote" << array.size() << "commands to" << path;
-  return ProcessResult::ExitSuccess;
+  teardownHeadlessSession();
+  return opened ? ProcessResult::ExitSuccess : ProcessResult::ExitFailure;
 }
 
 #ifdef SS_INAPP_TESTS

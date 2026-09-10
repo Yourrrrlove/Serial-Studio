@@ -27,17 +27,14 @@
 #include <QElapsedTimer>
 #include <QHash>
 #include <QJsonDocument>
-#include <QMessageBox>
 #include <QSet>
 #include <QStringList>
 #include <QTcpSocket>
 
-#include "AppState.h"
+#include "Core/Prompt/UserPrompt.h"
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
-#include "DataModel/ProjectModel.h"
 #include "IO/ConnectionManager.h"
-#include "Misc/Utilities.h"
-#include "SerialStudio.h"
 
 static constexpr int kS7MinIntervalMs     = 50;
 static constexpr int kS7MaxIntervalMs     = 60000;
@@ -411,8 +408,7 @@ quint64 IO::Drivers::S7PollWorker::itemErrors() const noexcept
  * @brief Constructs the driver, restores persisted settings and wires the configuration signals.
  */
 IO::Drivers::S7::S7()
-  : m_appState(AppState::instance())
-  , m_projectModel(DataModel::ProjectModel::instance())
+  : m_generatedProject(this)
   , m_open(false)
   , m_connecting(false)
   , m_persistent(true)
@@ -1296,7 +1292,7 @@ QJsonObject IO::Drivers::S7::buildProject() const
   source[Keys::FrameParserLanguage]   = static_cast<int>(SerialStudio::Native);
   source[Keys::FrameParserTemplate]   = QStringLiteral("s7");
   source[Keys::FrameParserParams]     = QJsonObject{
-    {QStringLiteral("schema"), wireSchema()}
+        {QStringLiteral("schema"), wireSchema()}
   };
 
   QJsonObject conn;
@@ -1337,20 +1333,18 @@ QJsonObject IO::Drivers::S7::buildProject() const
 /**
  * @brief Builds the project and loads it into the editor (no save dialog); the API path.
  */
-DataModel::ProjectModel* IO::Drivers::S7::loadGeneratedProject()
+bool IO::Drivers::S7::loadGeneratedProject()
 {
   if (m_variables.isEmpty())
-    return nullptr;
+    return false;
 
-  m_appState.setOperationMode(SerialStudio::ProjectFile);
-  if (!m_projectModel.loadFromJsonDocument(QJsonDocument(buildProject()), QString())) {
+  if (!m_generatedProject.load(messageBus(), QJsonDocument(buildProject()))) {
     logDriverError(tr("Failed to load generated project"),
                    tr("The generated project JSON could not be loaded."));
-    return nullptr;
+    return false;
   }
 
-  m_projectModel.setModified(true);
-  return &m_projectModel;
+  return true;
 }
 
 /**
@@ -1359,33 +1353,29 @@ DataModel::ProjectModel* IO::Drivers::S7::loadGeneratedProject()
 void IO::Drivers::S7::generateProject()
 {
   if (m_variables.isEmpty()) {
-    Misc::Utilities::showMessageBox(tr("No variables configured"),
-                                    tr("Add at least one variable before generating a project."),
-                                    QMessageBox::Warning,
-                                    tr("S7 Project Generator"));
+    Core::Prompt::showMessageBox(tr("No variables configured"),
+                                 tr("Add at least one variable before generating a project."),
+                                 Core::Prompt::Warning,
+                                 tr("S7 Project Generator"));
     return;
   }
 
-  auto* pm = loadGeneratedProject();
-  if (!pm)
-    return;
-
   const int datasets = wireSchema().size();
-  QObject::connect(
-    pm,
-    &DataModel::ProjectModel::saveDialogCompleted,
-    this,
-    [datasets](bool accepted) {
+  m_generatedProject.loadAndSave(
+    messageBus(), QJsonDocument(buildProject()), [this, datasets](bool loaded, bool accepted) {
+      if (!loaded) {
+        logDriverError(tr("Failed to load generated project"),
+                       tr("The generated project JSON could not be loaded."));
+        return;
+      }
+
       if (!accepted)
         return;
 
-      Misc::Utilities::showMessageBox(
+      Core::Prompt::showMessageBox(
         tr("Successfully generated project with %1 datasets.").arg(datasets),
         tr("The project editor is now open for customization."),
-        QMessageBox::Information,
+        Core::Prompt::Information,
         tr("S7 Project Generator"));
-    },
-    Qt::SingleShotConnection);
-
-  (void)pm->saveJsonFile(true);
+    });
 }

@@ -169,7 +169,7 @@ Window {
     if (!q)
       return constants
 
-    const m = (s) => SerialStudio.searchMatches(q, String(s || ""))
+    const m = (s) => SerialStudioHelpers.searchMatches(q, String(s || ""))
     return constants.filter(c => m(c.name) || m(c.symbol) || m(c.suggestedName) || m(c.category))
   }
 

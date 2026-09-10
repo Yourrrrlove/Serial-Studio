@@ -32,13 +32,16 @@
 #  include <QTimer>
 
 #  include "AppState.h"
+#  include "Core/Bus/MessageBus.h"
+#  include "Core/Bus/Messages.h"
+#  include "Core/Prompt/UserPrompt.h"
+#  include "Core/SerialStudio.h"
+#  include "Core/Services.h"
 #  include "Core/SSAssert.h"
-#  include "DataModel/NotificationCenter.h"
+#  include "Core/WorkspaceManager.h"
+#  include "DataModel/PipelineModules.h"
 #  include "DataModel/ProjectModel.h"
 #  include "Misc/PasswordHash.h"
-#  include "Misc/Utilities.h"
-#  include "Misc/WorkspaceManager.h"
-#  include "SerialStudio.h"
 #  include "Sessions/DatabaseManager/DatabaseSchema.h"
 #  include "Sessions/Export.h"
 #  include "Sessions/Player.h"
@@ -48,6 +51,11 @@
 //--------------------------------------------------------------------------------------------------
 
 static QString s_dbPathOverride;
+
+/**
+ * @brief Warning severity of a Core::Bus::NotificationRaised (NotificationCenter::Warning).
+ */
+static constexpr int kNotificationWarning = 1;
 
 /**
  * @brief True when @p sessionId is the session the historian is recording into right now. The
@@ -63,14 +71,16 @@ static QString s_dbPathOverride;
 /**
  * @brief Refuses a mutation of the live session and says why; true when the caller must stop.
  */
-[[nodiscard]] static bool refuseLiveSession(int sessionId)
+[[nodiscard]] static bool refuseLiveSession(Core::Bus::MessageBus* bus, int sessionId)
 {
   if (!sessionIsLive(sessionId))
     return false;
 
-  static auto& notifications = DataModel::NotificationCenter::instance();
-  notifications.postWarning(
+  SS_ASSERT(bus != nullptr, return true);
+  bus->publish<Core::Bus::NotificationRaised>(
+    kNotificationWarning,
     QStringLiteral("Historian"),
+    QString(),
     QObject::tr("This session is being recorded"),
     QObject::tr("Stop the recording before deleting or editing this session; its rows are still "
                 "being written."));
@@ -96,6 +106,7 @@ Sessions::DatabaseManager::DatabaseManager()
   , m_player(nullptr)
   , m_projectModel(nullptr)
   , m_appState(nullptr)
+  , m_bus(nullptr)
 {
   qRegisterMetaType<Sessions::ReportPayloadPtr>("Sessions::ReportPayloadPtr");
   initWorker();
@@ -118,6 +129,15 @@ Sessions::DatabaseManager& Sessions::DatabaseManager::instance()
 {
   static DatabaseManager singleton;
   return singleton;
+}
+
+/**
+ * @brief Adopts the root-owned message bus this module raises notifications on.
+ */
+void Sessions::DatabaseManager::attachMessageBus(Core::Bus::MessageBus& bus)
+{
+  SS_ASSERT(m_bus == nullptr, return);
+  m_bus = &bus;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -217,10 +237,10 @@ void Sessions::DatabaseManager::shutdown()
  */
 void Sessions::DatabaseManager::setupExternalConnections()
 {
-  m_workspaceManager = &Misc::WorkspaceManager::instance();
+  m_workspaceManager = &Core::services().workspaceManager;
   m_player           = &Sessions::Player::instance();
-  m_projectModel     = &DataModel::ProjectModel::instance();
-  m_appState         = &AppState::instance();
+  m_projectModel     = &DataModel::pipelineModules().projectModel;
+  m_appState         = &DataModel::pipelineModules().appState;
   m_exporter.setWorkspace(m_workspaceManager);
 
   connect(&Sessions::Export::instance(),
@@ -437,9 +457,9 @@ QString Sessions::DatabaseManager::canonicalDbPath(const QString& projectTitle)
   if (!s_dbPathOverride.isEmpty())
     return s_dbPathOverride;
 
-  const QString safeTitle       = Sessions::sanitiseTitleForPath(projectTitle);
-  static auto& workspaceManager = Misc::WorkspaceManager::instance();
-  const auto subdir             = workspaceManager.path("Session Databases");
+  const QString safeTitle = Sessions::sanitiseTitleForPath(projectTitle);
+  auto& workspaceManager  = Core::services().workspaceManager;
+  const auto subdir       = workspaceManager.path("Session Databases");
   return QStringLiteral("%1/%2/%2.db").arg(subdir, safeTitle);
 }
 
@@ -708,10 +728,10 @@ void Sessions::DatabaseManager::lockDatabase()
 
   if (first != second || !ok) {
     QTimer::singleShot(0, this, [] {
-      Misc::Utilities::showMessageBox(
+      Core::Prompt::showMessageBox(
         tr("Passwords do not match"),
         tr("The two passwords you entered do not match. The session file was not locked."),
-        QMessageBox::Warning);
+        Core::Prompt::Warning);
     });
     return;
   }
@@ -756,10 +776,10 @@ void Sessions::DatabaseManager::unlockDatabase()
 
   if (!Misc::PasswordHash::verifyPassword(pwd, m_passwordHash)) {
     QTimer::singleShot(0, this, [] {
-      Misc::Utilities::showMessageBox(
+      Core::Prompt::showMessageBox(
         tr("Incorrect password"),
         tr("The password you entered does not match the one stored in the session file."),
-        QMessageBox::Warning);
+        Core::Prompt::Warning);
     });
     return;
   }
@@ -799,7 +819,7 @@ void Sessions::DatabaseManager::setSelectedSessionNotes(const QString& notes)
   if (selectedSessionNotes() == notes)
     return;
 
-  if (refuseLiveSession(m_selectedSessionId))
+  if (refuseLiveSession(m_bus, m_selectedSessionId))
     return;
 
   for (auto& v : m_sessionList) {
@@ -833,7 +853,7 @@ void Sessions::DatabaseManager::deleteSession(int sessionId)
   if (!isOpen() || m_locked)
     return;
 
-  if (refuseLiveSession(sessionId))
+  if (refuseLiveSession(m_bus, sessionId))
     return;
 
   setBusy(true);
@@ -854,29 +874,28 @@ void Sessions::DatabaseManager::deleteSession(int sessionId)
  */
 void Sessions::DatabaseManager::confirmDeleteSession(int sessionId)
 {
-  if (refuseLiveSession(sessionId))
+  if (refuseLiveSession(m_bus, sessionId))
     return;
 
   if (m_locked) {
-    Misc::Utilities::showMessageBox(
-      tr("Session file locked"),
-      tr("Unlock the session file before deleting recorded sessions."),
-      QMessageBox::Information);
+    Core::Prompt::showMessageBox(tr("Session file locked"),
+                                 tr("Unlock the session file before deleting recorded sessions."),
+                                 Core::Prompt::Information);
     return;
   }
 
   const auto meta  = sessionMetadata(sessionId);
   const auto title = meta.value("started_at").toString();
 
-  const int choice = Misc::Utilities::showMessageBox(
+  const int choice = Core::Prompt::showMessageBox(
     tr("Delete session from %1?").arg(title),
     tr("All readings and raw data for this session are permanently removed."),
-    QMessageBox::Warning,
+    Core::Prompt::Warning,
     tr("Delete Session"),
-    QMessageBox::Yes | QMessageBox::Cancel,
-    QMessageBox::Cancel);
+    Core::Prompt::Yes | Core::Prompt::Cancel,
+    Core::Prompt::Cancel);
 
-  if (choice == QMessageBox::Yes)
+  if (choice == Core::Prompt::Yes)
     deleteSession(sessionId);
 }
 
@@ -918,7 +937,7 @@ void Sessions::DatabaseManager::addTagAndAssign(int sessionId, const QString& la
   if (!isOpen() || label.trimmed().isEmpty())
     return;
 
-  if (refuseLiveSession(sessionId))
+  if (refuseLiveSession(m_bus, sessionId))
     return;
 
   setBusy(true);
@@ -968,7 +987,7 @@ void Sessions::DatabaseManager::assignTagToSession(int sessionId, int tagId)
   if (!isOpen())
     return;
 
-  if (refuseLiveSession(sessionId))
+  if (refuseLiveSession(m_bus, sessionId))
     return;
 
   setBusy(true);
@@ -988,7 +1007,7 @@ void Sessions::DatabaseManager::removeTagFromSession(int sessionId, int tagId)
   if (!isOpen())
     return;
 
-  if (refuseLiveSession(sessionId))
+  if (refuseLiveSession(m_bus, sessionId))
     return;
 
   setBusy(true);
@@ -1134,19 +1153,19 @@ void Sessions::DatabaseManager::runRestoreProjectFromJson(const QString& json)
   SS_ASSERT(m_appState != nullptr, return);
 
   if (json.isEmpty()) {
-    Misc::Utilities::showMessageBox(tr("No project data"),
-                                    tr("This session file does not contain an embedded project."),
-                                    QMessageBox::Warning);
+    Core::Prompt::showMessageBox(tr("No project data"),
+                                 tr("This session file does not contain an embedded project."),
+                                 Core::Prompt::Warning);
     return;
   }
 
   QJsonParseError parseError{};
   const auto doc = QJsonDocument::fromJson(json.toUtf8(), &parseError);
   if (parseError.error != QJsonParseError::NoError || doc.isEmpty()) {
-    Misc::Utilities::showMessageBox(
+    Core::Prompt::showMessageBox(
       tr("Invalid project data"),
       tr("The embedded project JSON is malformed and cannot be restored."),
-      QMessageBox::Critical);
+      Core::Prompt::Critical);
     return;
   }
 
@@ -1162,8 +1181,8 @@ void Sessions::DatabaseManager::runRestoreProjectFromJson(const QString& json)
 
   QFile file(path);
   if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-    Misc::Utilities::showMessageBox(
-      tr("Cannot write file"), tr("Check file permissions and try again."), QMessageBox::Critical);
+    Core::Prompt::showMessageBox(
+      tr("Cannot write file"), tr("Check file permissions and try again."), Core::Prompt::Critical);
     return;
   }
 
@@ -1274,7 +1293,7 @@ void Sessions::DatabaseManager::onWorkerOpenFailed(const QString& filePath, cons
   Q_UNUSED(filePath)
   setBusy(false);
 
-  Misc::Utilities::showMessageBox(tr("Cannot open session file"), error, QMessageBox::Critical);
+  Core::Prompt::showMessageBox(tr("Cannot open session file"), error, Core::Prompt::Critical);
 }
 
 /**

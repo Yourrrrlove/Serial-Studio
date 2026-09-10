@@ -30,18 +30,19 @@
 #include <QJsonObject>
 #include <QSet>
 
-#include "API/EnumLabels.h"
 #include "API/Handlers/ProjectApiSupport.h"
 #include "API/SchemaBuilder.h"
 #include "AppState.h"
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/EnumLabels.h"
+#include "Core/SerialStudio.h"
 #include "DataModel/FrameBuilder.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
 #include "DataModel/Scripting/CFrameParser.h"
 #include "DataModel/Scripting/IScriptEngine.h"
 #include "DataModel/Scripting/JsScriptEngine.h"
 #include "DataModel/Scripting/LuaScriptEngine.h"
-#include "SerialStudio.h"
 
 using namespace API::Handlers::ProjectApiSupport;
 
@@ -83,7 +84,7 @@ static QJsonObject summarizeProjectJson(const QJsonObject& project)
  */
 static QJsonObject summarizeCurrentProject()
 {
-  static const auto& pm = DataModel::ProjectModel::instance();
+  static const auto& pm = DataModel::pipelineModules().projectModel;
   QJsonObject out;
   out[QStringLiteral("title")]        = pm.title();
   out[QStringLiteral("groupCount")]   = pm.groupCount();
@@ -418,12 +419,12 @@ API::CommandResponse API::Handlers::ProjectFileCommands::fileNew(const QString& 
     return CommandResponse::makeSuccess(id, result);
   }
 
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
   projectModel.setSuppressMessageBoxes(true);
   projectModel.newJsonFile();
   projectModel.setSuppressMessageBoxes(false);
 
-  static auto& appState = AppState::instance();
+  auto& appState = DataModel::pipelineModules().appState;
   appState.setOperationMode(SerialStudio::ProjectFile);
 
   QJsonObject result;
@@ -439,7 +440,7 @@ API::CommandResponse API::Handlers::ProjectFileCommands::projectUndo(const QStri
                                                                      const QJsonObject& params)
 {
   Q_UNUSED(params);
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
 
   QJsonObject result;
   if (!projectModel.canUndo()) {
@@ -474,7 +475,7 @@ API::CommandResponse API::Handlers::ProjectFileCommands::projectRedo(const QStri
                                                                      const QJsonObject& params)
 {
   Q_UNUSED(params);
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
 
   QJsonObject result;
   if (!projectModel.canRedo()) {
@@ -519,7 +520,7 @@ API::CommandResponse API::Handlers::ProjectFileCommands::setTitle(const QString&
       id, ErrorCode::InvalidParam, QStringLiteral("title cannot be empty"));
   }
 
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
   projectModel.setTitle(title);
 
   QJsonObject result;
@@ -575,7 +576,7 @@ API::CommandResponse API::Handlers::ProjectFileCommands::fileOpen(const QString&
     return CommandResponse::makeSuccess(id, result);
   }
 
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
   projectModel.setSuppressMessageBoxes(true);
   const bool ok = projectModel.openJsonFile(file_path);
   projectModel.setSuppressMessageBoxes(false);
@@ -587,7 +588,7 @@ API::CommandResponse API::Handlers::ProjectFileCommands::fileOpen(const QString&
       QStringLiteral("Failed to open project file (validation or I/O error)"));
   }
 
-  static auto& appState = AppState::instance();
+  auto& appState = DataModel::pipelineModules().appState;
   appState.setOperationMode(SerialStudio::ProjectFile);
 
   QJsonObject result;
@@ -605,7 +606,7 @@ API::CommandResponse API::Handlers::ProjectFileCommands::fileSave(const QString&
 {
   const QString explicit_path = params.value(QStringLiteral("filePath")).toString();
 
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
   projectModel.setSuppressMessageBoxes(true);
   bool success = false;
   if (!explicit_path.isEmpty()) {
@@ -640,7 +641,7 @@ API::CommandResponse API::Handlers::ProjectFileCommands::getStatus(const QString
 {
   Q_UNUSED(params)
 
-  static auto& project = DataModel::ProjectModel::instance();
+  auto& project = DataModel::pipelineModules().projectModel;
 
   QJsonObject result;
   result[QStringLiteral("title")]                      = project.title();
@@ -887,7 +888,7 @@ API::CommandResponse API::Handlers::ProjectFileCommands::projectSnapshot(const Q
   const int offset      = params.value(QStringLiteral("offset")).toInt(0);
   const int limit       = params.value(QStringLiteral("limit")).toInt(0);
   const auto sections   = params.value(QStringLiteral("sections")).toArray();
-  static const auto& pm = DataModel::ProjectModel::instance();
+  static const auto& pm = DataModel::pipelineModules().projectModel;
 
   const auto wants = [&sections](QLatin1String section) {
     return sections.isEmpty() || sections.contains(QJsonValue(section));
@@ -922,7 +923,7 @@ API::CommandResponse API::Handlers::ProjectFileCommands::projectSnapshot(const Q
   if (wants(QLatin1String("dataTables")))
     snapshot[QStringLiteral("dataTables")] = buildSnapshotTables(pm);
 
-  static auto& appState                     = AppState::instance();
+  auto& appState                            = DataModel::pipelineModules().appState;
   const int operationMode                   = static_cast<int>(appState.operationMode());
   snapshot[QStringLiteral("operationMode")] = operationMode;
   snapshot[QStringLiteral("_explanations")] =
@@ -965,7 +966,7 @@ API::CommandResponse API::Handlers::ProjectFileCommands::loadFromJSON(const QStr
     return CommandResponse::makeSuccess(id, result);
   }
 
-  static auto& project = DataModel::ProjectModel::instance();
+  auto& project = DataModel::pipelineModules().projectModel;
   project.setSuppressMessageBoxes(true);
   const bool ok = project.loadFromJsonDocument(QJsonDocument(config));
   project.setSuppressMessageBoxes(false);
@@ -994,7 +995,7 @@ API::CommandResponse API::Handlers::ProjectFileCommands::exportJson(const QStrin
 {
   Q_UNUSED(params)
 
-  static auto& project   = DataModel::ProjectModel::instance();
+  auto& project          = DataModel::pipelineModules().projectModel;
   const QJsonObject json = project.serializeToJson();
 
   QJsonObject result;
@@ -1010,8 +1011,8 @@ API::CommandResponse API::Handlers::ProjectFileCommands::loadIntoFrameBuilder(
 {
   Q_UNUSED(params)
 
-  static auto& project = DataModel::ProjectModel::instance();
-  static auto& builder = DataModel::FrameBuilder::instance();
+  auto& project = DataModel::pipelineModules().projectModel;
+  auto& builder = DataModel::pipelineModules().frameBuilder;
 
   const bool hasDatasetlessGroup =
     std::any_of(project.groups().begin(), project.groups().end(), [](const DataModel::Group& g) {
@@ -1129,7 +1130,7 @@ API::CommandResponse API::Handlers::ProjectFileCommands::templateApply(const QSt
     return CommandResponse::makeSuccess(id, result);
   }
 
-  static auto& project = DataModel::ProjectModel::instance();
+  auto& project = DataModel::pipelineModules().projectModel;
   project.setSuppressMessageBoxes(true);
   const bool ok = project.loadFromJsonDocument(body);
   project.setSuppressMessageBoxes(false);
@@ -1318,7 +1319,7 @@ API::CommandResponse API::Handlers::ProjectFileCommands::validate(const QString&
 {
   Q_UNUSED(params)
 
-  static const auto& project = DataModel::ProjectModel::instance();
+  static const auto& project = DataModel::pipelineModules().projectModel;
   const auto& groups         = project.groups();
   const auto& sources        = project.sources();
   const auto& actions        = project.actions();

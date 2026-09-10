@@ -17,16 +17,17 @@
 
 #  include <algorithm>
 #  include <memory>
+#  include <QHash>
 #  include <QScopedValueRollback>
 #  include <QStringList>
 
 #  include "AppState.h"
+#  include "Core/DataModel/DataBlock.h"
+#  include "Core/IO/IPayloadInjector.h"
+#  include "Core/SerialStudio.h"
 #  include "Core/SSAssert.h"
-#  include "DataModel/DataBlock.h"
 #  include "DataModel/FrameBuilder.h"
 #  include "DataModel/Scripting/FrameParserPipeline.h"
-#  include "IO/ConnectionManager.h"
-#  include "SerialStudio.h"
 
 /**
  * @brief Binds the synthesis to the reader it draws cells from, the layout that describes them,
@@ -36,13 +37,13 @@ Sessions::ReplaySynthesis::ReplaySynthesis(SessionDbReader& reader,
                                            const ReplayLayout& layout,
                                            AppState& appState,
                                            DataModel::FrameBuilder& frameBuilder,
-                                           IO::ConnectionManager& connectionManager)
+                                           IO::IPayloadInjector& payloadInjector)
   : m_injecting(false)
   , m_reader(reader)
   , m_layout(layout)
   , m_appState(appState)
   , m_frameBuilder(frameBuilder)
-  , m_connectionManager(connectionManager)
+  , m_payloadInjector(payloadInjector)
 {}
 
 /**
@@ -119,7 +120,7 @@ void Sessions::ReplaySynthesis::injectFrame(const ReplayRowValues& frame, qint64
 
     QByteArray payload = DataModel::joinReplayRow(cells);
     payload.append('\n');
-    m_connectionManager.processPayload(payload);
+    m_payloadInjector.processPayload(payload);
     return;
   }
 

@@ -22,6 +22,7 @@
 #include "SnapGuides.h"
 
 #include <algorithm>
+#include <array>
 #include <numeric>
 #include <optional>
 #include <QtGlobal>
@@ -33,8 +34,14 @@ constexpr int kRankSpacing  = 2;
 constexpr int kRankFraction = 3;
 
 // Imperial wrench ladder; a rung closer-spaced than kMinFractionSpacing is skipped.
-constexpr int kFractionDenominators[] = {2, 4, 8, 16};
-constexpr int kMinFractionSpacing     = 40;
+constexpr std::array<int, 4> kFractionDenominators = {2, 4, 8, 16};
+constexpr int kMinFractionSpacing                  = 40;
+
+// Candidate reserve budgets: per-sibling entries plus the canvas edge/center/fraction entries.
+constexpr int kMoveReservePerSibling   = 5;
+constexpr int kMoveReserveCanvas       = 88;
+constexpr int kResizeReservePerSibling = 3;
+constexpr int kResizeReserveCanvas     = 32;
 
 namespace detail {
 
@@ -49,8 +56,8 @@ struct Candidate {
   int gap           = 0;
   bool canvasTarget = false;
   bool afterPair    = false;
-  QRect pairA       = {};
-  QRect pairB       = {};
+  QRect pairA;
+  QRect pairB;
 };
 
 }  // namespace detail
@@ -78,7 +85,7 @@ static int rectHi(const QRect& r, const bool horiz)
  */
 static int rectMid(const QRect& r, const bool horiz)
 {
-  return rectLo(r, horiz) + (horiz ? r.width() : r.height()) / 2;
+  return rectLo(r, horiz) + ((horiz ? r.width() : r.height()) / 2);
 }
 
 /**
@@ -155,7 +162,7 @@ static void appendAlignCandidates(const UI::Snap::SnapInput& input,
 
   appendIfViable({0 - lo, 0, kRankEdge, 0, true}, input, horiz, out);
   appendIfViable({extent - hi, extent, kRankEdge, 0, true}, input, horiz, out);
-  appendIfViable({extent / 2 - mid, extent / 2, kRankCenter, 0, true}, input, horiz, out);
+  appendIfViable({(extent / 2) - mid, extent / 2, kRankCenter, 0, true}, input, horiz, out);
 
   for (const int den : kFractionDenominators) {
     if (extent / den < kMinFractionSpacing)
@@ -198,10 +205,11 @@ static void appendSpacingCandidates(const UI::Snap::SnapInput& input,
     if (gap <= 0)
       continue;
 
-    Candidate after{rectHi(b, horiz) + gap - lo, 0, kRankSpacing, gap, false, true, a, b};
+    const Candidate after{rectHi(b, horiz) + gap - lo, 0, kRankSpacing, gap, false, true, a, b};
     appendIfViable(after, input, horiz, out);
 
-    Candidate before{rectLo(a, horiz) - gap - size - lo, 0, kRankSpacing, gap, false, false, a, b};
+    const Candidate before{
+      rectLo(a, horiz) - gap - size - lo, 0, kRankSpacing, gap, false, false, a, b};
     appendIfViable(before, input, horiz, out);
   }
 }
@@ -358,7 +366,7 @@ static void appendResizeCandidates(const UI::Snap::SnapInput& input,
 
     const int sSize  = rectSize(sibling, horiz);
     const int target = movingLo ? hi - sSize : lo + sSize;
-    Candidate size{target - edge, 0, kRankSize, 0, false, false, sibling};
+    const Candidate size{target - edge, 0, kRankSize, 0, false, false, sibling};
     appendIfViableResize(size, input, horiz, movingLo, out);
   }
 
@@ -471,7 +479,7 @@ QString UI::Snap::fractionLabel(const int size, const int extent)
       continue;
 
     for (int num = 1; num <= den; ++num) {
-      if (qAbs(size - extent * num / den) > 1)
+      if (qAbs(size - (extent * num / den)) > 1)
         continue;
 
       const int divisor = std::gcd(num, den);
@@ -497,8 +505,8 @@ UI::Snap::SnapResult UI::Snap::resolveMoveSnap(const SnapInput& input)
 
   QVector<Candidate> horizontal;
   QVector<Candidate> vertical;
-  horizontal.reserve(input.siblings.size() * 5 + 88);
-  vertical.reserve(input.siblings.size() * 5 + 88);
+  horizontal.reserve((input.siblings.size() * kMoveReservePerSibling) + kMoveReserveCanvas);
+  vertical.reserve((input.siblings.size() * kMoveReservePerSibling) + kMoveReserveCanvas);
 
   if (input.smartGuidesEnabled) {
     appendAlignCandidates(input, true, horizontal);
@@ -558,7 +566,7 @@ UI::Snap::SnapResult UI::Snap::resolveResizeSnap(const SnapInput& input, const M
   const bool vertMoving  = edges.top || edges.bottom;
 
   QVector<Candidate> candidates;
-  candidates.reserve(input.siblings.size() * 3 + 32);
+  candidates.reserve((input.siblings.size() * kResizeReservePerSibling) + kResizeReserveCanvas);
 
   if (horizMoving) {
     if (input.smartGuidesEnabled)

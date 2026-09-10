@@ -24,13 +24,14 @@
 #include <kiss_fftr.h>
 
 #include <QElapsedTimer>
+#include <QList>
 #include <QQuickItem>
 #include <QVariant>
 #include <QVector>
 #include <QXYSeries>
 
+#include "Core/SerialStudio.h"
 #include "DSP.h"
-#include "SerialStudio.h"
 #include "UI/Widgets/PlotBase.h"
 
 namespace UI {

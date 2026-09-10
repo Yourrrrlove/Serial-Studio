@@ -51,13 +51,14 @@ HEADER = """/*
 
 // AUTO-GENERATED lupdate stub ("Commands" context) from app/rcc/commands/; regenerate, never edit.
 
-#include <QCoreApplication>
+#include <array>
+#include <QtTranslation>
 
 // clang-format off
-[[maybe_unused]] static const char* const kCommandStrings[] = {
+[[maybe_unused]] static constexpr std::array<const char*, {count}> kCommandStrings = {{{{
 """
 
-FOOTER = """};
+FOOTER = """}};
 // clang-format on
 """
 
@@ -93,8 +94,9 @@ def escaped(value: str) -> str:
 
 
 def render() -> str:
-    lines = [HEADER]
-    for value in collect_strings():
+    strings = collect_strings()
+    lines = [HEADER.format(count=len(strings))]
+    for value in strings:
         lines.append(f'  QT_TRANSLATE_NOOP("Commands", "{escaped(value)}"),\n')
     lines.append(FOOTER)
     return "".join(lines)

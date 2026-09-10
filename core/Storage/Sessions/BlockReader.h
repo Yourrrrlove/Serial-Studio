@@ -19,7 +19,7 @@
 #include <QString>
 #include <vector>
 
-#include "SerialStudio.h"
+#include "Core/SerialStudio.h"
 #include "Sessions/StreamBlockCodec.h"
 
 namespace Sessions {

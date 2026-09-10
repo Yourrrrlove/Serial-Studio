@@ -24,11 +24,11 @@
 #include <QDebug>
 #include <QJsonDocument>
 #include <QJsonParseError>
-#include <QMessageBox>
+#include <QList>
 
+#include "Core/Prompt/UserPrompt.h"
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
-#include "Misc/Utilities.h"
-#include "SerialStudio.h"
 
 //--------------------------------------------------------------------------------------------------
 // Descriptor keys & helpers
@@ -330,8 +330,8 @@ void DataModel::CFrameParser::reportLoadError(const QString& error,
 
   m_lastError = error;
   if (showMessageBoxes) {
-    Misc::Utilities::showMessageBox(
-      QObject::tr("Built-In Parser Error"), error, QMessageBox::Critical);
+    Core::Prompt::showMessageBox(
+      QObject::tr("Built-In Parser Error"), error, Core::Prompt::Critical);
   } else {
     qWarning() << "[CFrameParser] Source" << sourceId << "load failed:" << error;
   }

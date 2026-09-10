@@ -14,6 +14,7 @@
 #include <QJsonArray>
 
 #include "API/CommandRegistry.h"
+#include "API/HandlerContext.h"
 #include "API/SchemaBuilder.h"
 #include "IO/ConnectionManager.h"
 
@@ -112,7 +113,7 @@ API::CommandResponse API::Handlers::ProcessHandler::setMode(const QString& id,
       QStringLiteral("Invalid mode: %1. Valid values: 0=Launch, 1=NamedPipe").arg(mode));
   }
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
+  auto& connectionManager = API::handlerContext().connectionManager;
   connectionManager.process()->setMode(mode);
 
   QJsonObject result;
@@ -133,7 +134,7 @@ API::CommandResponse API::Handlers::ProcessHandler::setExecutable(const QString&
 
   const QString path = params.value(QStringLiteral("executable")).toString();
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
+  auto& connectionManager = API::handlerContext().connectionManager;
   connectionManager.process()->setExecutable(path);
 
   QJsonObject result;
@@ -152,8 +153,8 @@ API::CommandResponse API::Handlers::ProcessHandler::setArguments(const QString& 
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: arguments"));
   }
 
-  const QString args             = params.value(QStringLiteral("arguments")).toString();
-  static auto& connectionManager = IO::ConnectionManager::instance();
+  const QString args      = params.value(QStringLiteral("arguments")).toString();
+  auto& connectionManager = API::handlerContext().connectionManager;
   connectionManager.process()->setArguments(args);
 
   QJsonObject result;
@@ -174,7 +175,7 @@ API::CommandResponse API::Handlers::ProcessHandler::setWorkingDir(const QString&
 
   const QString dir = params.value(QStringLiteral("workingDir")).toString();
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
+  auto& connectionManager = API::handlerContext().connectionManager;
   connectionManager.process()->setWorkingDir(dir);
 
   QJsonObject result;
@@ -195,7 +196,7 @@ API::CommandResponse API::Handlers::ProcessHandler::setPipePath(const QString& i
 
   const QString path = params.value(QStringLiteral("pipePath")).toString();
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
+  auto& connectionManager = API::handlerContext().connectionManager;
   connectionManager.process()->setPipePath(path);
 
   QJsonObject result;
@@ -215,7 +216,7 @@ API::CommandResponse API::Handlers::ProcessHandler::getRunningProcesses(const QS
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
+  auto& connectionManager = API::handlerContext().connectionManager;
   connectionManager.process()->refreshProcessList();
 
   const auto& processes = connectionManager.process()->runningProcesses();
@@ -238,8 +239,8 @@ API::CommandResponse API::Handlers::ProcessHandler::getConfiguration(const QStri
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* proc                     = connectionManager.process();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  auto* proc              = connectionManager.process();
 
   QJsonObject result;
   result[QStringLiteral("mode")]       = proc->mode();

@@ -338,6 +338,7 @@ void IO::Drivers::Network::appendHttpProperties(QList<IO::DriverProperty>& props
   url.description = tr("REST endpoint, for example %1").arg(defaultHttpUrl());
   url.type        = IO::DriverProperty::Text;
   url.value       = m_httpUrl;
+  url.showWhen(QStringLiteral("socketTypeIndex"), {static_cast<int>(Http)});
   props.append(url);
 
   IO::DriverProperty method;
@@ -346,6 +347,7 @@ void IO::Drivers::Network::appendHttpProperties(QList<IO::DriverProperty>& props
   method.type    = IO::DriverProperty::ComboBox;
   method.value   = m_httpMethod;
   method.options = httpMethods();
+  method.showWhen(QStringLiteral("socketTypeIndex"), {static_cast<int>(Http)});
   props.append(method);
 
   IO::DriverProperty interval;
@@ -356,6 +358,7 @@ void IO::Drivers::Network::appendHttpProperties(QList<IO::DriverProperty>& props
   interval.value       = m_httpInterval;
   interval.min         = 0;
   interval.max         = 3600000;
+  interval.showWhen(QStringLiteral("socketTypeIndex"), {static_cast<int>(Http)});
   props.append(interval);
 
   IO::DriverProperty body;
@@ -363,6 +366,7 @@ void IO::Drivers::Network::appendHttpProperties(QList<IO::DriverProperty>& props
   body.label = tr("Request Body");
   body.type  = IO::DriverProperty::Text;
   body.value = m_httpBody;
+  body.showWhen(QStringLiteral("socketTypeIndex"), {static_cast<int>(Http)});
   props.append(body);
 
   IO::DriverProperty headers;
@@ -371,6 +375,7 @@ void IO::Drivers::Network::appendHttpProperties(QList<IO::DriverProperty>& props
   headers.description = tr("One %1 pair per line").arg(QStringLiteral("Name: Value"));
   headers.type        = IO::DriverProperty::Text;
   headers.value       = m_httpHeaders;
+  headers.showWhen(QStringLiteral("socketTypeIndex"), {static_cast<int>(Http)});
   props.append(headers);
 }
 

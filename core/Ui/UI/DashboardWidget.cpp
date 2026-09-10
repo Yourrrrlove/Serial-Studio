@@ -83,6 +83,7 @@
 }
 
 #ifdef BUILD_COMMERCIAL
+#  include "UI/SerialStudioHelpers.h"
 #  include "UI/Widgets/ImageView.h"
 #  include "UI/Widgets/Output/Panel.h"
 #  include "UI/Widgets/Painter.h"
@@ -197,9 +198,9 @@ QColor UI::DashboardWidget::widgetColor() const
     if (slot.valid && !slot.group) {
       const auto& dataset = GET_DATASET(m_widgetType, slot.bucketIndex);
       if (plotClassDatasetWidget(m_widgetType))
-        return SerialStudio::getDatasetColor(dataset);
+        return UI::SerialStudioHelpers::getDatasetColor(dataset);
 
-      return SerialStudio::getDatasetAccentColor(dataset);
+      return UI::SerialStudioHelpers::getDatasetAccentColor(dataset);
     }
   }
 

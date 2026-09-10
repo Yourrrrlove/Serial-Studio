@@ -29,18 +29,18 @@
 #  include <QStringList>
 #  include <utility>
 
+#  include "Core/IO/HAL_Driver.h"
+#  include "Core/SerialStudio.h"
 #  include "IO/ConnectionManager.h"
 #  include "IO/Drivers/CANBus.h"
 #  include "IO/Drivers/EthernetIp.h"
 #  include "IO/Drivers/Iec104.h"
 #  include "IO/Drivers/Modbus.h"
 #  include "IO/Drivers/OpcUa.h"
-#  include "IO/Drivers/OpcUaWire.h"
 #  include "IO/Drivers/S7.h"
-#  include "IO/HAL_Driver.h"
 #  include "Misc/CLI.h"
 #  include "Misc/CLI/CliSpecParsers.h"
-#  include "SerialStudio.h"
+#  include "Protocols/OpcUa/OpcUaWire.h"
 #endif
 
 namespace Misc {

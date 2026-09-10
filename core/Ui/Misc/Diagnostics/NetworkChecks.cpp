@@ -25,6 +25,7 @@
 #include <QHostInfo>
 #include <utility>
 
+#include "API/HandlerContext.h"
 #include "Core/SSAssert.h"
 #include "IO/ConnectionManager.h"
 
@@ -237,7 +238,7 @@ void Misc::Diagnostics::NetworkChecks::TcpProbeTask::onErrorOccurred(
  */
 [[nodiscard]] static IO::ConnectionManager& connectionManager()
 {
-  static auto& manager = IO::ConnectionManager::instance();
+  auto& manager = API::handlerContext().connectionManager;
   return manager;
 }
 

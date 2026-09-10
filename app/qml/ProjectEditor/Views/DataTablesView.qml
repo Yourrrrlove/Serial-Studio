@@ -49,7 +49,7 @@ Widgets.Pane {
     if (q.length === 0)
       return summary
 
-    return summary.filter((r) => SerialStudio.searchMatches(q, String(r.title)))
+    return summary.filter((r) => SerialStudioHelpers.searchMatches(q, String(r.title)))
   }
 
   //

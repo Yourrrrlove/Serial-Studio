@@ -25,7 +25,7 @@
 #include <QGuiApplication>
 
 #include "API/Server/AuthPrimitives.h"
-#include "Misc/Utilities.h"
+#include "Core/Prompt/UserPrompt.h"
 
 //--------------------------------------------------------------------------------------------------
 // Constructor
@@ -156,16 +156,16 @@ void API::ServerAuth::showDeviceWriteConsentPrompt()
     return;
   }
 
-  const auto answer = Misc::Utilities::showMessageBox(
+  const auto answer = Core::Prompt::showMessageBox(
     tr("Allow API device control?"),
     tr("A program using Serial Studio's local API is requesting to send data to the connected "
        "device. Allow API clients to write to the device?"),
-    QMessageBox::Question,
+    Core::Prompt::Question,
     tr("Serial Studio"),
-    QMessageBox::Yes | QMessageBox::No,
-    QMessageBox::No);
+    Core::Prompt::Yes | Core::Prompt::No,
+    Core::Prompt::No);
 
-  if (answer == QMessageBox::Yes) {
+  if (answer == Core::Prompt::Yes) {
     m_deviceWriteConsent = DeviceWriteConsent::Granted;
     m_settings.setValue("API/DeviceWriteConsent", true);
     m_consentPromptPosted = false;

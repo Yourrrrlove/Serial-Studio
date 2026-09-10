@@ -29,8 +29,10 @@
 # Headers ride along with the sources so AUTOMOC sees the Q_OBJECT classes of the file-transfer
 # protocols, and for the same reason none of them may stay in the executable's HEADERS list.
 #
-# Qt6::Core is the whole link set: the CAN, S7, IEC 104, Sparkplug and Modbus codecs speak bytes,
-# not QtSerialBus, QtMqtt or QtNetwork -- those live with the drivers, in app/src.
+# Qt6::Core is the whole link set of the codecs: the CAN, S7, IEC 104, Sparkplug and Modbus codecs
+# speak bytes, not QtSerialBus or QtMqtt -- those live with the drivers. The one exception is the
+# Pro TLS identity/configuration pair, which both the MQTT driver (Devices) and the MQTT publisher
+# (Storage) build their QSslConfiguration from: it needs Qt6::Network and links it below.
 #
 #---------------------------------------------------------------------------------------------------
 
@@ -77,11 +79,18 @@ if(BUILD_COMMERCIAL OR SS_BUILD_TESTS)
     Iec104/Apci.cpp
     Iec104/Asdu.h
     Iec104/Asdu.cpp
+    OpcUa/OpcUaWire.h
+    Sparkplug/SparkplugLimits.h
+    Tls/TlsIdentity.h
+    Tls/TlsIdentity.cpp
+    Tls/TlsConfig.h
+    Tls/TlsConfig.cpp
     Sparkplug/SparkplugPayload.h
     Sparkplug/SparkplugPayload.cpp
     Modbus/ModbusRtuCodec.h
     Modbus/ModbusRtuCodec.cpp
   )
+  target_link_libraries(SerialStudioProtocols PUBLIC Qt6::Network)
 endif()
 
 target_include_directories(SerialStudioProtocols PUBLIC ${CMAKE_SOURCE_DIR}/core)

@@ -29,9 +29,9 @@
 #include <QStringList>
 #include <vector>
 
+#include "Core/IO/HAL_Driver.h"
 #include "Core/ParseBudget.h"
-#include "IO/HAL_Driver.h"
-#include "ThirdParty/readerwriterqueue.h"
+#include "Core/ThirdParty/readerwriterqueue.h"
 
 namespace DataModel {
 

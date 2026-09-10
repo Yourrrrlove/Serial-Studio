@@ -22,7 +22,7 @@
 #include <QtMath>
 #include <QtTest>
 
-#include "UI/LayoutPatterns.h"
+#include "Core/LayoutPatterns.h"
 
 using UI::Layouts::LayoutEnv;
 using UI::Layouts::Pattern;

@@ -25,6 +25,7 @@
 #include <QUrl>
 
 #include "API/CommandRegistry.h"
+#include "API/HandlerContext.h"
 #include "API/SchemaBuilder.h"
 #include "IO/ConnectionManager.h"
 
@@ -33,7 +34,7 @@
  */
 [[nodiscard]] static IO::Drivers::Network* networkDriver()
 {
-  static auto& connectionManager = IO::ConnectionManager::instance();
+  auto& connectionManager = API::handlerContext().connectionManager;
   return connectionManager.network();
 }
 
@@ -153,10 +154,10 @@ void API::Handlers::NetworkHandler::registerUrlTransportCommands(CommandRegistry
   method_prop.type         = QStringLiteral("string");
   method_prop.description  = QStringLiteral("HTTP method");
   method_prop.enumValues   = QJsonArray{QStringLiteral("GET"),
-                                        QStringLiteral("POST"),
-                                        QStringLiteral("PUT"),
-                                        QStringLiteral("PATCH"),
-                                        QStringLiteral("DELETE")};
+                                      QStringLiteral("POST"),
+                                      QStringLiteral("PUT"),
+                                      QStringLiteral("PATCH"),
+                                      QStringLiteral("DELETE")};
   method_prop.defaultValue = QStringLiteral("GET");
   registry.registerCommand(
     QStringLiteral("io.network.setHttpMethod"),
@@ -224,7 +225,7 @@ API::CommandResponse API::Handlers::NetworkHandler::setRemoteAddress(const QStri
       id, ErrorCode::InvalidParam, QStringLiteral("Address cannot be empty"));
   }
 
-  static auto& conn = IO::ConnectionManager::instance();
+  auto& conn = API::handlerContext().connectionManager;
   conn.network()->setRemoteAddress(address);
 
   QJsonObject result;
@@ -249,7 +250,7 @@ API::CommandResponse API::Handlers::NetworkHandler::setTcpPort(const QString& id
       id, ErrorCode::InvalidParam, QStringLiteral("Port must be between 1 and 65535"));
   }
 
-  static auto& conn = IO::ConnectionManager::instance();
+  auto& conn = API::handlerContext().connectionManager;
   conn.network()->setTcpPort(static_cast<quint16>(port));
 
   QJsonObject result;
@@ -274,7 +275,7 @@ API::CommandResponse API::Handlers::NetworkHandler::setUdpLocalPort(const QStrin
       id, ErrorCode::InvalidParam, QStringLiteral("Port must be between 0 and 65535"));
   }
 
-  static auto& conn = IO::ConnectionManager::instance();
+  auto& conn = API::handlerContext().connectionManager;
   conn.network()->setUdpLocalPort(static_cast<quint16>(port));
 
   QJsonObject result;
@@ -299,7 +300,7 @@ API::CommandResponse API::Handlers::NetworkHandler::setUdpRemotePort(const QStri
       id, ErrorCode::InvalidParam, QStringLiteral("Port must be between 1 and 65535"));
   }
 
-  static auto& conn = IO::ConnectionManager::instance();
+  auto& conn = API::handlerContext().connectionManager;
   conn.network()->setUdpRemotePort(static_cast<quint16>(port));
 
   QJsonObject result;
@@ -319,7 +320,7 @@ API::CommandResponse API::Handlers::NetworkHandler::setSocketType(const QString&
   }
 
   const int socketTypeIndex = params.value(QStringLiteral("socketTypeIndex")).toInt();
-  static auto& conn         = IO::ConnectionManager::instance();
+  auto& conn                = API::handlerContext().connectionManager;
   const auto& socketTypes   = conn.network()->socketTypes();
 
   if (socketTypeIndex < 0 || socketTypeIndex >= socketTypes.count()) {
@@ -351,7 +352,7 @@ API::CommandResponse API::Handlers::NetworkHandler::setUdpMulticast(const QStrin
   }
 
   const bool enabled = params.value(QStringLiteral("enabled")).toBool();
-  static auto& conn  = IO::ConnectionManager::instance();
+  auto& conn         = API::handlerContext().connectionManager;
   conn.network()->setUdpMulticast(enabled);
 
   QJsonObject result;
@@ -376,7 +377,7 @@ API::CommandResponse API::Handlers::NetworkHandler::lookup(const QString& id,
       id, ErrorCode::InvalidParam, QStringLiteral("Host cannot be empty"));
   }
 
-  static auto& conn = IO::ConnectionManager::instance();
+  auto& conn = API::handlerContext().connectionManager;
   conn.network()->lookup(host);
 
   QJsonObject result;
@@ -556,8 +557,8 @@ API::CommandResponse API::Handlers::NetworkHandler::getConfiguration(const QStri
 {
   Q_UNUSED(params)
 
-  static auto& conn = IO::ConnectionManager::instance();
-  auto* network     = conn.network();
+  auto& conn    = API::handlerContext().connectionManager;
+  auto* network = conn.network();
 
   QJsonObject result;
 
@@ -633,7 +634,7 @@ API::CommandResponse API::Handlers::NetworkHandler::getSocketTypes(const QString
 {
   Q_UNUSED(params)
 
-  static auto& conn       = IO::ConnectionManager::instance();
+  auto& conn              = API::handlerContext().connectionManager;
   const auto& socketTypes = conn.network()->socketTypes();
 
   QJsonArray types;

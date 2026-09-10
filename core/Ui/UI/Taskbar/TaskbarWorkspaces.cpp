@@ -26,11 +26,11 @@
 #include <QVariantMap>
 
 #include "AppState.h"
+#include "Core/IconRegistry.h"
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
 #include "DataModel/ProjectModel.h"
 #include "Misc/IconEngine.h"
-#include "Misc/IconRegistry.h"
-#include "SerialStudio.h"
 #include "UI/Dashboard.h"
 #include "UI/Taskbar.h"
 #include "UI/Taskbar/TaskbarModel.h"
@@ -127,10 +127,10 @@ QVariantList UI::TaskbarWorkspaces::model() const
       continue;
 
     QVariantMap node;
-    const bool fixedIcon = ws.icon.isEmpty();
-    const auto icon = fixedIcon
-                      ? registry.icon(QStringLiteral("widgets"), QStringLiteral("workspace"), 16)
-                      : Misc::IconEngine::resolveActionIconSource(ws.icon);
+    const bool fixedIcon             = ws.icon.isEmpty();
+    const auto icon                  = fixedIcon
+                                       ? registry.icon(QStringLiteral("widgets"), QStringLiteral("workspace"), 16)
+                                       : Misc::IconEngine::resolveActionIconSource(ws.icon);
     node[QStringLiteral("isFolder")] = false;
     node[QStringLiteral("id")]       = ws.workspaceId;
     node[QStringLiteral("text")]     = ws.title;

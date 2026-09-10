@@ -336,6 +336,11 @@ Widgets.SmartDialog {
             Layout.fillHeight: true
             section.property: "scope"
             model: discoveryPane.filteredCommands
+
+            ScrollBar.vertical: ScrollBar {
+              policy: ScrollBar.AsNeeded
+            }
+
             section.delegate: Rectangle {
               required property string section
 
@@ -356,6 +361,8 @@ Widgets.SmartDialog {
             }
 
             delegate: ItemDelegate {
+              id: commandRow
+
               required property int index
               required property var modelData
 
@@ -371,8 +378,10 @@ Widgets.SmartDialog {
                 Label {
                   Layout.fillWidth: true
                   elide: Text.ElideRight
-                  text: parent.parent.modelData.verb
+                  text: commandRow.modelData.verb
                   font: Cpp_Misc_CommonFonts.monoFont
+                  color: commandRow.highlighted ? Cpp_ThemeManager.colors["highlighted_text"]
+                                                : Cpp_ThemeManager.colors["text"]
                 }
 
                 Label {
@@ -380,7 +389,9 @@ Widgets.SmartDialog {
                   Layout.fillWidth: true
                   elide: Text.ElideRight
                   font: Cpp_Misc_CommonFonts.uiFont
-                  text: parent.parent.modelData.description
+                  text: commandRow.modelData.description
+                  color: commandRow.highlighted ? Cpp_ThemeManager.colors["highlighted_text"]
+                                                : Cpp_ThemeManager.colors["text"]
                 }
               }
             }
@@ -790,7 +801,16 @@ Widgets.SmartDialog {
                           anchors.fill: parent
                           model: commandInput.completions
 
+                          ScrollBar.vertical: ScrollBar {
+                            policy: ScrollBar.AsNeeded
+                          }
+
                           delegate: ItemDelegate {
+                            id: completionRow
+
+                            required property int index
+                            required property string modelData
+
                             width: completionList.width
                             highlighted: ListView.isCurrentItem
                             onClicked: {
@@ -799,9 +819,11 @@ Widgets.SmartDialog {
                             }
 
                             contentItem: Label {
-                              text: modelData
                               elide: Text.ElideRight
+                              text: completionRow.modelData
                               font: Cpp_Misc_CommonFonts.monoFont
+                              color: completionRow.highlighted ? Cpp_ThemeManager.colors["highlighted_text"]
+                                                               : Cpp_ThemeManager.colors["text"]
                             }
                           }
                         }

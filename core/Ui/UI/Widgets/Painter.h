@@ -23,7 +23,7 @@
 #  include <QVariantList>
 #  include <QWheelEvent>
 
-#  include "DataModel/Frame.h"
+#  include "Core/DataModel/Frame.h"
 #  include "DataModel/Scripting/JsWatchdog.h"
 
 class AppState;

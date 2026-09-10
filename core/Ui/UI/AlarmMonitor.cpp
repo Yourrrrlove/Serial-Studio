@@ -24,9 +24,10 @@
 #include <cmath>
 #include <QDateTime>
 
+#include "Core/DataModel/Frame.h"
 #include "Core/SSAssert.h"
-#include "DataModel/Frame.h"
 #include "DataModel/NotificationCenter.h"
+#include "DataModel/PipelineModules.h"
 #include "UI/Dashboard.h"
 
 //--------------------------------------------------------------------------------------------------
@@ -59,7 +60,7 @@ UI::AlarmMonitor& UI::AlarmMonitor::instance()
 void UI::AlarmMonitor::setupExternalConnections()
 {
   m_dashboard          = &UI::Dashboard::instance();
-  m_notificationCenter = &DataModel::NotificationCenter::instance();
+  m_notificationCenter = &DataModel::pipelineModules().notifications;
 
   auto& dashboard = UI::Dashboard::instance();
   connect(&dashboard, &UI::Dashboard::widgetCountChanged, this, &AlarmMonitor::rebuildTrackers);

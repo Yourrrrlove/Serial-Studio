@@ -3642,14 +3642,16 @@ SINGLETON_CENSUS_BUCKETS = (
 
 def singleton_census(path: Path, src_text: str) -> dict:
     """Classify every `X::instance()` occurrence in one file into the six
-    spec-0039 buckets. Returns {"total", "buckets", "classes"}; the caller
-    aggregates. Needs tree-sitter for the accessor / ctor-capture spans and
+    spec-0039 buckets. Returns {"total", "buckets", "classes", "reaches"}; the
+    caller aggregates (`reaches` is the per-line class list the per-edge census
+    of spec 0077 resolves to layers). Needs tree-sitter for the accessor / ctor-capture spans and
     reports everything as `loose` without it, so a census taken on a machine
     with no parser is refused by the driver rather than silently wrong."""
     buckets = {name: 0 for name in SINGLETON_CENSUS_BUCKETS}
     classes: dict[str, int] = {}
+    reaches: list[tuple[int, str]] = []
     if not _SINGLETON_INSTANCE_RE.search(src_text):
-        return {"total": 0, "buckets": buckets, "classes": classes}
+        return {"total": 0, "buckets": buckets, "classes": classes, "reaches": reaches}
 
     posix = path.resolve().as_posix()
     is_root = any(posix.endswith(tail) for tail in _SINGLETON_ROOT_FILES)
@@ -3695,8 +3697,9 @@ def singleton_census(path: Path, src_text: str) -> dict:
         buckets[bucket] += len(hits)
         for name in hits:
             classes[name] = classes.get(name, 0) + 1
+            reaches.append((i, name))
 
-    return {"total": total, "buckets": buckets, "classes": classes}
+    return {"total": total, "buckets": buckets, "classes": classes, "reaches": reaches}
 
 
 # ---------------------------------------------------------------------------

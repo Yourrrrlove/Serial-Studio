@@ -25,10 +25,11 @@
 #include <QJsonDocument>
 
 #include "API/CommandRegistry.h"
+#include "API/HandlerContext.h"
 #include "API/Server.h"
-#include "AppInfo.h"
-#include "DataModel/Frame.h"
-#include "UI/Dashboard.h"
+#include "Core/AppInfo.h"
+#include "Core/DataModel/Frame.h"
+#include "DataModel/IDashboardFrames.h"
 
 //--------------------------------------------------------------------------------------------------
 // Constructor & singleton access
@@ -381,9 +382,9 @@ API::MCP::MCPResponse API::MCPHandler::handleResourcesRead(const MCP::MCPRequest
   content[QStringLiteral("mimeType")] = QStringLiteral("application/json");
 
   if (uri == QStringLiteral("serialstudio://frame/current")) {
-    static auto& dashboard = UI::Dashboard::instance();
-    const auto& frame      = dashboard.processedFrame();
-    const bool hasData     = !frame.groups.empty();
+    auto& dashboard    = API::handlerContext().dashboard;
+    const auto& frame  = dashboard.processedFrame();
+    const bool hasData = !frame.groups.empty();
 
     auto frameJson                       = DataModel::serialize(frame);
     frameJson[QStringLiteral("hasData")] = hasData;
@@ -396,8 +397,8 @@ API::MCP::MCPResponse API::MCPHandler::handleResourcesRead(const MCP::MCPRequest
     content[QStringLiteral("text")] =
       QString::fromUtf8(QJsonDocument(frameJson).toJson(QJsonDocument::Indented));
   } else if (uri == QStringLiteral("serialstudio://frame/history")) {
-    static auto& dashboard = UI::Dashboard::instance();
-    const auto& frame      = dashboard.processedFrame();
+    auto& dashboard   = API::handlerContext().dashboard;
+    const auto& frame = dashboard.processedFrame();
 
     QJsonArray history;
     if (!frame.groups.empty())

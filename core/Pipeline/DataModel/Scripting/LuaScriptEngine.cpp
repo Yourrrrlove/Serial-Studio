@@ -32,10 +32,12 @@ extern "C" {
 
 #include <QDebug>
 #include <QHash>
-#include <QMessageBox>
+#include <QList>
 #include <QSet>
 #include <stdexcept>
 
+#include "Core/Prompt/UserPrompt.h"
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
 #include "DataModel/FrameBuilder.h"
 #include "DataModel/NotificationCenter.h"
@@ -48,8 +50,6 @@ extern "C" {
 #include "DataModel/Scripting/ScriptApiCall.h"
 #include "DataModel/Scripting/ScriptFrameShaping.h"
 #include "IO/PipelineHost.h"
-#include "Misc/Utilities.h"
-#include "SerialStudio.h"
 
 static constexpr int kMaxOfferedMigrations = 64;
 
@@ -261,23 +261,23 @@ static void offerLuaMigration(int sourceId,
         offered.clear();
 
       offered.insert(key);
-      const auto answer = Misc::Utilities::showMessageBox(
+      const auto answer = Core::Prompt::showMessageBox(
         QObject::tr("Lua Syntax Error"),
         QObject::tr("The parser code contains an error:\n\n%1\n\n"
                     "Serial Studio can rewrite the unsupported operators as bit.* calls and "
                     "reload the parser. The bit library works on 32-bit integers, so a value "
                     "wider than 32 bits will wrap once rewritten.")
           .arg(error),
-        QMessageBox::Critical,
+        Core::Prompt::Critical,
         QString(),
-        QMessageBox::Yes | QMessageBox::No,
-        QMessageBox::Yes,
+        Core::Prompt::Yes | Core::Prompt::No,
+        Core::Prompt::Yes,
         {
-          {QMessageBox::Yes, QObject::tr("Fix Automatically")},
-          { QMessageBox::No,   QObject::tr("Leave Unchanged")}
+          {Core::Prompt::Yes, QObject::tr("Fix Automatically")},
+          { Core::Prompt::No,   QObject::tr("Leave Unchanged")}
       });
 
-      if (answer == QMessageBox::Yes)
+      if (answer == Core::Prompt::Yes)
         applyLuaMigration(sourceId, fixed);
     },
     Qt::QueuedConnection);
@@ -301,10 +301,10 @@ static void reportSyntaxError(
     return;
   }
 
-  Misc::Utilities::showMessageBox(
+  Core::Prompt::showMessageBox(
     QObject::tr("Lua Syntax Error"),
     QObject::tr("The parser code contains an error:\n\n%1").arg(errorMsg),
-    QMessageBox::Critical);
+    Core::Prompt::Critical);
 }
 
 /**
@@ -482,7 +482,7 @@ bool DataModel::LuaScriptEngine::noteTimeoutAndCheckDisabled(int sourceId)
   m_disabled = true;
   qWarning() << "[LuaScriptEngine] Source" << sourceId << "disabled after"
              << kMaxConsecutiveTimeouts << "consecutive watchdog timeouts.";
-  Misc::Utilities::showMessageBox(
+  Core::Prompt::showMessageBox(
     QObject::tr("Frame Parser Disabled"),
     QObject::tr("The Lua frame parser for source %1 timed out %2 frames in a row "
                 "and has been disabled to keep Serial Studio responsive.\n\n"
@@ -491,7 +491,7 @@ bool DataModel::LuaScriptEngine::noteTimeoutAndCheckDisabled(int sourceId)
                 "re-enable parsing.")
       .arg(sourceId)
       .arg(kMaxConsecutiveTimeouts),
-    QMessageBox::Critical);
+    Core::Prompt::Critical);
   return true;
 }
 
@@ -650,10 +650,10 @@ bool DataModel::LuaScriptEngine::runLoadedChunk(int sourceId, bool showMessageBo
   const QString errorMsg = QString::fromUtf8(lua_tostring(m_state, -1));
   lua_pop(m_state, 1);
   if (showMessageBoxes) {
-    Misc::Utilities::showMessageBox(
+    Core::Prompt::showMessageBox(
       QObject::tr("Lua Runtime Error"),
       QObject::tr("The parser code triggered an error:\n\n%1").arg(errorMsg),
-      QMessageBox::Critical);
+      Core::Prompt::Critical);
   } else {
     qWarning() << "[LuaScriptEngine] Source" << sourceId << "runtime error:" << errorMsg;
   }
@@ -672,12 +672,12 @@ bool DataModel::LuaScriptEngine::ensureParseFunction(int sourceId, bool showMess
     return true;
 
   if (showMessageBoxes) {
-    Misc::Utilities::showMessageBox(
+    Core::Prompt::showMessageBox(
       QObject::tr("Missing Parse Function"),
       QObject::tr("The 'parse' function is not defined in the script.\n\n"
                   "Please ensure your code includes:\n"
                   "function parse(frame) ... end"),
-      QMessageBox::Critical);
+      Core::Prompt::Critical);
   } else {
     qWarning() << "[LuaScriptEngine] Source" << sourceId << "missing parse() function";
   }
@@ -736,11 +736,11 @@ bool DataModel::LuaScriptEngine::probeParseFunction(int sourceId, bool showMessa
     return true;
 
   if (showMessageBoxes) {
-    Misc::Utilities::showMessageBox(QObject::tr("Parse Function Runtime Error"),
-                                    QObject::tr("The parse function contains an error:\n\n%1\n\n"
-                                                "Please fix the error in the function body.")
-                                      .arg(lastError),
-                                    QMessageBox::Critical);
+    Core::Prompt::showMessageBox(QObject::tr("Parse Function Runtime Error"),
+                                 QObject::tr("The parse function contains an error:\n\n%1\n\n"
+                                             "Please fix the error in the function body.")
+                                   .arg(lastError),
+                                 Core::Prompt::Critical);
   } else {
     qWarning() << "[LuaScriptEngine] Probe failed:" << lastError;
   }

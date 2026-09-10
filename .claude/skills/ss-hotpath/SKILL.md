@@ -55,7 +55,8 @@ block. Never per-sample across a thread boundary.
   pipeline-thread objects fills the slot queue at 10+ kHz and drops frames. GUI↔pipeline
   traffic must stay chunk/command/tick rate.
 - **No allocation and no block copy on the dashboard path.** Draw blocks from
-  `FrameBuilder::claimBlockSlot()` (the slot pool) — never `make_shared<DataModel::DataBlock>`
+  the pooled slots (`DataModel::BlockStager` on the frame lane, `StreamProcessor::claimBlockSlot()`
+  on the stream lane) — never `make_shared<DataModel::DataBlock>`
   directly. The one detached `clone_block_trimmed` copy in the async-sink fan-out is
   intentional (slow export path, gated on a sink being on, keeps a backlog from pinning the
   pool) — not a violation.

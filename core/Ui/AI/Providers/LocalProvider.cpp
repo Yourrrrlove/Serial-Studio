@@ -25,7 +25,7 @@
 #include "AI/Providers/ImmediateErrorReply.h"
 #include "AI/Providers/OpenAIReply.h"
 #include "AI/Providers/ProviderJson.h"
-#include "Misc/JsonValidator.h"
+#include "Core/JsonValidator.h"
 
 static constexpr int kLocalTransferTimeoutMs = 5 * 60 * 1000;
 

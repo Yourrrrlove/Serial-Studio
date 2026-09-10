@@ -27,6 +27,7 @@
 #include "AppState.h"
 #include "Core/SSAssert.h"
 #include "DataModel/ProjectModel.h"
+#include "DataModel/WidgetResolution.h"
 #include "DSP.h"
 #include "UI/Dashboard.h"
 #include "UI/WidgetExtensions.h"

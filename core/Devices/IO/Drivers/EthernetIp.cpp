@@ -29,18 +29,17 @@
 #include <QElapsedTimer>
 #include <QHash>
 #include <QJsonDocument>
-#include <QMessageBox>
 #include <QSet>
 
-#include "AppState.h"
+#include "Core/Prompt/UserPrompt.h"
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
-#include "DataModel/ProjectModel.h"
 #include "IO/ConnectionManager.h"
-#include "Misc/Utilities.h"
-#include "SerialStudio.h"
 
 #ifdef SS_EIP_ACTIVE
 #  include <libplctag.h>
+
+#  include <QJsonValue>
 #endif
 
 static constexpr int kEipMinIntervalMs                    = 50;
@@ -448,8 +447,7 @@ bool IO::Drivers::EipPollWorker::readTag(int index, QVariant& value)
  * @brief Constructs the driver, restores persisted settings and wires the configuration signals.
  */
 IO::Drivers::EthernetIp::EthernetIp()
-  : m_appState(AppState::instance())
-  , m_projectModel(DataModel::ProjectModel::instance())
+  : m_generatedProject(this)
   , m_open(false)
   , m_connecting(false)
   , m_persistent(true)
@@ -1311,7 +1309,7 @@ QJsonObject IO::Drivers::EthernetIp::buildProject() const
   source[Keys::FrameParserLanguage]   = static_cast<int>(SerialStudio::Native);
   source[Keys::FrameParserTemplate]   = QStringLiteral("ethernetip");
   source[Keys::FrameParserParams]     = QJsonObject{
-    {QStringLiteral("schema"), wireSchema()}
+        {QStringLiteral("schema"), wireSchema()}
   };
 
   QJsonObject conn;
@@ -1352,20 +1350,18 @@ QJsonObject IO::Drivers::EthernetIp::buildProject() const
 /**
  * @brief Builds the project and loads it into the editor (no save dialog); the API path.
  */
-DataModel::ProjectModel* IO::Drivers::EthernetIp::loadGeneratedProject()
+bool IO::Drivers::EthernetIp::loadGeneratedProject()
 {
   if (m_tags.isEmpty())
-    return nullptr;
+    return false;
 
-  m_appState.setOperationMode(SerialStudio::ProjectFile);
-  if (!m_projectModel.loadFromJsonDocument(QJsonDocument(buildProject()), QString())) {
+  if (!m_generatedProject.load(messageBus(), QJsonDocument(buildProject()))) {
     logDriverError(tr("Failed to load generated project"),
                    tr("The generated project JSON could not be loaded."));
-    return nullptr;
+    return false;
   }
 
-  m_projectModel.setModified(true);
-  return &m_projectModel;
+  return true;
 }
 
 /**
@@ -1374,33 +1370,29 @@ DataModel::ProjectModel* IO::Drivers::EthernetIp::loadGeneratedProject()
 void IO::Drivers::EthernetIp::generateProject()
 {
   if (m_tags.isEmpty()) {
-    Misc::Utilities::showMessageBox(tr("No tags configured"),
-                                    tr("Add at least one tag before generating a project."),
-                                    QMessageBox::Warning,
-                                    tr("EtherNet/IP Project Generator"));
+    Core::Prompt::showMessageBox(tr("No tags configured"),
+                                 tr("Add at least one tag before generating a project."),
+                                 Core::Prompt::Warning,
+                                 tr("EtherNet/IP Project Generator"));
     return;
   }
 
-  auto* pm = loadGeneratedProject();
-  if (!pm)
-    return;
-
   const int datasets = wireSchema().size();
-  QObject::connect(
-    pm,
-    &DataModel::ProjectModel::saveDialogCompleted,
-    this,
-    [datasets](bool accepted) {
+  m_generatedProject.loadAndSave(
+    messageBus(), QJsonDocument(buildProject()), [this, datasets](bool loaded, bool accepted) {
+      if (!loaded) {
+        logDriverError(tr("Failed to load generated project"),
+                       tr("The generated project JSON could not be loaded."));
+        return;
+      }
+
       if (!accepted)
         return;
 
-      Misc::Utilities::showMessageBox(
+      Core::Prompt::showMessageBox(
         tr("Successfully generated project with %1 datasets.").arg(datasets),
         tr("The project editor is now open for customization."),
-        QMessageBox::Information,
+        Core::Prompt::Information,
         tr("EtherNet/IP Project Generator"));
-    },
-    Qt::SingleShotConnection);
-
-  (void)pm->saveJsonFile(true);
+    });
 }

@@ -29,7 +29,7 @@
 #include <QUrl>
 #include <QUrlQuery>
 
-#include "CommercialToken.h"
+#include "Core/Licensing/CommercialToken.h"
 #include "LemonSqueezy.h"
 #include "MachineID.h"
 #include "Misc/Utilities.h"

@@ -85,7 +85,7 @@ per-script table lives in [doc/claude/scripts.md](doc/claude/scripts.md). What b
 pushes); `code-verify.py` is the structural linter (`--fix` rewrites, `--check` regenerates
 `.code-report`; errors block CI). Suppression: `// code-verify off` / `// code-verify on`
 (C++/QML), `<!-- doc-verify off -->` / `<!-- doc-verify on -->` (Markdown) — suppressions
-are a code-review trigger. `.code-report` / `.doc-report` / `.claim-report` are the cleanup
+are a code-review trigger. `.code-report` / `.doc-report` / `.claim-report` / `.tidy-report` are the cleanup
 checklists; advisories are baseline debt, new code still clears them.
 
 Three gates ratchet *growth* against a checked-in baseline instead of capping absolute size,
@@ -150,12 +150,16 @@ Database; `Sessions::` namespace, `sessions.*` API, "Session Databases" folder s
 Computed Dataset (was Virtual Dataset; `virtual_` field + `"Virtual"` JSON key stay), Canvas
 Widget (was Painter; `"painter"` widget key, `project.painter.*` API, Painter* classes stay).
 In doc/help the hotpath is called the "acquisition pipeline" — code, benchmarks, and internal
-docs keep "hotpath". The code base is seven static libraries under `core/`
-(`SerialStudio::Core`, `::Protocols` strict with prefixed includes; `::Pipeline`, `::Devices`,
-`::Storage`, `::Api`, `::Ui` transitional partitions keeping their relative include roots) plus
-the composition root in `app/src`; cross-library talk goes over `Core::Bus::MessageBus` (typed
-topics, shared-pointer messages, retained state) — never a new `instance()` reach;
-`scripts/layer-verify.py` ratchets every upward edge (spec 0076).
+docs keep "hotpath". The code base is seven static libraries under `core/`, every one a
+STRICT layer since spec 0077 (`SerialStudioCore` and `SerialStudioProtocols` with prefixed
+includes; `SerialStudioPipeline`, `SerialStudioDevices`, `SerialStudioStorage`, `SerialStudioApi`
+and `SerialStudioUi` keeping their relative include roots) plus the composition root in
+`app/src`; a library includes and links only the layers below it. Cross-library talk goes over
+`Core::Bus::MessageBus` (typed topics, shared-pointer messages, retained state), through the
+interfaces the root binds, or through the three root-bound module sets (`Core::services()`,
+`DataModel::pipelineModules()`, `API::handlerContext()`) — never an `instance()` reach into
+another library; `scripts/layer-verify.py` fails on any include, include root or link outside
+the graph, and `code-verify.py --singleton-census` fails on any cross-library reach.
 
 ## Sub-Documentation
 
@@ -278,9 +282,10 @@ block caps, the time-ring/plot-clock rules, and the kernel macros.
 - **Diagnostics are pulled, never pushed (specs 0033/0035).** `FrameReader` / `FrameBuilder`
   counters are plain `quint64` increments polled on the 1 Hz tick — never signal, allocate,
   or lock per frame. A recreated `FrameReader` zeroes them: consumers work on deltas.
-  `ConnectionManager::linkStats()` forwards to `IO::DeviceTableQuery`, where `IO::LinkStats` now
-  lives; a polled-PLC worker's counters are atomics (a documented deviation: the poll thread
-  writes while the GUI samples).
+  `ConnectionManager::linkStats()` forwards to `IO::IIngestBinder::linkStats()`, answered by
+  `IO::PipelineHost` from the readers it owns (spec 0077); `IO::LinkStats` lives in
+  `core/Core/IO/LinkStats.h`. A polled-PLC worker's counters are atomics (a documented deviation:
+  the poll thread writes while the GUI samples).
 - **JS scripts**: always `JsScriptEngine::guardedCall()`, never `parseFunction.call()`.
   `setInterrupted(true)` only in `JsWatchdogThread.cpp`.
 - **256 kHz is a CI gate, not a slogan.** `--benchmark-hotpath` drives the real parse pipeline
@@ -314,14 +319,16 @@ Full contract, including the ctor-edge proof and the licensing consumer inventor
   inside `instantiateCoreModules()`. Ctor/dtor stay empty; adopted addresses never change;
   `shutdown()` releases in exact reverse pinned order, after the pipeline thread and every stream
   worker join in `stopFrameConsumerWorkers()`. **Never call `SessionContext::current()` from a
-  method body** — composition root and `instance()` forwarders only; the singleton census
-  (`code-verify.py --singleton-census --check`) fails on any increase.
-- **A composition root that skips `setupCrossModuleConnections()` must still bind the block
-  sinks.** `instantiateCoreModules()` constructs modules but wires nothing, and the publish path
-  holds its pipeline as a bound pointer (spec 0075), not a singleton reach.
-  `FrameBuilder::setupExternalConnections()` binds it for the GUI and headless-session roots;
-  `--benchmark-hotpath` builds its own root and calls `FrameBuilder::bindBlockSinks()`. Skip it and
-  the first flushed block publishes through a null host.
+  method body** — composition root only: `adopt*()` binds each module's private `s_instance`,
+  `shutdown()` clears it, `instance()` reads it, and no library includes `SessionContext.h`
+  (spec 0077); the singleton census (`code-verify.py --singleton-census --check`) fails on any
+  increase.
+- **Every composition root calls `ModuleManager::bindInterfaces()` right after
+  `instantiateCoreModules()`.** Construction wires nothing, and the publish path holds its pipeline
+  and its sinks as bound pointers (specs 0075/0077), not singleton reaches: `bindInterfaces()` is
+  the ONE list of block sinks, raw-byte taps and the per-frame tap, shared by the GUI, headless
+  session and `--benchmark-hotpath` roots. Skip it and the first flushed block publishes through a
+  null host; leave a sink out and its recording is a valid-looking empty file.
 - **License-gated state must exist before `restoreLastProject()` or re-derive on
   `activatedChanged`.** The licensing block is the FIRST thing `instantiateCoreModules()` builds
   after Translator (spec 0042). `activatedChanged` fires only on real token-validity transitions.

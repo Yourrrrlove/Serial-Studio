@@ -251,6 +251,7 @@ void IO::Drivers::Network::appendWebSocketProperties(QList<IO::DriverProperty>& 
   url.description = tr("WebSocket endpoint, for example %1").arg(defaultWebSocketUrl());
   url.type        = IO::DriverProperty::Text;
   url.value       = m_webSocketUrl;
+  url.showWhen(QStringLiteral("socketTypeIndex"), {static_cast<int>(WebSocket)});
   props.append(url);
 
   IO::DriverProperty format;
@@ -259,6 +260,7 @@ void IO::Drivers::Network::appendWebSocketProperties(QList<IO::DriverProperty>& 
   format.type    = IO::DriverProperty::ComboBox;
   format.value   = m_webSocketFormat;
   format.options = webSocketFormats();
+  format.showWhen(QStringLiteral("socketTypeIndex"), {static_cast<int>(WebSocket)});
   props.append(format);
 }
 

@@ -23,7 +23,7 @@
 #include <QString>
 #include <QTest>
 
-#include "Licensing/SimpleCrypt.h"
+#include "Core/Crypto/SimpleCrypt.h"
 
 // Every test function here is self-contained: each builds its own cipher, so Qt Test's
 // declaration-order execution is never load-bearing.

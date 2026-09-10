@@ -28,7 +28,15 @@
 class QJSEngine;
 struct lua_State;
 
+namespace API {
+class ICommandExecutor;
+}  // namespace API
+
 namespace DataModel {
+
+void setCommandExecutor(API::ICommandExecutor* executor) noexcept;
+[[nodiscard]] API::ICommandExecutor* commandExecutor() noexcept;
+[[nodiscard]] API::ICommandExecutor& requireCommandExecutor();
 
 /**
  * @brief QObject bridge that backs the JS apiCall() global. One per QJSEngine.

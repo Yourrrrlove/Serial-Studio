@@ -21,11 +21,13 @@
 
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QList>
 #include <QTest>
+#include <QVector>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/SerialStudio.h"
 #include "IO/Drivers/Modbus/ModbusProjectGenerator.h"
-#include "SerialStudio.h"
 
 // Every test function builds its own groups: no state is carried between slots, so Qt Test's
 // declaration-order execution is never load-bearing.

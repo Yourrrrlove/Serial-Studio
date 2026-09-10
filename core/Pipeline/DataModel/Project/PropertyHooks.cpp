@@ -23,9 +23,11 @@
 
 #include <QCoreApplication>
 
+#include "Core/Bus/MessageBus.h"
+#include "Core/Bus/Messages.h"
+#include "Core/Services.h"
 #include "Core/SSAssert.h"
 #include "DataModel/ProjectModel.h"
-#include "UI/WidgetExtensions.h"
 
 //--------------------------------------------------------------------------------------------------
 // Option sources
@@ -408,14 +410,20 @@ bool DataModel::PropertyHooks::TupleOptions::secondForIndex(int index) const
  */
 QList<QPair<QString, QString>> DataModel::PropertyHooks::widgetExtensionOptions()
 {
-  static auto& catalog = UI::WidgetExtensions::instance();
+  constexpr int kDatasetScope = 1;
 
   QList<QPair<QString, QString>> out;
-  const auto packages = catalog.idsForScope(UI::WidgetExtensions::DatasetScope);
-  for (const auto& id : packages) {
-    const auto& package = catalog.descriptor(id);
+  const auto* bus    = &Core::services().bus;
+  const auto catalog = bus ? bus->latest<Core::Bus::WidgetExtensionCatalog>() : nullptr;
+  if (!catalog)
+    return out;
+
+  for (const auto& package : catalog->entries) {
+    if (package.scope != kDatasetScope)
+      continue;
+
     if (package.replaces.isEmpty() && !package.title.isEmpty())
-      out.append({id, package.title});
+      out.append({package.id, package.title});
   }
 
   return out;

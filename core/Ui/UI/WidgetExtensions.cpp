@@ -28,12 +28,15 @@
 #include <QVariantMap>
 #include <utility>
 
+#include "Core/Bus/MessageBus.h"
+#include "Core/Bus/Messages.h"
+#include "Core/IconRegistry.h"
+#include "Core/JsonValidator.h"
+#include "Core/SerialStudio.h"
+#include "Core/Services.h"
 #include "Core/SSAssert.h"
+#include "Core/WorkspaceManager.h"
 #include "Misc/ContextRegistry.h"
-#include "Misc/IconRegistry.h"
-#include "Misc/JsonValidator.h"
-#include "Misc/WorkspaceManager.h"
-#include "SerialStudio.h"
 #include "UI/WidgetManifestParser.h"
 
 //--------------------------------------------------------------------------------------------------
@@ -83,7 +86,7 @@ static const QString kDeclinePrefix = QStringLiteral("WidgetExtensionDecline/");
  * @brief Constructs an empty catalog with no outgoing dependency at all: the spec-0001 ctor-edge
  *        proof holds only while this constructor stays a leaf (see the class documentation).
  */
-UI::WidgetExtensions::WidgetExtensions() : m_settings() {}
+UI::WidgetExtensions::WidgetExtensions() : m_settings(), m_bus(nullptr) {}
 
 /**
  * @brief Returns the singleton widget-extension catalog.
@@ -92,6 +95,15 @@ UI::WidgetExtensions& UI::WidgetExtensions::instance()
 {
   static WidgetExtensions singleton;
   return singleton;
+}
+
+/**
+ * @brief Adopts the root-owned message bus this module publishes on and subscribes to.
+ */
+void UI::WidgetExtensions::attachMessageBus(Core::Bus::MessageBus& bus)
+{
+  SS_ASSERT(m_bus == nullptr, return);
+  m_bus = &bus;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -327,7 +339,7 @@ void UI::WidgetExtensions::grantConsent(const QString& id)
 
   m_settings.remove(kDeclinePrefix + id);
   m_settings.setValue(kConsentPrefix + id, descriptor(id).version);
-  Q_EMIT catalogChanged();
+  announceCatalog();
 }
 
 /**
@@ -341,7 +353,7 @@ void UI::WidgetExtensions::declineConsent(const QString& id)
 
   m_settings.remove(kConsentPrefix + id);
   m_settings.setValue(kDeclinePrefix + id, descriptor(id).version);
-  Q_EMIT catalogChanged();
+  announceCatalog();
 }
 
 /**
@@ -376,7 +388,7 @@ void UI::WidgetExtensions::revokeConsent(const QString& id)
   m_prompted.remove(id);
   m_settings.remove(kConsentPrefix + id);
   m_settings.remove(kDeclinePrefix + id);
-  Q_EMIT catalogChanged();
+  announceCatalog();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -438,7 +450,7 @@ QString UI::WidgetExtensions::iconUrl(const QString& id, const int px) const
   if (!package.isValid() || package.iconId.isEmpty())
     return {};
 
-  static auto& icons = Misc::IconRegistry::instance();
+  auto& icons = Core::services().iconRegistry;
   if (!package.iconId.contains(QStringLiteral(".")))
     return icons.iconById(package.iconId, px);
 
@@ -492,10 +504,30 @@ void UI::WidgetExtensions::rescan()
 
   scanDirectory(kBundledRoot, true);
 
-  static auto& workspaceManager = Misc::WorkspaceManager::instance();
+  auto& workspaceManager = Core::services().workspaceManager;
   scanDirectory(workspaceManager.path(QStringLiteral("Extensions/widget")), false);
 
   resolveDependencies();
+
+  announceCatalog();
+}
+
+/**
+ * @brief Retains the catalog on the bus for the pipeline's widget resolver and the property
+ *        option providers (id, scope ordinal, title, replaced builtin), then notifies the editor.
+ */
+void UI::WidgetExtensions::announceCatalog()
+{
+  if (m_bus) {
+    QVector<Core::Bus::WidgetExtensionEntry> entries;
+    entries.reserve(m_order.size());
+    for (const auto& id : m_order) {
+      const auto& package = descriptor(id);
+      entries.append({id, static_cast<int>(package.scope), package.title, package.replaces});
+    }
+
+    m_bus->publishState<Core::Bus::WidgetExtensionCatalog>(std::move(entries));
+  }
 
   Q_EMIT catalogChanged();
 }
@@ -597,8 +629,8 @@ void UI::WidgetExtensions::resolveDependencies()
     for (const auto& dependency : package.dependencies) {
       const bool present = m_descriptors.contains(dependency.id);
       const bool usable  = present
-                        && WidgetManifestParser::versionInRange(
-                             m_descriptors.value(dependency.id).version, dependency.versionRange);
+                       && WidgetManifestParser::versionInRange(
+                            m_descriptors.value(dependency.id).version, dependency.versionRange);
       if (usable)
         continue;
 

@@ -33,12 +33,11 @@
 #include <QSslConfiguration>
 // clang-format on
 
+#include "Core/Crypto/CredentialVault.h"
+#include "Core/IO/HAL_Driver.h"
+#include "IO/Drivers/GeneratedProjectRequest.h"
 #include "IO/Drivers/MQTT/SparkplugSession.h"
-#include "IO/HAL_Driver.h"
-#include "MQTT/CredentialVault.h"
-#include "MQTT/TlsIdentity.h"
-
-class AppState;
+#include "Protocols/Tls/TlsIdentity.h"
 
 namespace DataModel {
 class ProjectModel;
@@ -302,8 +301,7 @@ private:
     {}
   };
 
-  AppState& m_appState;
-  DataModel::ProjectModel& m_projectModel;
+  GeneratedProjectRequest m_generatedProject;
 
   bool m_sslEnabled;
   bool m_cleanSession;

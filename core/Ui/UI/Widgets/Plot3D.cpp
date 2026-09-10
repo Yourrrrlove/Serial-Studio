@@ -32,12 +32,14 @@
 #include <QtNumeric>
 
 #include "Core/HotpathOptimization.h"
+#include "Core/Services.h"
 #include "Core/SSAssert.h"
+#include "Core/TimerEvents.h"
 #include "DSP.h"
 #include "Misc/CommonFonts.h"
 #include "Misc/ThemeManager.h"
-#include "Misc/TimerEvents.h"
 #include "UI/Dashboard.h"
+#include "UI/SerialStudioHelpers.h"
 #include "UI/Widgets/GpuStroke.h"
 #include "UI/Widgets/Plot3D/Plot3DEyeMaterial.h"
 #include "UI/Widgets/Plot3D/Plot3DOverlay.h"
@@ -136,7 +138,7 @@ Widgets::Plot3D::Plot3D(const int index, QQuickItem* parent)
   , m_shrinkTicks(0)
   , m_centerInitialized(false)
   , m_dashboard(UI::Dashboard::instance())
-  , m_timerEvents(Misc::TimerEvents::instance())
+  , m_timerEvents(Core::services().timerEvents)
   , m_themeManager(Misc::ThemeManager::instance())
   , m_commonFonts(Misc::CommonFonts::instance())
 {
@@ -610,11 +612,13 @@ void Widgets::Plot3D::onThemeChanged()
 {
   QColor custom;
   if (VALIDATE_WIDGET(SerialStudio::DashboardPlot3D, m_index))
-    custom = SerialStudio::getGroupColorOverride(GET_GROUP(SerialStudio::DashboardPlot3D, m_index));
+    custom = UI::SerialStudioHelpers::getGroupColorOverride(
+      GET_GROUP(SerialStudio::DashboardPlot3D, m_index));
 
-  const QColor base = custom.isValid() ? custom : SerialStudio::getDatasetColor(m_index + 1);
-  m_lineHeadColor   = custom.isValid() ? base : base.darker(130);
-  m_lineTailColor   = base.lighter(130);
+  const QColor base =
+    custom.isValid() ? custom : UI::SerialStudioHelpers::getDatasetColor(m_index + 1);
+  m_lineHeadColor = custom.isValid() ? base : base.darker(130);
+  m_lineTailColor = base.lighter(130);
   m_lineTailColor.setAlpha(156);
 
   // clang-format off

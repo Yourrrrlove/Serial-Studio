@@ -32,13 +32,17 @@
 #  include <QUrlQuery>
 #  include <utility>
 
+#  include "Core/Bus/MessageBus.h"
+#  include "Core/Bus/Messages.h"
+#  include "Core/Licensing/CommercialToken.h"
+#  include "Core/SerialStudio.h"
+#  include "Core/Services.h"
 #  include "Core/SSAssert.h"
+#  include "Core/TimerEvents.h"
 #  include "DataModel/FrameBuilder.h"
+#  include "DataModel/PipelineModules.h"
 #  include "DataModel/ProjectModel.h"
-#  include "Licensing/CommercialToken.h"
-#  include "Licensing/LemonSqueezy.h"
-#  include "Misc/TimerEvents.h"
-#  include "SerialStudio.h"
+#  include "Replay/PlayerState.h"
 
 //--------------------------------------------------------------------------------------------------
 // Constants
@@ -132,7 +136,7 @@ void InfluxDB::ExportWorker::sampleEpochOffset()
   const auto wall   = std::chrono::system_clock::now().time_since_epoch();
   const auto steady = std::chrono::steady_clock::now().time_since_epoch();
   m_epochOffsetNs   = std::chrono::duration_cast<std::chrono::nanoseconds>(wall).count()
-                    - std::chrono::duration_cast<std::chrono::nanoseconds>(steady).count();
+                  - std::chrono::duration_cast<std::chrono::nanoseconds>(steady).count();
 }
 
 /**
@@ -530,7 +534,10 @@ InfluxDB::Export::Export()
   , m_lastPointsWrittenSeen(0)
   , m_lastPointsDroppedSeen(0)
   , m_lastHttpErrorsSeen(0)
+  , m_bus(nullptr)
 {
+  connect(
+    this, &InfluxDB::Export::enabledChanged, this, &DataModel::IBlockSink::sinkActivityChanged);
   initializeWorker();
 
   auto* worker = static_cast<ExportWorker*>(m_worker);
@@ -541,10 +548,10 @@ InfluxDB::Export::Export()
   connect(worker, &ExportWorker::errorOccurred, this, &Export::onWorkerError);
   QMetaObject::invokeMethod(worker, &ExportWorker::bootstrap, Qt::QueuedConnection);
 
-  static auto& lemonSqueezy = Licensing::LemonSqueezy::instance();
-  connect(&lemonSqueezy, &Licensing::LemonSqueezy::activatedChanged, this, [this] {
-    setExportEnabled(m_exportRequested);
-  });
+  m_licenseWatch = Core::services().bus.subscribe<Core::Bus::LicenseStateChanged>(
+    this, [this](const std::shared_ptr<const Core::Bus::LicenseStateChanged>&) {
+      setExportEnabled(m_exportRequested);
+    });
 }
 
 /**
@@ -588,6 +595,14 @@ bool InfluxDB::Export::hasToken() const
 bool InfluxDB::Export::exportEnabled() const
 {
   return m_exportEnabled.load(std::memory_order_relaxed);
+}
+
+/**
+ * @brief The publisher's verdict for this sink: the InfluxDB sink consumes blocks while enabled.
+ */
+bool InfluxDB::Export::sinkActive() const noexcept
+{
+  return exportEnabled();
 }
 
 /**
@@ -681,12 +696,21 @@ QJsonObject InfluxDB::Export::toJson() const
 //--------------------------------------------------------------------------------------------------
 
 /**
+ * @brief Adopts the root-owned message bus this module publishes on and subscribes to.
+ */
+void InfluxDB::Export::attachMessageBus(Core::Bus::MessageBus& bus)
+{
+  SS_ASSERT(m_bus == nullptr, return);
+  m_bus = &bus;
+}
+
+/**
  * @brief Wires the project round-trip, the published-structure feed the field names come from,
  *        and the 1 Hz statistics pull.
  */
 void InfluxDB::Export::setupExternalConnections()
 {
-  auto* projectModel = &DataModel::ProjectModel::instance();
+  auto* projectModel = &DataModel::pipelineModules().projectModel;
   connect(projectModel, &DataModel::ProjectModel::influxSinkChanged, this, [this, projectModel] {
     if (m_savingToProjectModel)
       return;
@@ -705,14 +729,14 @@ void InfluxDB::Export::setupExternalConnections()
 
   auto* worker = static_cast<ExportWorker*>(m_worker);
   SS_ASSERT(worker != nullptr, return);
-  connect(&DataModel::FrameBuilder::instance(),
+  connect(&DataModel::pipelineModules().frameBuilder,
           &DataModel::FrameBuilder::structurePublished,
           worker,
           &ExportWorker::setTemplateFrame,
           Qt::QueuedConnection);
 
   connect(
-    &Misc::TimerEvents::instance(), &Misc::TimerEvents::timeout1Hz, this, &Export::sampleStats);
+    &Core::services().timerEvents, &Misc::TimerEvents::timeout1Hz, this, &Export::sampleStats);
 
   applyProjectConfig(projectModel->influxSink());
 }

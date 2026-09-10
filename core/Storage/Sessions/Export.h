@@ -26,17 +26,23 @@
 #include <QSqlQuery>
 #include <QTimer>
 
+#include "Core/Bus/Subscription.h"
+#include "Core/DataModel/DataBlock.h"
+#include "Core/DataModel/ExportSchema.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/DataModel/FrameConsumer.h"
+#include "Core/IO/IRawByteTap.h"
 #include "Core/SSAssert.h"
-#include "DataModel/DataBlock.h"
 #include "DataModel/DataTable.h"
-#include "DataModel/ExportSchema.h"
 #include "DataModel/ExportStructure.h"
-#include "DataModel/Frame.h"
-#include "DataModel/FrameConsumer.h"
-#include "IO/ConnectionManager.h"
+#include "IO/PipelineHost.h"
 #include "Sessions/BlockFingerprint.h"
 
 class AppState;
+
+namespace Core::Bus {
+class MessageBus;
+}  // namespace Core::Bus
 
 namespace DataModel {
 class ControlScript;
@@ -45,10 +51,6 @@ class ProjectModel;
 }  // namespace DataModel
 
 #ifdef BUILD_COMMERCIAL
-
-namespace UI {
-class Dashboard;
-}  // namespace UI
 
 namespace Sessions {
 class Export;
@@ -161,7 +163,9 @@ private:
 /**
  * @brief Session-database export controller (Pro) driving the SQLite worker.
  */
-class Export : public DataModel::FrameConsumer<DataModel::DataBlockPtr> {
+class Export
+  : public DataModel::FrameConsumer<DataModel::DataBlockPtr>
+  , public IO::IRawByteTap {
   // clang-format off
   Q_OBJECT
   Q_PROPERTY(bool isOpen
@@ -196,10 +200,12 @@ private:
 
 public:
   [[nodiscard]] static Export& instance();
+  void attachMessageBus(Core::Bus::MessageBus& bus);
 
   [[nodiscard]] bool isOpen() const;
   [[nodiscard]] bool writeFailed() const;
   [[nodiscard]] bool exportEnabled() const;
+  [[nodiscard]] bool sinkActive() const noexcept override;
   [[nodiscard]] int currentSessionId() const;
   [[nodiscard]] quint64 rawOverruns() const;
   [[nodiscard]] quint64 droppedBlocks() const;
@@ -212,8 +218,9 @@ public slots:
   void setExportEnabled(const bool enabled);
   void setSettingsPersistent(const bool persistent);
   void setRegressionBaselinePinned(const bool pinned);
-  void ingestBlock(const DataModel::DataBlockPtr& block);
+  void ingestBlock(const DataModel::DataBlockPtr& block) override;
   void hotpathTxRawBytes(int deviceId, const IO::CapturedDataPtr& data);
+  void onDeviceBytes(int deviceId, const IO::CapturedDataPtr& data) override;
 
 protected:
   DataModel::FrameConsumerWorkerBase* createWorker() override;
@@ -224,7 +231,7 @@ private slots:
   void onSessionBoundary(bool connected, bool paused);
   void captureTableSnapshots();
   void onWorkerSessionIdAssigned(int sessionId);
-  void refreshViewStateSnapshot();
+  void refreshViewStateSnapshot(const QString& json);
   void pushViewStateToWorker();
 
 private:
@@ -268,8 +275,12 @@ private:
   DataModel::FrameBuilder* m_frameBuilder;
   DataModel::Frame m_sessionStructure;
   DataModel::ControlScript* m_controlScript;
-  IO::ConnectionManager* m_connectionManager;
-  UI::Dashboard* m_dashboard;
+  IO::PipelineHost* m_pipelineHost;
+  Core::Bus::MessageBus* m_bus;
+  Core::Bus::Subscription m_licenseWatch;
+  Core::Bus::Subscription m_viewStateWatch;
+  Core::Bus::Subscription m_closeOnModeChange;
+  Core::Bus::Subscription m_snapshotOnModeChange;
 };
 
 }  // namespace Sessions

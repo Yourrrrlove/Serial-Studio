@@ -43,8 +43,8 @@ path runs under a protected bootstrap so `lua_atpanic` is unreachable.
 - **Engine mismatch detection uses `IScriptEngine::language()`** (the old `dynamic_cast`
   bool check silently broke with 3 languages). `FrameParser::parseMultiFrame*` never falls
   back to source 0 across language boundaries.
-- Native config persists in `Source::frameParserTemplate` (string id) +
-  `Source::frameParserParams` (JSON object). `FrameParser::scriptForSource()` builds the
+- Native config persists in the `DataModel::Source` fields `frameParserTemplate` (string id)
+  + `frameParserParams` (JSON object). `FrameParser::scriptForSource()` builds the
   descriptor for native sources (empty template id falls back to the default `delimited`
   comma config).
 - **Language switches convert the template, both directions.**

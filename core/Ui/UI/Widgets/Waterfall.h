@@ -24,15 +24,16 @@
 
 #include <kiss_fftr.h>
 
+#include <QColor>
 #include <QImage>
 #include <QPointF>
 #include <QQuickItem>
 #include <vector>
 
+#include "Core/SerialStudio.h"
+#include "Core/TimerEvents.h"
 #include "Misc/CommonFonts.h"
 #include "Misc/ThemeManager.h"
-#include "Misc/TimerEvents.h"
-#include "SerialStudio.h"
 #include "UI/Dashboard.h"
 #include "UI/Widgets/Waterfall/WaterfallColorMap.h"
 #include "UI/Widgets/Waterfall/WaterfallOverlay.h"

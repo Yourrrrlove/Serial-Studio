@@ -21,25 +21,25 @@
 
 #include "IO/DeviceManager.h"
 
-#include <QThread>
-
 #include "Core/SSAssert.h"
-#include "IO/PipelineHost.h"
 
 //--------------------------------------------------------------------------------------------------
 // Constructor & destructor
 //--------------------------------------------------------------------------------------------------
 
 /**
- * @brief Constructs a DeviceManager owning a driver and FrameReader for the given device.
+ * @brief Constructs a DeviceManager owning a driver and attaches it to the pipeline for the given
+ *        device.
  */
 IO::DeviceManager::DeviceManager(int deviceId,
                                  std::unique_ptr<HAL_Driver> driver,
                                  const FrameConfig& config,
+                                 IIngestBinder& binder,
                                  QObject* parent)
   : QObject(parent)
   , m_deviceId(deviceId)
-  , m_pipeline(PipelineHost::instance())
+  , m_attached(false)
+  , m_binder(binder)
   , m_frameConfig(config)
   , m_driver(std::move(driver))
 {
@@ -53,11 +53,11 @@ IO::DeviceManager::DeviceManager(int deviceId,
           this,
           &IO::DeviceManager::onConsoleDataReceived);
 
-  startFrameReader(config);
+  attachToPipeline(config);
 }
 
 /**
- * @brief Closes the device and tears down its FrameReader.
+ * @brief Closes the device and detaches it from the pipeline.
  */
 IO::DeviceManager::~DeviceManager()
 {
@@ -93,6 +93,14 @@ bool IO::DeviceManager::isWritable() const
 }
 
 /**
+ * @brief Returns true while the pipeline holds a reader for this device.
+ */
+bool IO::DeviceManager::isAttached() const noexcept
+{
+  return m_attached;
+}
+
+/**
  * @brief Returns the underlying HAL driver instance.
  */
 IO::HAL_Driver* IO::DeviceManager::driver() const noexcept
@@ -125,7 +133,7 @@ qint64 IO::DeviceManager::write(const QByteArray& data)
 //--------------------------------------------------------------------------------------------------
 
 /**
- * @brief Opens the device in the given @p mode and ensures the FrameReader is running. The
+ * @brief Opens the device in the given @p mode and ensures it is attached to the pipeline. The
  *        driver's verdict is returned rather than discarded: for a driver that dials
  *        asynchronously it means the attempt started, not that the link is up.
  */
@@ -137,14 +145,14 @@ bool IO::DeviceManager::open(QIODevice::OpenMode mode)
   if (!m_driver)
     return false;
 
-  if (m_frameReader.isNull())
-    startFrameReader(m_frameConfig);
+  if (!m_attached)
+    attachToPipeline(m_frameConfig);
 
   return m_driver->open(mode);
 }
 
 /**
- * @brief Closes the device and stops the FrameReader.
+ * @brief Closes the device and retires its reader.
  */
 void IO::DeviceManager::close()
 {
@@ -153,20 +161,23 @@ void IO::DeviceManager::close()
   if (m_driver)
     m_driver->close();
 
-  killFrameReader();
-  SS_ASSERT_LOG(m_frameReader.isNull());
+  detachFromPipeline();
+  SS_ASSERT_LOG(!m_attached);
 }
 
 /**
- * @brief Recreates the FrameReader with a new frame configuration.
+ * @brief Recreates the reader with a new frame configuration (recreate, never lock: the reader is
+ *        single-producer); a detached device is attached with it.
  */
 void IO::DeviceManager::reconfigure(const FrameConfig& config)
 {
   SS_ASSERT_LOG(m_driver);
 
   m_frameConfig = config;
-  killFrameReader();
-  startFrameReader(config);
+  if (m_attached)
+    m_binder.reconfigure(m_deviceId, config);
+  else
+    attachToPipeline(config);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -194,11 +205,10 @@ void IO::DeviceManager::onConsoleDataReceived(const IO::CapturedDataPtr& data)
 //--------------------------------------------------------------------------------------------------
 
 /**
- * @brief Creates a new FrameReader, configures it while still on this thread, then hands it to
- *        the PipelineHost: configuration runs before the move (no live connections yet), and
- *        after adoption the reader is only reached through queued driver chunks or recreation.
+ * @brief Hands the driver's byte stream to the pipeline under @p config; the binder creates and
+ *        adopts the reader, replacing any earlier one for this device.
  */
-void IO::DeviceManager::startFrameReader(const FrameConfig& config)
+void IO::DeviceManager::attachToPipeline(const FrameConfig& config)
 {
   SS_ASSERT_LOG(m_driver);
   SS_ASSERT_LOG(m_deviceId >= 0);
@@ -206,41 +216,18 @@ void IO::DeviceManager::startFrameReader(const FrameConfig& config)
   if (!m_driver)
     return;
 
-  killFrameReader();
-
-  m_frameReader = new FrameReader();
-  m_frameReader->setChecksum(config.checksumAlgorithm);
-  m_frameReader->setStartSequences(config.startSequences);
-  m_frameReader->setFinishSequences(config.finishSequences);
-  m_frameReader->setOperationMode(config.operationMode);
-  m_frameReader->setFrameDetectionMode(config.frameDetection);
-
-  m_readerFeed = connect(
-    m_driver.get(), &IO::HAL_Driver::dataReceived, m_frameReader, &IO::FrameReader::processData);
-  m_pipeline.registerFrameReader(m_deviceId, m_frameReader);
+  m_binder.attach(m_deviceId, m_driver.get(), config);
+  m_attached = true;
 }
 
 /**
- * @brief Drops the driver feed and retires the current FrameReader. The connection is dropped by
- *        handle rather than by a wildcard slot, and the reader is destroyed outright once the
- *        pipeline thread has stopped: deleteLater() there posts into a dead event loop, so at
- *        quit the reader would never be freed at all.
+ * @brief Retires this device's reader; idempotent.
  */
-void IO::DeviceManager::killFrameReader()
+void IO::DeviceManager::detachFromPipeline()
 {
-  QObject::disconnect(m_readerFeed);
-  m_readerFeed = QMetaObject::Connection();
-
-  if (m_frameReader.isNull())
+  if (!m_attached)
     return;
 
-  QThread* host = m_pipeline.pipelineThread();
-  if (host != nullptr && host->isRunning()) {
-    m_frameReader->deleteLater();
-    m_frameReader.clear();
-    return;
-  }
-
-  delete m_frameReader;
-  m_frameReader.clear();
+  m_binder.detach(m_deviceId);
+  m_attached = false;
 }

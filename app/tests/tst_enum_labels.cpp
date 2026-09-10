@@ -25,7 +25,7 @@
 #include <QStringList>
 #include <QTest>
 
-#include "API/EnumLabels.h"
+#include "Core/EnumLabels.h"
 
 // Every test function here is self-contained: no state is carried between slots, so Qt Test's
 // declaration-order execution is never load-bearing. This TU is compiled twice (see

@@ -629,6 +629,8 @@ Item {
         border.color: Cpp_ThemeManager.colors["widget_border"]
 
         Flickable {
+          id: legendFlick
+
           clip: true
           anchors.margins: 4
           contentWidth: width
@@ -637,6 +639,9 @@ Item {
 
           ScrollBar.vertical: ScrollBar {
             id: scroll
+
+            policy: legendFlick.contentHeight > legendFlick.height ? ScrollBar.AlwaysOn
+                                                                   : ScrollBar.AlwaysOff
           }
 
           ColumnLayout {
@@ -647,22 +652,47 @@ Item {
 
             Repeater {
               model: root.model.count
-              delegate: Switch {
-                onCheckedChanged: {
-                  if (checked !== root.model.visibleCurves[index]) {
-                    root.model.modifyCurveVisibility(index, checked)
-                    Cpp_JSON_ProjectModel.saveWidgetSetting(widgetId, "visibleCurves",
-                                                            root.model.visibleCurves)
-                  }
-                }
+              delegate: RowLayout {
+                id: legendRow
+
+                required property int index
+
+                spacing: 2
                 Layout.fillWidth: true
-                text: root.model.labels[index]
-                Layout.alignment: Qt.AlignVCenter
-                checked: root.model.visibleCurves[index]
-                palette.highlight: root.model.colors[index]
-                palette.text: Cpp_ThemeManager.colors["widget_text"]
-                font: (Cpp_Misc_CommonFonts.widgetFontRevision,
-                       Cpp_Misc_CommonFonts.widgetFont(0.8 * root.uiScale))
+
+                Switch {
+                  id: legendSwitch
+
+                  onCheckedChanged: {
+                    if (checked !== root.model.visibleCurves[legendRow.index]) {
+                      root.model.modifyCurveVisibility(legendRow.index, checked)
+                      Cpp_JSON_ProjectModel.saveWidgetSetting(widgetId, "visibleCurves",
+                                                              root.model.visibleCurves)
+                    }
+                  }
+                  Layout.fillWidth: true
+                  text: root.model.labels[legendRow.index]
+                  Layout.alignment: Qt.AlignVCenter
+                  checked: root.model.visibleCurves[legendRow.index]
+                  palette.highlight: root.model.colors[legendRow.index]
+                  palette.text: Cpp_ThemeManager.colors["widget_text"]
+                  font: (Cpp_Misc_CommonFonts.widgetFontRevision,
+                         Cpp_Misc_CommonFonts.widgetFont(0.8 * root.uiScale))
+
+                  ToolTip.delay: 600
+                  ToolTip.text: legendSwitch.text
+                  ToolTip.visible: legendSwitch.hovered && legendSwitch.text.length > 0
+                }
+
+                //
+                // Pop-out buttons for the other widgets showing this curve's dataset
+                //
+                DatasetWidgetButtons {
+                  buttonSize: 24
+                  windowRoot: root.windowRoot
+                  Layout.alignment: Qt.AlignVCenter
+                  widgets: root.model.widgets[legendRow.index]
+                }
               }
             }
           }

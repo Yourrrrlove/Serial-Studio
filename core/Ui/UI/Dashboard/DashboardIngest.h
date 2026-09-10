@@ -27,10 +27,10 @@
 #include <QVector>
 #include <vector>
 
-#include "DataModel/DataBlock.h"
-#include "DataModel/Frame.h"
+#include "Core/DataModel/DataBlock.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/SerialStudio.h"
 #include "DSP.h"
-#include "SerialStudio.h"
 #include "UI/Dashboard/WidgetMapBuilder.h"
 
 namespace UI {

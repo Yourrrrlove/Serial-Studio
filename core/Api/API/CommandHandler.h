@@ -23,7 +23,8 @@
 
 #include <QObject>
 
-#include "API/CommandProtocol.h"
+#include "Core/Api/CommandProtocol.h"
+#include "Core/Api/ICommandExecutor.h"
 
 namespace API {
 /**
@@ -36,9 +37,13 @@ enum class CommandOrigin : quint8 {
 };
 
 /**
- * @brief Main entry point for processing incoming API commands.
+ * @brief Main entry point for processing incoming API commands. The composition root registers
+ *        the handler sets (registerCoreHandlers(), then the Ui and licensing sets) and binds this
+ *        object as the scripting layer's ICommandExecutor (spec 0077 T60).
  */
-class CommandHandler : public QObject {
+class CommandHandler
+  : public QObject
+  , public ICommandExecutor {
   Q_OBJECT
 
 private:
@@ -60,8 +65,11 @@ public:
                                            const CommandOrigin origin = CommandOrigin::Trusted);
   [[nodiscard]] QJsonObject getAvailableCommands() const;
 
-private:
-  void initializeHandlers();
+  [[nodiscard]] CommandResponse execute(const CommandRequest& request) override;
+  [[nodiscard]] bool hasCommand(const QString& name) const override;
+  [[nodiscard]] QStringList commandNames() const override;
+
+  void registerCoreHandlers();
 
 private:
   bool m_initialized;

@@ -30,8 +30,8 @@ extern "C" {
 #include <QJSEngine>
 #include <QObject>
 
+#include "Core/DataModel/Frame.h"
 #include "DataModel/DataTable.h"
-#include "DataModel/Frame.h"
 
 namespace DataModel {
 

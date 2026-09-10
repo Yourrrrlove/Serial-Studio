@@ -22,9 +22,10 @@
 #include "DataModel/Project/ProjectBulkOps.h"
 
 #include <algorithm>
-#include <QMessageBox>
 #include <QSet>
 
+#include "Core/Prompt/UserPrompt.h"
+#include "DataModel/Project/EntityKinds.h"
 #include "DataModel/Project/ProjectEntities.h"
 #include "DataModel/Project/ProjectFolders.h"
 #include "DataModel/Project/ProjectHistory.h"
@@ -32,21 +33,19 @@
 #include "DataModel/Project/ProjectPersistence.h"
 #include "DataModel/Project/ProjectTables.h"
 #include "DataModel/Project/ProjectWorkspaces.h"
-#include "DataModel/ProjectEditor.h"
 #include "DataModel/ProjectModel.h"
-#include "Misc/Utilities.h"
 
 namespace DataModel {
 
-static_assert(kBatchKindGroup == ProjectEditor::KindGroup);
-static_assert(kBatchKindDataset == ProjectEditor::KindDataset);
-static_assert(kBatchKindWorkspace == ProjectEditor::KindWorkspace);
-static_assert(kBatchKindWorkspaceFolder == ProjectEditor::KindWorkspaceFolder);
-static_assert(kBatchKindAction == ProjectEditor::KindAction);
-static_assert(kBatchKindOutputWidget == ProjectEditor::KindOutputWidget);
-static_assert(kBatchKindGroupFolder == ProjectEditor::KindGroupFolder);
-static_assert(kBatchKindUserTable == ProjectEditor::KindUserTable);
-static_assert(kBatchKindTableFolder == ProjectEditor::KindTableFolder);
+static_assert(kBatchKindGroup == DataModel::KindGroup);
+static_assert(kBatchKindDataset == DataModel::KindDataset);
+static_assert(kBatchKindWorkspace == DataModel::KindWorkspace);
+static_assert(kBatchKindWorkspaceFolder == DataModel::KindWorkspaceFolder);
+static_assert(kBatchKindAction == DataModel::KindAction);
+static_assert(kBatchKindOutputWidget == DataModel::KindOutputWidget);
+static_assert(kBatchKindGroupFolder == DataModel::KindGroupFolder);
+static_assert(kBatchKindUserTable == DataModel::KindUserTable);
+static_assert(kBatchKindTableFolder == DataModel::KindTableFolder);
 
 /**
  * @brief Returns the uniqueId of the group at positional @p gid, or -1 when out of range.
@@ -139,9 +138,9 @@ void DataModel::ProjectBulkOps::duplicateSelectedItems(const QVariantList& items
     const auto m   = v.toMap();
     const int kind = m.value(QStringLiteral("kind"), -1).toInt();
     const int id   = m.value(QStringLiteral("id"), -1).toInt();
-    if (kind == ProjectEditor::KindGroupFolder)
+    if (kind == DataModel::KindGroupFolder)
       selectedGroupFolders.insert(id);
-    else if (kind == ProjectEditor::KindTableFolder)
+    else if (kind == DataModel::KindTableFolder)
       selectedTableFolders.insert(id);
   }
 
@@ -152,11 +151,11 @@ void DataModel::ProjectBulkOps::duplicateSelectedItems(const QVariantList& items
     const int kind = m.value(QStringLiteral("kind"), -1).toInt();
     const int id   = m.value(QStringLiteral("id"), -1).toInt();
 
-    if (kind == ProjectEditor::KindGroupFolder
+    if (kind == DataModel::KindGroupFolder
         && !folderHasSelectedAncestor(folders.groupFolders(), id, selectedGroupFolders))
       coveredGroupFolders.unite(folders.duplicateGroupFolderSubtree(id));
 
-    else if (kind == ProjectEditor::KindTableFolder
+    else if (kind == DataModel::KindTableFolder
              && !folderHasSelectedAncestor(folders.tableFolders(), id, selectedTableFolders))
       coveredTableFolders.unite(folders.duplicateTableFolderSubtree(id));
   }
@@ -168,26 +167,26 @@ void DataModel::ProjectBulkOps::duplicateSelectedItems(const QVariantList& items
     const int parent   = entry.value(QStringLiteral("parentId"), -1).toInt();
     const QString path = entry.value(QStringLiteral("path")).toString();
 
-    if (kind == ProjectEditor::KindGroup && coveredGroupFolders.contains(parent))
+    if (kind == DataModel::KindGroup && coveredGroupFolders.contains(parent))
       continue;
 
-    if (kind == ProjectEditor::KindUserTable && coveredTableFolders.contains(parent))
+    if (kind == DataModel::KindUserTable && coveredTableFolders.contains(parent))
       continue;
 
     switch (kind) {
-      case ProjectEditor::KindGroup:
+      case DataModel::KindGroup:
         m_model.m_entities.duplicateGroup(id);
         break;
-      case ProjectEditor::KindDataset:
+      case DataModel::KindDataset:
         m_model.m_entities.duplicateDataset(parent, id);
         break;
-      case ProjectEditor::KindAction:
+      case DataModel::KindAction:
         m_model.m_entities.duplicateAction(id);
         break;
-      case ProjectEditor::KindOutputWidget:
+      case DataModel::KindOutputWidget:
         m_model.m_outputWidgets.duplicateOutputWidget(parent, id);
         break;
-      case ProjectEditor::KindUserTable:
+      case DataModel::KindUserTable:
         m_model.m_tables.duplicateTableByPath(path);
         break;
       default:
@@ -223,13 +222,13 @@ void DataModel::ProjectBulkOps::deleteSelectedItems(const QVariantList& items)
     e.groupUid   = -1;
     e.datasetUid = -1;
 
-    if (e.kind == ProjectEditor::KindGroup)
+    if (e.kind == DataModel::KindGroup)
       e.groupUid = batchGroupUidAt(groups, e.id);
 
-    if (e.kind == ProjectEditor::KindDataset || e.kind == ProjectEditor::KindOutputWidget)
+    if (e.kind == DataModel::KindDataset || e.kind == DataModel::KindOutputWidget)
       e.groupUid = batchGroupUidAt(groups, e.parentId);
 
-    if (e.kind == ProjectEditor::KindDataset)
+    if (e.kind == DataModel::KindDataset)
       e.datasetUid = batchDatasetUidAt(groups, e.parentId, e.id);
 
     entries.append(e);
@@ -239,14 +238,14 @@ void DataModel::ProjectBulkOps::deleteSelectedItems(const QVariantList& items)
 
   for (const auto& e : entries) {
     switch (e.kind) {
-      case ProjectEditor::KindGroup: {
+      case DataModel::KindGroup: {
         const int gid = batchResolveGroupId(groups, e.groupUid, e.id);
         if (gid >= 0)
           m_model.m_entities.deleteGroup(gid, false);
 
         break;
       }
-      case ProjectEditor::KindDataset: {
+      case DataModel::KindDataset: {
         const int gid = batchResolveGroupId(groups, e.groupUid, e.parentId);
         const int did = batchResolveDatasetId(groups, gid, e.datasetUid, e.id);
         if (gid >= 0 && did >= 0)
@@ -254,29 +253,29 @@ void DataModel::ProjectBulkOps::deleteSelectedItems(const QVariantList& items)
 
         break;
       }
-      case ProjectEditor::KindAction:
+      case DataModel::KindAction:
         m_model.m_entities.deleteAction(e.id, false);
         break;
-      case ProjectEditor::KindOutputWidget: {
+      case DataModel::KindOutputWidget: {
         const int gid = batchResolveGroupId(groups, e.groupUid, e.parentId);
         if (gid >= 0)
           m_model.m_outputWidgets.deleteOutputWidget(gid, e.id, false);
 
         break;
       }
-      case ProjectEditor::KindWorkspace:
+      case DataModel::KindWorkspace:
         m_model.m_workspaces.deleteWorkspace(e.id);
         break;
-      case ProjectEditor::KindWorkspaceFolder:
+      case DataModel::KindWorkspaceFolder:
         m_model.m_folders.deleteWorkspaceFolder(e.id);
         break;
-      case ProjectEditor::KindGroupFolder:
+      case DataModel::KindGroupFolder:
         m_model.m_folders.deleteGroupFolder(e.id);
         break;
-      case ProjectEditor::KindUserTable:
+      case DataModel::KindUserTable:
         m_model.m_tables.deleteTable(e.path);
         break;
-      case ProjectEditor::KindTableFolder:
+      case DataModel::KindTableFolder:
         m_model.m_folders.deleteTableFolder(e.id);
         break;
       default:
@@ -297,14 +296,14 @@ void DataModel::ProjectBulkOps::confirmDeleteSelectedItems(const QVariantList& i
   const int count = static_cast<int>(items.size());
   if (count > 1) {
     const int choice =
-      Misc::Utilities::showMessageBox(ProjectModel::tr("Delete %1 selected items?").arg(count),
-                                      ProjectModel::tr("This action cannot be undone."),
-                                      QMessageBox::Warning,
-                                      ProjectModel::tr("Delete Items"),
-                                      QMessageBox::Yes | QMessageBox::Cancel,
-                                      QMessageBox::Cancel);
+      Core::Prompt::showMessageBox(ProjectModel::tr("Delete %1 selected items?").arg(count),
+                                   ProjectModel::tr("This action cannot be undone."),
+                                   Core::Prompt::Warning,
+                                   ProjectModel::tr("Delete Items"),
+                                   Core::Prompt::Yes | Core::Prompt::Cancel,
+                                   Core::Prompt::Cancel);
 
-    if (choice != QMessageBox::Yes)
+    if (choice != Core::Prompt::Yes)
       return;
   }
 
@@ -331,22 +330,22 @@ void DataModel::ProjectBulkOps::moveSelectedItemsToFolder(const QVariantList& it
     const QString path = m.value(QStringLiteral("path")).toString();
 
     switch (kind) {
-      case ProjectEditor::KindWorkspace:
+      case DataModel::KindWorkspace:
         folders.moveWorkspaceToFolder(id, folderId);
         break;
-      case ProjectEditor::KindWorkspaceFolder:
+      case DataModel::KindWorkspaceFolder:
         folders.moveFolderToFolder(id, folderId);
         break;
-      case ProjectEditor::KindGroup:
+      case DataModel::KindGroup:
         folders.moveGroupToFolder(id, folderId);
         break;
-      case ProjectEditor::KindGroupFolder:
+      case DataModel::KindGroupFolder:
         folders.moveGroupFolderToFolder(id, folderId);
         break;
-      case ProjectEditor::KindUserTable:
+      case DataModel::KindUserTable:
         folders.moveTableToFolder(path, folderId);
         break;
-      case ProjectEditor::KindTableFolder:
+      case DataModel::KindTableFolder:
         folders.moveTableFolderToFolder(id, folderId);
         break;
       default:
@@ -402,19 +401,19 @@ void DataModel::ProjectBulkOps::setItemsEnabled(const QVariantList& items, const
     const int id     = m.value(QStringLiteral("id"), -1).toInt();
     const int parent = m.value(QStringLiteral("parentId"), -1).toInt();
 
-    if (kind == ProjectEditor::KindGroupFolder) {
+    if (kind == DataModel::KindGroupFolder) {
       changed |= setGroupsInFolderEnabled(id, enabled);
       continue;
     }
 
-    if (kind == ProjectEditor::KindGroup && id >= 0 && id < groupCount
+    if (kind == DataModel::KindGroup && id >= 0 && id < groupCount
         && groups[id].enabled != enabled) {
       groups[id].enabled = enabled;
       changed            = true;
       continue;
     }
 
-    if (kind == ProjectEditor::KindDataset && parent >= 0 && parent < groupCount) {
+    if (kind == DataModel::KindDataset && parent >= 0 && parent < groupCount) {
       auto& datasets = groups[parent].datasets;
       if (id < 0 || static_cast<size_t>(id) >= datasets.size() || datasets[id].enabled == enabled)
         continue;

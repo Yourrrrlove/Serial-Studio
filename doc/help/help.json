@@ -132,6 +132,12 @@
   "file": "Console-Annotations.md"
  },
  {
+  "id": "macros",
+  "title": "Macros",
+  "section": "Scripting & Data Logic",
+  "file": "Macros.md"
+ },
+ {
   "id": "communication-protocols",
   "title": "Communication Protocols",
   "section": "Connectivity",
@@ -382,6 +388,12 @@
   "title": "Glossary",
   "section": "Support",
   "file": "Glossary.md"
+ },
+ {
+  "id": "problem-center",
+  "title": "Problem Center",
+  "section": "Support",
+  "file": "Problem-Center.md"
  },
  {
   "id": "troubleshooting",

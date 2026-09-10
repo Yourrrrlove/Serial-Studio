@@ -23,7 +23,7 @@
 #include "AI/Logging.h"
 #include "AI/Providers/ProviderJson.h"
 #include "AI/SseEventReader.h"
-#include "Misc/JsonValidator.h"
+#include "Core/JsonValidator.h"
 
 static constexpr int kOpenAIInitialResponseTimeoutMs = 120 * 1000;
 static const char* const kOpenAIEndpoint             = "https://api.openai.com/v1/chat/completions";

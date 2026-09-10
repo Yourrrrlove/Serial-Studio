@@ -27,9 +27,10 @@
 #include <QJsonArray>
 
 #include "API/Handlers/ProjectHandler.h"
+#include "Core/SerialStudio.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/Project/PropertyHooks.h"
 #include "DataModel/ProjectModel.h"
-#include "SerialStudio.h"
 
 // clang-format off
 
@@ -69,7 +70,7 @@ static QString applyDatasetStringFields1(DataModel::Dataset& d,
                                          bool& rebuildTree,
                                          QSet<QString>& consumed)
 {
-  static auto& project = DataModel::ProjectModel::instance();
+  auto& project = DataModel::pipelineModules().projectModel;
 
   const auto key_title = takeDatasetField(params, consumed, {Keys::Title});
   if (!key_title.isEmpty()) {

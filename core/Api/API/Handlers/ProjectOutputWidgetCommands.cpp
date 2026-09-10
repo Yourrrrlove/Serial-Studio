@@ -24,9 +24,10 @@
 #include <QJsonObject>
 
 #include "API/SchemaBuilder.h"
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/SerialStudio.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
-#include "SerialStudio.h"
 
 //--------------------------------------------------------------------------------------------------
 // Command registration
@@ -113,10 +114,10 @@ API::CommandResponse API::Handlers::ProjectOutputWidgetCommands::outputWidgetAdd
     return CommandResponse::makeError(
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: groupId"));
 
-  const int groupId    = params.value(QStringLiteral("groupId")).toInt();
-  const int type       = params.value(QStringLiteral("type")).toInt(0);
-  static auto& project = DataModel::ProjectModel::instance();
-  const auto& groups   = project.groups();
+  const int groupId  = params.value(QStringLiteral("groupId")).toInt();
+  const int type     = params.value(QStringLiteral("type")).toInt(0);
+  auto& project      = DataModel::pipelineModules().projectModel;
+  const auto& groups = project.groups();
   if (groupId < 0 || static_cast<size_t>(groupId) >= groups.size())
     return CommandResponse::makeError(
       id, ErrorCode::InvalidParam, QStringLiteral("Group id not found: %1").arg(groupId));
@@ -146,10 +147,10 @@ API::CommandResponse API::Handlers::ProjectOutputWidgetCommands::outputWidgetDel
     return CommandResponse::makeError(
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: widgetId"));
 
-  const int groupId    = params.value(QStringLiteral("groupId")).toInt();
-  const int widgetId   = params.value(QStringLiteral("widgetId")).toInt();
-  static auto& project = DataModel::ProjectModel::instance();
-  const auto& groups   = project.groups();
+  const int groupId  = params.value(QStringLiteral("groupId")).toInt();
+  const int widgetId = params.value(QStringLiteral("widgetId")).toInt();
+  auto& project      = DataModel::pipelineModules().projectModel;
+  const auto& groups = project.groups();
   if (groupId < 0 || static_cast<size_t>(groupId) >= groups.size())
     return CommandResponse::makeError(
       id, ErrorCode::InvalidParam, QStringLiteral("Group id not found: %1").arg(groupId));
@@ -183,10 +184,10 @@ API::CommandResponse API::Handlers::ProjectOutputWidgetCommands::outputWidgetDup
     return CommandResponse::makeError(
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: widgetId"));
 
-  const int groupId    = params.value(QStringLiteral("groupId")).toInt();
-  const int widgetId   = params.value(QStringLiteral("widgetId")).toInt();
-  static auto& project = DataModel::ProjectModel::instance();
-  const auto& groups   = project.groups();
+  const int groupId  = params.value(QStringLiteral("groupId")).toInt();
+  const int widgetId = params.value(QStringLiteral("widgetId")).toInt();
+  auto& project      = DataModel::pipelineModules().projectModel;
+  const auto& groups = project.groups();
   if (groupId < 0 || static_cast<size_t>(groupId) >= groups.size())
     return CommandResponse::makeError(
       id, ErrorCode::InvalidParam, QStringLiteral("Group id not found: %1").arg(groupId));
@@ -220,10 +221,10 @@ API::CommandResponse API::Handlers::ProjectOutputWidgetCommands::outputWidgetGet
     return CommandResponse::makeError(
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: widgetId"));
 
-  const int groupId         = params.value(QStringLiteral("groupId")).toInt();
-  const int widgetId        = params.value(QStringLiteral("widgetId")).toInt();
-  static auto& projectModel = DataModel::ProjectModel::instance();
-  const auto& groups        = projectModel.groups();
+  const int groupId  = params.value(QStringLiteral("groupId")).toInt();
+  const int widgetId = params.value(QStringLiteral("widgetId")).toInt();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
+  const auto& groups = projectModel.groups();
   if (groupId < 0 || static_cast<size_t>(groupId) >= groups.size())
     return CommandResponse::makeError(
       id, ErrorCode::InvalidParam, QStringLiteral("Group id not found: %1").arg(groupId));

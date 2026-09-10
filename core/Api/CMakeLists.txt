@@ -32,9 +32,9 @@
 # removed from the executable's HEADERS list, or moc would run twice and the link would fail on
 # duplicate staticMetaObject symbols.
 #
-# This is a partition of the old monolith, not a clean layer: it still reaches sideways into
-# Pipeline, Devices, Storage and Ui and upward into app/src. The include roots and the sibling
-# links below spell that debt out; scripts/layer-verify.py ratchets it down per directed edge.
+# A strict layer since spec 0077: it includes only itself and Core, Pipeline, Devices and Storage, and the include
+# roots and links below say exactly that. scripts/layer-verify.py fails on an include, an
+# include root or a link outside that graph.
 #
 #---------------------------------------------------------------------------------------------------
 
@@ -53,14 +53,11 @@ qt_add_library(
   API/PathPolicy.cpp
   API/ProcessLauncher.cpp
   API/TerminalBridge.cpp
-  API/EnumLabels.cpp
   API/Handlers/IOManagerHandler.cpp
   API/Handlers/UARTHandler.cpp
   API/Handlers/NetworkHandler.cpp
   API/Handlers/BluetoothLEHandler.cpp
   API/Handlers/CSVExportHandler.cpp
-  API/Handlers/ProblemsHandler.cpp
-  API/Handlers/DiagnosticsHandler.cpp
   API/Handlers/MirrorHandler.cpp
   API/Mirror/MirrorPublisher.cpp
   API/Mirror/MirrorClient.cpp
@@ -80,19 +77,13 @@ qt_add_library(
   API/Handlers/ProjectPainterCommands.cpp
   API/Handlers/ProjectParserCommands.cpp
   API/Handlers/ProjectUpdateCommands.cpp
-  API/Handlers/ConsoleHandler.cpp
   API/Handlers/ControlScriptHandler.cpp
   API/Handlers/CSVPlayerHandler.cpp
-  API/Handlers/ExtensionHandler.cpp
-  API/Handlers/DashboardHandler.cpp
   API/Handlers/DataTablesHandler.cpp
-  API/Handlers/WindowHandler.cpp
   API/Handlers/SourceHandler.cpp
   API/Handlers/SystemHandler.cpp
-  API/Handlers/WorkspacesHandler.cpp
   API/Handlers/ScriptsHandler.cpp
   API/Handlers/StreamHandler.cpp
-  API/Handlers/AssistantHandler.cpp
   API/Generated/DatasetApiFields.cpp
   API/Server.h
   API/Server/ServerWorker.h
@@ -102,7 +93,9 @@ qt_add_library(
   API/Server/ConnectionState.h
   API/Server/DeviceWriteVerdict.h
   API/Server/MirrorCommands.h
-  API/CommandProtocol.h
+  API/ICheckpointStore.h
+  API/HandlerContext.h
+  API/HandlerContext.cpp
   API/MCPProtocol.h
   API/SchemaBuilder.h
   API/CommandRegistry.h
@@ -111,14 +104,11 @@ qt_add_library(
   API/PathPolicy.h
   API/ProcessLauncher.h
   API/TerminalBridge.h
-  API/EnumLabels.h
   API/Handlers/IOManagerHandler.h
   API/Handlers/UARTHandler.h
   API/Handlers/NetworkHandler.h
   API/Handlers/BluetoothLEHandler.h
   API/Handlers/CSVExportHandler.h
-  API/Handlers/ProblemsHandler.h
-  API/Handlers/DiagnosticsHandler.h
   API/Handlers/MirrorHandler.h
   API/Mirror/MirrorProtocol.h
   API/Mirror/MirrorPublisher.h
@@ -139,19 +129,13 @@ qt_add_library(
   API/Handlers/ProjectPainterCommands.h
   API/Handlers/ProjectParserCommands.h
   API/Handlers/ProjectUpdateCommands.h
-  API/Handlers/ConsoleHandler.h
   API/Handlers/ControlScriptHandler.h
   API/Handlers/CSVPlayerHandler.h
-  API/Handlers/ExtensionHandler.h
-  API/Handlers/DashboardHandler.h
   API/Handlers/DataTablesHandler.h
-  API/Handlers/WindowHandler.h
   API/Handlers/SourceHandler.h
   API/Handlers/SystemHandler.h
-  API/Handlers/WorkspacesHandler.h
   API/Handlers/ScriptsHandler.h
   API/Handlers/StreamHandler.h
-  API/Handlers/AssistantHandler.h
 )
 
 add_library(SerialStudio::Api ALIAS SerialStudioApi)
@@ -177,10 +161,8 @@ if(BUILD_COMMERCIAL)
     API/Handlers/USBHandler.h
     API/Handlers/MqttHandler.h
     API/Handlers/InfluxHandler.h
-    API/Handlers/NotificationsHandler.h
     API/Handlers/ProcessHandler.h
     API/Handlers/SessionsHandler.h
-    API/Handlers/LicensingHandler.h
     API/Handlers/ModbusHandler.cpp
     API/Handlers/OpcUaHandler.cpp
     API/Handlers/S7Handler.cpp
@@ -195,39 +177,29 @@ if(BUILD_COMMERCIAL)
     API/Handlers/MqttHandler.cpp
     API/Handlers/InfluxHandler.cpp
     API/Handlers/ProcessHandler.cpp
-    API/Handlers/LicensingHandler.cpp
-    API/Handlers/NotificationsHandler.cpp
     API/Handlers/SessionsHandler.cpp
   )
 endif()
 
 #---------------------------------------------------------------------------------------------------
-# Include roots -- the transitional debt
+# Include roots -- the layer graph
 #---------------------------------------------------------------------------------------------------
 #
-# Every partition directory is an include root and so is app/src, which is what keeps every
-# #include line in the moved tree byte-identical. It is deliberate debt, not a layering statement:
-# scripts/layer-verify.py counts the upward and sideways includes per directed edge against a
-# checked-in baseline and fails on growth, and each follow-up spec drives one edge to zero.
+# This partition keeps its own relative include root plus the roots of the layers below it that
+# it may include (spec 0077). Nothing from app/src and nothing sideways: scripts/layer-verify.py
+# fails on an include outside the graph and on a root or a link this list does not justify. The
+# commercial token's generated guards header arrives through SerialStudio::Core.
 #
 #---------------------------------------------------------------------------------------------------
 
 target_include_directories(
   SerialStudioApi PUBLIC
 
+  ${CMAKE_SOURCE_DIR}/core/Api
   ${CMAKE_SOURCE_DIR}/core/Pipeline
   ${CMAKE_SOURCE_DIR}/core/Devices
   ${CMAKE_SOURCE_DIR}/core/Storage
-  ${CMAKE_SOURCE_DIR}/core/Api
-  ${CMAKE_SOURCE_DIR}/core/Ui
-  ${CMAKE_SOURCE_DIR}/app/src
 )
-
-# API/Handlers/LicensingHandler.cpp gates its Pro entry points on Licensing/CommercialToken.h,
-# which the generated guards header backs.
-if(BUILD_COMMERCIAL AND LICENSE_GUARDS_INCLUDE_DIR)
-  target_include_directories(SerialStudioApi PRIVATE ${LICENSE_GUARDS_INCLUDE_DIR})
-endif()
 
 target_link_libraries(
   SerialStudioApi PUBLIC
@@ -235,7 +207,9 @@ target_link_libraries(
   ${QT_LIBS}
 
   SerialStudio::Core
-  SerialStudio::Protocols
+  SerialStudio::Pipeline
+  SerialStudio::Devices
+  SerialStudio::Storage
   luajit
   QCodeEditor
 )

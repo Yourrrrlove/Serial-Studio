@@ -25,7 +25,7 @@
 #include <QJsonObject>
 #include <QString>
 
-#include "IO/Drivers/OpcUaWire.h"
+#include "Protocols/OpcUa/OpcUaWire.h"
 
 namespace IO {
 namespace Drivers {

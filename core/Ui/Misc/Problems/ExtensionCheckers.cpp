@@ -24,6 +24,7 @@
 #include <QCoreApplication>
 #include <QString>
 
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
 #include "Misc/ProblemCenter.h"
 #include "UI/WidgetExtensions.h"
@@ -147,7 +148,7 @@ static void checkCatalogFindings(QList<Finding>& out)
  */
 static void checkProjectReferences(QList<Finding>& out)
 {
-  static auto& project = DataModel::ProjectModel::instance();
+  auto& project = DataModel::pipelineModules().projectModel;
 
   const auto& groups = project.groups();
   for (const auto& group : groups) {

@@ -730,7 +730,7 @@ Item {
 
             text: model.widgetName
             forceHidden: Cpp_UI_Dashboard.frozen
-            icon.source: SerialStudio.dashboardWidgetIcon(model.widgetType)
+            icon.source: SerialStudioHelpers.dashboardWidgetIcon(model.widgetType)
             forceVisible: Cpp_UI_TaskbarSettings.showTaskbarButtons
                           || (taskBar && taskBar.hasMaximizedWindow)
 

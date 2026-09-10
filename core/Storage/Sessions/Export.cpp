@@ -26,24 +26,26 @@
 #  include <QSqlError>
 #  include <QtEndian>
 
-#  include "AppInfo.h"
 #  include "AppState.h"
+#  include "Core/AppInfo.h"
+#  include "Core/Bus/MessageBus.h"
+#  include "Core/Bus/Messages.h"
+#  include "Core/Licensing/CommercialToken.h"
+#  include "Core/Services.h"
 #  include "Core/SSAssert.h"
+#  include "Core/TimerEvents.h"
 #  include "CSV/Player.h"
 #  include "DataModel/FrameBuilder.h"
+#  include "DataModel/PipelineModules.h"
 #  include "DataModel/ProjectModel.h"
 #  include "DataModel/Scripting/ControlScript.h"
 #  include "DataModel/Scripting/FrameParser.h"
 #  include "DataModel/Scripting/NativeTemplates/NativeTemplate.h"
-#  include "IO/ConnectionManager.h"
-#  include "Licensing/CommercialToken.h"
-#  include "Licensing/LemonSqueezy.h"
+#  include "IO/PipelineHost.h"
 #  include "MDF4/Player.h"
-#  include "Misc/TimerEvents.h"
-#  include "Misc/WorkspaceManager.h"
+#  include "Replay/PlayerState.h"
 #  include "Sessions/DatabaseManager.h"
 #  include "Sessions/StreamBlockCodec.h"
-#  include "UI/Dashboard.h"
 
 //--------------------------------------------------------------------------------------------------
 // Constants
@@ -878,21 +880,22 @@ Sessions::Export::Export()
   , m_linkOverflowBytes(0)
   , m_lastLinkDroppedSample(0)
   , m_lastLinkOverflowSample(0)
-  , m_appState(&AppState::instance())
-  , m_projectModel(&DataModel::ProjectModel::instance())
-  , m_frameBuilder(&DataModel::FrameBuilder::instance())
+  , m_appState(&DataModel::pipelineModules().appState)
+  , m_projectModel(&DataModel::pipelineModules().projectModel)
+  , m_frameBuilder(&DataModel::pipelineModules().frameBuilder)
   , m_controlScript(nullptr)
-  , m_connectionManager(nullptr)
-  , m_dashboard(nullptr)
+  , m_pipelineHost(nullptr)
+  , m_bus(nullptr)
 {
+  connect(
+    this, &Sessions::Export::enabledChanged, this, &DataModel::IBlockSink::sinkActivityChanged);
   initializeWorker();
 
-  static auto& lemonSqueezy = Licensing::LemonSqueezy::instance();
-  connect(&lemonSqueezy, &Licensing::LemonSqueezy::activatedChanged, this, [this] {
-    if (exportEnabled()
-        && (!Licensing::CommercialToken::current().isValid() || !SS_LICENSE_GUARD()))
-      setExportEnabled(false);
-  });
+  m_licenseWatch = Core::services().bus.subscribe<Core::Bus::LicenseStateChanged>(
+    this, [this](const std::shared_ptr<const Core::Bus::LicenseStateChanged>& license) {
+      if (exportEnabled() && (!license->activated || !SS_LICENSE_GUARD()))
+        setExportEnabled(false);
+    });
 }
 
 /**
@@ -963,6 +966,14 @@ bool Sessions::Export::exportEnabled() const
 }
 
 /**
+ * @brief The publisher's verdict for this sink: the historian consumes blocks while enabled.
+ */
+bool Sessions::Export::sinkActive() const noexcept
+{
+  return exportEnabled();
+}
+
+/**
  * @brief Returns the row id of the session currently being recorded, or -1.
  */
 int Sessions::Export::currentSessionId() const
@@ -990,6 +1001,15 @@ void Sessions::Export::closeFile()
 }
 
 /**
+ * @brief Adopts the root-owned message bus this module publishes on and subscribes to.
+ */
+void Sessions::Export::attachMessageBus(Core::Bus::MessageBus& bus)
+{
+  SS_ASSERT(m_bus == nullptr, return);
+  m_bus = &bus;
+}
+
+/**
  * @brief Wires external signals for auto-close on disconnect.
  */
 void Sessions::Export::setupExternalConnections()
@@ -1005,17 +1025,17 @@ void Sessions::Export::setupExternalConnections()
       QMetaObject::invokeMethod(
         worker, [worker, frame] { worker->applyPublishedStructure(frame); }, Qt::QueuedConnection);
     });
-  m_controlScript     = &DataModel::ControlScript::instance();
-  m_connectionManager = &IO::ConnectionManager::instance();
+  m_controlScript = &DataModel::pipelineModules().controlScript;
+  m_pipelineHost  = &DataModel::pipelineModules().pipelineHost;
 
-  connect(&AppState::instance(), &AppState::operationModeChanged, this, [this] {
-    const auto mode = AppState::instance().operationMode();
-    if (isOpen())
-      closeFile();
+  m_closeOnModeChange = m_bus->subscribe<Core::Bus::OperationModeChanged>(
+    this, [this](const std::shared_ptr<const Core::Bus::OperationModeChanged>& message) {
+      if (isOpen())
+        closeFile();
 
-    if (mode == SerialStudio::ConsoleOnly && exportEnabled())
-      setExportEnabled(false);
-  });
+      if (message->mode == SerialStudio::ConsoleOnly && exportEnabled())
+        setExportEnabled(false);
+    });
 
   connect(m_frameBuilder,
           &DataModel::FrameBuilder::sessionStructureReady,
@@ -1040,7 +1060,7 @@ void Sessions::Export::setupExternalConnections()
       closeFile();
   });
 
-  auto& pm = DataModel::ProjectModel::instance();
+  auto& pm = DataModel::pipelineModules().projectModel;
   connect(&pm,
           &DataModel::ProjectModel::jsonFileChanged,
           this,
@@ -1075,12 +1095,12 @@ void Sessions::Export::setupExternalConnections()
           this,
           &Sessions::Export::refreshProjectSnapshot);
 
-  connect(&AppState::instance(),
-          &AppState::operationModeChanged,
-          this,
-          &Sessions::Export::refreshProjectSnapshot);
+  m_snapshotOnModeChange = m_bus->subscribe<Core::Bus::OperationModeChanged>(
+    this, [this](const std::shared_ptr<const Core::Bus::OperationModeChanged>&) {
+      refreshProjectSnapshot();
+    });
 
-  connect(&Misc::TimerEvents::instance(),
+  connect(&Core::services().timerEvents,
           &Misc::TimerEvents::timeout1Hz,
           this,
           &Sessions::Export::captureTableSnapshots);
@@ -1105,34 +1125,32 @@ void Sessions::Export::onSessionBoundary(bool connected, bool paused)
 }
 
 /**
- * @brief Wires the spec-0062 view-state capture: the dashboard's change signal into the snapshot,
- *        and a 1.5 s single-shot debounce into the worker push.
+ * @brief Wires the spec-0062 view-state capture: the dashboard's retained view-state topic into
+ *        the snapshot (replaying the current one), and a 1.5 s single-shot debounce into the
+ *        worker push.
  */
 void Sessions::Export::wireViewState()
 {
-  // code-verify off
-  // This IS the setupExternalConnections capture the rule asks for: Dashboard is built last in
-  // the composition root, so a ctor-init-list capture would recurse the Meyers guard and abort.
-  m_dashboard = &UI::Dashboard::instance();
-  // code-verify on
+  SS_ASSERT(m_bus != nullptr, return);
   m_viewStateDebounce.setSingleShot(true);
   m_viewStateDebounce.setInterval(kViewStateDebounceMs);
   connect(&m_viewStateDebounce, &QTimer::timeout, this, &Sessions::Export::pushViewStateToWorker);
-  connect(m_dashboard,
-          &UI::Dashboard::viewStateChanged,
-          this,
-          &Sessions::Export::refreshViewStateSnapshot);
-  refreshViewStateSnapshot();
+  m_viewStateWatch = m_bus->subscribe<Core::Bus::DashboardViewState>(
+    this,
+    [this](const std::shared_ptr<const Core::Bus::DashboardViewState>& state) {
+      refreshViewStateSnapshot(state->json);
+    },
+    Qt::AutoConnection,
+    true);
 }
 
 /**
  * @brief Main-thread-only: snapshots the dashboard view state (spec 0062) beside the project
  *        snapshot and arms the debounce that hands it to the worker while a session is open.
  */
-void Sessions::Export::refreshViewStateSnapshot()
+void Sessions::Export::refreshViewStateSnapshot(const QString& json)
 {
-  SS_ASSERT(m_dashboard != nullptr, return);
-  QByteArray payload = m_dashboard->viewStateJson().toUtf8();
+  QByteArray payload = json.toUtf8();
 
   {
     QMutexLocker locker(&m_projectSnapshotMutex);
@@ -1228,13 +1246,13 @@ void Sessions::Export::setRegressionBaselinePinned(const bool pinned)
 void Sessions::Export::resetSessionHealthBaseline()
 {
   SS_ASSERT(m_controlScript != nullptr, return);
-  SS_ASSERT(m_connectionManager != nullptr, return);
+  SS_ASSERT(m_pipelineHost != nullptr, return);
 
   m_writeFailure.store(false, std::memory_order_relaxed);
   m_rawOverruns.store(0, std::memory_order_relaxed);
   m_droppedBlocks.store(0, std::memory_order_relaxed);
 
-  const auto stats         = m_connectionManager->linkStats();
+  const auto stats         = m_pipelineHost->linkStats();
   m_lastLinkDroppedSample  = stats.droppedFrames;
   m_lastLinkOverflowSample = stats.overflowBytes;
   m_linkDroppedFrames.store(0, std::memory_order_relaxed);
@@ -1249,12 +1267,12 @@ void Sessions::Export::resetSessionHealthBaseline()
 void Sessions::Export::sampleSessionHealth()
 {
   SS_ASSERT(m_controlScript != nullptr, return);
-  SS_ASSERT(m_connectionManager != nullptr, return);
+  SS_ASSERT(m_pipelineHost != nullptr, return);
 
   if (m_controlScript->running())
     m_controlScriptSeen.store(true, std::memory_order_relaxed);
 
-  const auto stats = m_connectionManager->linkStats();
+  const auto stats = m_pipelineHost->linkStats();
 
   const quint64 droppedDelta  = stats.droppedFrames >= m_lastLinkDroppedSample
                                 ? stats.droppedFrames - m_lastLinkDroppedSample
@@ -1381,6 +1399,14 @@ void Sessions::Export::hotpathTxRawBytes(int deviceId, const IO::CapturedDataPtr
   }
 
   noteSecondaryEnqueued(m_rawBytesQueue.size_approx());
+}
+
+/**
+ * @brief Raw-tap entry (spec 0077): the device router hands every received chunk here.
+ */
+void Sessions::Export::onDeviceBytes(int deviceId, const IO::CapturedDataPtr& data)
+{
+  hotpathTxRawBytes(deviceId, data);
 }
 
 /**

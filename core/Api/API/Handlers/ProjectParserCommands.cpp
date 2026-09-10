@@ -26,17 +26,19 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
+#include "API/HandlerContext.h"
 #include "API/Handlers/ProjectApiSupport.h"
 #include "API/SchemaBuilder.h"
 #include "AppState.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
-#include "DataModel/Frame.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
 #include "DataModel/Scripting/CFrameParser.h"
 #include "DataModel/Scripting/FrameParser.h"
 #include "DataModel/Scripting/NativeTemplates/NativeTemplate.h"
 #include "IO/ConnectionManager.h"
-#include "SerialStudio.h"
 
 using namespace API::Handlers::ProjectApiSupport;
 
@@ -78,7 +80,7 @@ static void applyNativeTemplate(int sourceId,
   const auto params =
     templateParams.isEmpty() ? DataModel::nativeTemplateDefaults(*tmpl) : templateParams;
 
-  static auto& model = DataModel::ProjectModel::instance();
+  auto& model = DataModel::pipelineModules().projectModel;
   model.updateSourceFrameParserLanguage(sourceId, SerialStudio::Native);
   model.updateSourceFrameParserParams(sourceId, params);
   model.updateSourceFrameParserTemplate(sourceId, templateId);
@@ -113,7 +115,7 @@ static API::CommandResponse setNativeParserFromDescriptor(const QString& id,
   result[Keys::SourceId]             = sourceId;
   result[QStringLiteral("language")] = static_cast<int>(SerialStudio::Native);
   result[QStringLiteral("template")] = template_id;
-  static auto& model                 = DataModel::ProjectModel::instance();
+  auto& model                        = DataModel::pipelineModules().projectModel;
   result[QStringLiteral("params")]   = model.frameParserParams(sourceId);
   return API::CommandResponse::makeSuccess(id, result);
 }
@@ -362,7 +364,7 @@ API::CommandResponse API::Handlers::ProjectParserCommands::parserSetCode(const Q
 
   const QString code = params.value(QStringLiteral("code")).toString();
   const int sourceId = params.contains(Keys::SourceId) ? params.value(Keys::SourceId).toInt() : 0;
-  static auto& model = DataModel::ProjectModel::instance();
+  auto& model        = DataModel::pipelineModules().projectModel;
   const int srcCount = static_cast<int>(model.sources().size());
 
   if (sourceId < 0 || sourceId >= srcCount)
@@ -387,7 +389,7 @@ API::CommandResponse API::Handlers::ProjectParserCommands::parserSetCode(const Q
 
     model.updateSourceFrameParserLanguage(sourceId, language);
 
-    static auto& parser     = DataModel::FrameParser::instance();
+    auto& parser            = DataModel::pipelineModules().frameParser;
     const bool prevSuppress = model.suppressMessageBoxes();
     model.setSuppressMessageBoxes(true);
     parser.setSuppressMessageBoxes(true);
@@ -434,7 +436,7 @@ API::CommandResponse API::Handlers::ProjectParserCommands::parserGetCode(const Q
                                                                          const QJsonObject& params)
 {
   const int sourceId = params.contains(Keys::SourceId) ? params.value(Keys::SourceId).toInt() : 0;
-  static auto& model = DataModel::ProjectModel::instance();
+  auto& model        = DataModel::pipelineModules().projectModel;
   const int srcCount = static_cast<int>(model.sources().size());
 
   if (sourceId < 0 || sourceId >= srcCount)
@@ -489,7 +491,7 @@ API::CommandResponse API::Handlers::ProjectParserCommands::parserSetLanguage(
       ErrorCode::InvalidParam,
       QStringLiteral("Invalid language: must be 0 (JavaScript), 1 (Lua) or 2 (Built-In)"));
 
-  static auto& model  = DataModel::ProjectModel::instance();
+  auto& model         = DataModel::pipelineModules().projectModel;
   const auto& sources = model.sources();
   const auto it =
     std::find_if(sources.begin(), sources.end(), [sourceId](const DataModel::Source& s) {
@@ -503,10 +505,10 @@ API::CommandResponse API::Handlers::ProjectParserCommands::parserSetLanguage(
   model.updateSourceFrameParserLanguage(sourceId, language);
 
   if (language != SerialStudio::Native || model.frameParserTemplate(sourceId).isEmpty()) {
-    static auto& parser = DataModel::FrameParser::instance();
+    auto& parser = DataModel::pipelineModules().frameParser;
     parser.loadDefaultTemplate(sourceId, true);
   } else {
-    static auto& parser = DataModel::FrameParser::instance();
+    auto& parser = DataModel::pipelineModules().frameParser;
     parser.readCode();
   }
 
@@ -524,7 +526,7 @@ API::CommandResponse API::Handlers::ProjectParserCommands::parserGetLanguage(
 {
   const int sourceId = params.contains(Keys::SourceId) ? params.value(Keys::SourceId).toInt() : 0;
 
-  static auto& model  = DataModel::ProjectModel::instance();
+  auto& model         = DataModel::pipelineModules().projectModel;
   const auto& sources = model.sources();
   const auto it =
     std::find_if(sources.begin(), sources.end(), [sourceId](const DataModel::Source& s) {
@@ -586,7 +588,7 @@ API::CommandResponse API::Handlers::ProjectParserCommands::parserGetTemplate(
   const QString& id, const QJsonObject& params)
 {
   const int sourceId  = params.contains(Keys::SourceId) ? params.value(Keys::SourceId).toInt() : 0;
-  static auto& model  = DataModel::ProjectModel::instance();
+  auto& model         = DataModel::pipelineModules().projectModel;
   const auto& sources = model.sources();
   const auto it =
     std::find_if(sources.begin(), sources.end(), [sourceId](const DataModel::Source& s) {
@@ -616,7 +618,7 @@ API::CommandResponse API::Handlers::ProjectParserCommands::parserSetTemplate(
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: template"));
 
   const int sourceId  = params.contains(Keys::SourceId) ? params.value(Keys::SourceId).toInt() : 0;
-  static auto& model  = DataModel::ProjectModel::instance();
+  auto& model         = DataModel::pipelineModules().projectModel;
   const auto& sources = model.sources();
   const auto it =
     std::find_if(sources.begin(), sources.end(), [sourceId](const DataModel::Source& s) {
@@ -650,9 +652,9 @@ API::CommandResponse API::Handlers::ProjectParserCommands::parserSetTemplate(
  */
 static bool configurePrimarySourceFrame(const QJsonObject& params)
 {
-  static auto& model   = DataModel::ProjectModel::instance();
-  static auto& manager = IO::ConnectionManager::instance();
-  bool updated         = false;
+  auto& model   = DataModel::pipelineModules().projectModel;
+  auto& manager = API::handlerContext().connectionManager;
+  bool updated  = false;
 
   if (params.contains(QStringLiteral("startSequence"))) {
     const QString start = params.value(QStringLiteral("startSequence")).toString();
@@ -705,7 +707,7 @@ static bool configurePrimarySourceFrame(const QJsonObject& params)
  */
 static bool configureSecondarySourceFrame(const QJsonObject& params, int sourceId)
 {
-  static auto& model    = DataModel::ProjectModel::instance();
+  auto& model           = DataModel::pipelineModules().projectModel;
   DataModel::Source src = model.sources()[sourceId];
   bool updated          = false;
 
@@ -757,9 +759,9 @@ static bool configureSecondarySourceFrame(const QJsonObject& params, int sourceI
 API::CommandResponse API::Handlers::ProjectParserCommands::frameParserConfigure(
   const QString& id, const QJsonObject& params)
 {
-  static auto& model   = DataModel::ProjectModel::instance();
-  static auto& manager = IO::ConnectionManager::instance();
-  bool updated         = false;
+  auto& model   = DataModel::pipelineModules().projectModel;
+  auto& manager = API::handlerContext().connectionManager;
+  bool updated  = false;
 
   const int sourceId = params.contains(Keys::SourceId) ? params.value(Keys::SourceId).toInt() : 0;
   const int srcCount = static_cast<int>(model.sources().size());
@@ -771,7 +773,7 @@ API::CommandResponse API::Handlers::ProjectParserCommands::frameParserConfigure(
   if (params.contains(QStringLiteral("operationMode"))) {
     const int modeIdx = params.value(QStringLiteral("operationMode")).toInt();
     if (modeIdx >= 0 && modeIdx <= 2) {
-      static auto& appState = AppState::instance();
+      auto& appState = DataModel::pipelineModules().appState;
       appState.setOperationMode(static_cast<SerialStudio::OperationMode>(modeIdx));
       updated = true;
     }
@@ -799,8 +801,8 @@ API::CommandResponse API::Handlers::ProjectParserCommands::frameParserGetConfig(
 {
   Q_UNUSED(params)
 
-  static auto& appState = AppState::instance();
-  const auto& cfg       = appState.frameConfig();
+  auto& appState  = DataModel::pipelineModules().appState;
+  const auto& cfg = appState.frameConfig();
 
   QJsonArray startArr, endArr;
   for (const auto& s : cfg.startSequences)

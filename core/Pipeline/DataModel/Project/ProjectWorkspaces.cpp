@@ -24,18 +24,21 @@
 #include <algorithm>
 #include <QInputDialog>
 #include <QJsonObject>
-#include <QMessageBox>
 #include <QTimer>
 
 #include "AppState.h"
+#include "Core/DataModel/FrameSupport.h"
+#include "Core/IconRegistry.h"
+#include "Core/License.h"
+#include "Core/Prompt/UserPrompt.h"
+#include "Core/Services.h"
 #include "Core/SSAssert.h"
 #include "DataModel/FrameBuilder.h"
+#include "DataModel/Project/EntityKinds.h"
 #include "DataModel/Project/ProjectFolders.h"
 #include "DataModel/Project/ProjectPresentation.h"
-#include "DataModel/ProjectEditor.h"
 #include "DataModel/ProjectModel.h"
-#include "Misc/IconRegistry.h"
-#include "Misc/Utilities.h"
+#include "DataModel/WidgetResolution.h"
 
 namespace DataModel {
 
@@ -748,9 +751,8 @@ void DataModel::ProjectWorkspaces::promptAddWorkspace()
     return;
 
   const int newId = addWorkspace(name.trimmed());
-  QTimer::singleShot(0, &m_model, [newId] {
-    static auto& projectEditor = DataModel::ProjectEditor::instance();
-    projectEditor.selectWorkspace(newId);
+  QTimer::singleShot(0, &m_model, [this, newId] {
+    Q_EMIT m_model.editorSelectionRequested(DataModel::KindWorkspace, newId, QString());
   });
 }
 
@@ -786,15 +788,14 @@ void DataModel::ProjectWorkspaces::confirmDeleteWorkspace(int workspaceId)
   if (name.isEmpty())
     return;
 
-  const int choice =
-    Misc::Utilities::showMessageBox(ProjectModel::tr("Delete \"%1\"?").arg(name),
-                                    ProjectModel::tr("This action cannot be undone."),
-                                    QMessageBox::Warning,
-                                    ProjectModel::tr("Delete Workspace"),
-                                    QMessageBox::Yes | QMessageBox::Cancel,
-                                    QMessageBox::Cancel);
+  const int choice = Core::Prompt::showMessageBox(ProjectModel::tr("Delete \"%1\"?").arg(name),
+                                                  ProjectModel::tr("This action cannot be undone."),
+                                                  Core::Prompt::Warning,
+                                                  ProjectModel::tr("Delete Workspace"),
+                                                  Core::Prompt::Yes | Core::Prompt::Cancel,
+                                                  Core::Prompt::Cancel);
 
-  if (choice == QMessageBox::Yes)
+  if (choice == Core::Prompt::Yes)
     deleteWorkspace(workspaceId);
 }
 
@@ -825,7 +826,7 @@ std::vector<DataModel::Workspace> DataModel::ProjectWorkspaces::buildAutoWorkspa
   datasetIdx.insert(SerialStudio::DashboardExtension,
                     SerialStudio::extensionGroupWidgetCount(groups));
 
-  const bool pro = SerialStudio::activated();
+  const bool pro = Core::License::activated();
 
   std::vector<DataModel::WidgetRef> allRefs;
   std::vector<DataModel::WidgetRef> overviewRefs;
@@ -848,7 +849,7 @@ std::vector<DataModel::Workspace> DataModel::ProjectWorkspaces::buildAutoWorkspa
   if (eligibleGroups == 0)
     return result;
 
-  static auto& registry = Misc::IconRegistry::instance();
+  auto& registry = Core::services().iconRegistry;
   if (overviewRefs.size() >= 2) {
     DataModel::Workspace ws;
     ws.workspaceId = WorkspaceIds::Overview;
@@ -1129,16 +1130,16 @@ void DataModel::ProjectWorkspaces::confirmResetWorkspacesToAuto()
     return;
   }
 
-  const int choice = Misc::Utilities::showMessageBox(
+  const int choice = Core::Prompt::showMessageBox(
     ProjectModel::tr("Discard workspace customisations?"),
     ProjectModel::tr("Switching off Customize discards your edits and rebuilds the "
                      "workspace list from the project's groups."),
-    QMessageBox::Warning,
+    Core::Prompt::Warning,
     ProjectModel::tr("Customize Workspaces"),
-    QMessageBox::Yes | QMessageBox::Cancel,
-    QMessageBox::Cancel);
+    Core::Prompt::Yes | Core::Prompt::Cancel,
+    Core::Prompt::Cancel);
 
-  if (choice == QMessageBox::Yes)
+  if (choice == Core::Prompt::Yes)
     resetWorkspacesToAuto();
 }
 

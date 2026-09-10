@@ -26,6 +26,8 @@
 #include <QLocale>
 #include <utility>
 
+#include "Core/Bus/MessageBus.h"
+#include "Core/Bus/Messages.h"
 #include "Core/SSAssert.h"
 #include "Misc/Diagnostics/BluetoothChecks.h"
 #include "Misc/Diagnostics/NetworkChecks.h"
@@ -155,6 +157,8 @@ Misc::ConnectionDiagnostics::ConnectionDiagnostics()
   , m_problems(nullptr)
   , m_results()
   , m_autoRunClocks()
+  , m_bus(nullptr)
+  , m_openAttempts()
 {}
 
 /**
@@ -447,9 +451,19 @@ void Misc::ConnectionDiagnostics::onOpenSucceeded(Bus bus)
 //--------------------------------------------------------------------------------------------------
 
 /**
- * @brief Registers one problem-center checker per bus and wires the runner's completion. Each
- *        checker is a pure reader of the result cache: the collector's contract is synchronous,
- *        so an asynchronous probe can never live inside one.
+ * @brief Adopts the root-owned message bus this module publishes on and subscribes to.
+ */
+void Misc::ConnectionDiagnostics::attachMessageBus(Core::Bus::MessageBus& bus)
+{
+  SS_ASSERT(m_bus == nullptr, return);
+  m_bus = &bus;
+}
+
+/**
+ * @brief Registers one problem-center checker per bus, wires the runner's completion and
+ *        subscribes to the open verdicts the connection manager publishes. Each checker is a pure
+ *        reader of the result cache: the collector's contract is synchronous, so an asynchronous
+ *        probe can never live inside one.
  */
 void Misc::ConnectionDiagnostics::setupExternalConnections()
 {
@@ -464,6 +478,27 @@ void Misc::ConnectionDiagnostics::setupExternalConnections()
       Misc::ProblemCenter::OnDemand,
       [this, bus](QList<ProblemCenter::Finding>& out) { appendCached(bus, out); });
   }
+
+  SS_ASSERT(m_bus != nullptr, return);
+  m_openAttempts = m_bus->subscribe<Core::Bus::DeviceOpenAttempted>(
+    this, [this](const std::shared_ptr<const Core::Bus::DeviceOpenAttempted>& message) {
+      onOpenAttempted(*message);
+    });
+}
+
+/**
+ * @brief Routes one published open verdict to the success or failure hook; a bus ordinal outside
+ *        the declared taxonomy is dropped rather than indexed.
+ */
+void Misc::ConnectionDiagnostics::onOpenAttempted(const Core::Bus::DeviceOpenAttempted& message)
+{
+  SS_ASSERT(message.bus >= 0 && message.bus < kBusCount, return);
+
+  const auto bus = static_cast<Bus>(message.bus);
+  if (message.ok)
+    onOpenSucceeded(bus);
+  else
+    onOpenFailed(bus, message.reason);
 }
 
 //--------------------------------------------------------------------------------------------------

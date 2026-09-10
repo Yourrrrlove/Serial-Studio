@@ -29,9 +29,9 @@
 # removed from the executable's HEADERS list, or moc would run twice and the link would fail on
 # duplicate staticMetaObject symbols.
 #
-# This is a partition of the old monolith, not a clean layer: it still reaches sideways into
-# Pipeline, Devices, Api and Ui and upward into app/src. The include roots and the sibling links
-# below spell that debt out; scripts/layer-verify.py ratchets it down per directed edge.
+# A strict layer since spec 0077: it includes only itself and Core, Protocols and Pipeline, and the include
+# roots and links below say exactly that. scripts/layer-verify.py fails on an include, an
+# include root or a link outside that graph.
 #
 #---------------------------------------------------------------------------------------------------
 
@@ -51,6 +51,9 @@ qt_add_library(
   CSV/SparseRowMerger.h
   CSV/Export.h
   CSV/Player.h
+  Replay/PlayerState.h
+  Replay/LinkGate.h
+  Replay/LinkGate.cpp
   CSV/Player/FileIndexer.h
   CSV/Player/MultiSourceMap.h
   CSV/Player/RowCodec.h
@@ -64,13 +67,27 @@ qt_add_library(
 add_library(SerialStudio::Storage ALIAS SerialStudioStorage)
 
 #---------------------------------------------------------------------------------------------------
-# Pro sinks: Historian sessions and the InfluxDB writer
+# Pro sinks: Historian sessions, the InfluxDB writer and the MQTT publisher stack
 #---------------------------------------------------------------------------------------------------
 
 if(BUILD_COMMERCIAL)
   target_sources(
     SerialStudioStorage PRIVATE
 
+    MQTT/Publisher.h
+    MQTT/PublisherWorker.h
+    MQTT/BrokerOptions.h
+    MQTT/CsvExpansion.h
+    MQTT/NotificationPayload.h
+    MQTT/PublisherScript.h
+    MQTT/SparkplugPublisher.h
+    MQTT/Publisher.cpp
+    MQTT/PublisherWorker.cpp
+    MQTT/BrokerOptions.cpp
+    MQTT/CsvExpansion.cpp
+    MQTT/NotificationPayload.cpp
+    MQTT/PublisherScript.cpp
+    MQTT/SparkplugPublisher.cpp
     InfluxDB/LineProtocol.h
     InfluxDB/Export.h
     Sessions/BlockFingerprint.h
@@ -119,32 +136,22 @@ if(BUILD_COMMERCIAL)
 endif()
 
 #---------------------------------------------------------------------------------------------------
-# Include roots -- the transitional debt
+# Include roots -- the layer graph
 #---------------------------------------------------------------------------------------------------
 #
-# Every partition directory is an include root and so is app/src, which is what keeps every
-# #include line in the moved tree byte-identical. It is deliberate debt, not a layering statement:
-# scripts/layer-verify.py counts the upward and sideways includes per directed edge against a
-# checked-in baseline and fails on growth, and each follow-up spec drives one edge to zero.
+# This partition keeps its own relative include root plus the roots of the layers below it that
+# it may include (spec 0077). Nothing from app/src and nothing sideways: scripts/layer-verify.py
+# fails on an include outside the graph and on a root or a link this list does not justify. The
+# commercial token's generated guards header arrives through SerialStudio::Core.
 #
 #---------------------------------------------------------------------------------------------------
 
 target_include_directories(
   SerialStudioStorage PUBLIC
 
-  ${CMAKE_SOURCE_DIR}/core/Pipeline
-  ${CMAKE_SOURCE_DIR}/core/Devices
   ${CMAKE_SOURCE_DIR}/core/Storage
-  ${CMAKE_SOURCE_DIR}/core/Api
-  ${CMAKE_SOURCE_DIR}/core/Ui
-  ${CMAKE_SOURCE_DIR}/app/src
+  ${CMAKE_SOURCE_DIR}/core/Pipeline
 )
-
-# MDF4/Player.cpp, MDF4/Export.cpp, InfluxDB/Export.cpp and Sessions/Export.cpp gate their Pro
-# entry points on Licensing/CommercialToken.h, which the generated guards header backs.
-if(BUILD_COMMERCIAL AND LICENSE_GUARDS_INCLUDE_DIR)
-  target_include_directories(SerialStudioStorage PRIVATE ${LICENSE_GUARDS_INCLUDE_DIR})
-endif()
 
 target_link_libraries(
   SerialStudioStorage PUBLIC
@@ -153,6 +160,7 @@ target_link_libraries(
 
   SerialStudio::Core
   SerialStudio::Protocols
+  SerialStudio::Pipeline
 
   mdf
   luajit

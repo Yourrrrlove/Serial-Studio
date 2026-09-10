@@ -22,6 +22,7 @@
 #pragma once
 
 #include <QQuickItem>
+#include <QVariantList>
 #include <QVector>
 #include <vector>
 
@@ -42,6 +43,9 @@ class LEDPanel : public QQuickItem {
              CONSTANT)
   Q_PROPERTY(QStringList titles
              READ titles
+             CONSTANT)
+  Q_PROPERTY(QVariantList widgets
+             READ widgets
              CONSTANT)
   Q_PROPERTY(QStringList colors
              READ colors
@@ -69,6 +73,7 @@ public:
   [[nodiscard]] const QStringList& colors() const noexcept;
   [[nodiscard]] const QStringList& labels() const noexcept;
   [[nodiscard]] const QStringList& titles() const noexcept;
+  [[nodiscard]] const QVariantList& widgets() const noexcept;
 
 protected:
   void itemChange(ItemChange change, const ItemChangeData& value) override;
@@ -106,6 +111,7 @@ private:
   QStringList m_titles;
   QStringList m_colors;
   QStringList m_labels;
+  QVariantList m_widgets;
   std::vector<Led> m_leds;
 
   UI::Dashboard& m_dashboard;

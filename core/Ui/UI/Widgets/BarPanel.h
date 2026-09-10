@@ -56,6 +56,9 @@ class BarPanel : public QQuickItem {
   Q_PROPERTY(QVariantList bands
              READ bands
              CONSTANT)
+  Q_PROPERTY(QVariantList widgets
+             READ widgets
+             CONSTANT)
   Q_PROPERTY(int revision
              READ revision
              NOTIFY updated)
@@ -74,11 +77,13 @@ public:
   [[nodiscard]] const QStringList& units() const noexcept;
   [[nodiscard]] const QVector<bool>& ranged() const noexcept;
   [[nodiscard]] const QVariantList& bands() const noexcept;
+  [[nodiscard]] const QVariantList& widgets() const noexcept;
 
   Q_INVOKABLE [[nodiscard]] double frac(int row) const;
   Q_INVOKABLE [[nodiscard]] int severity(int row) const;
   Q_INVOKABLE [[nodiscard]] bool isNumeric(int row) const;
   Q_INVOKABLE [[nodiscard]] QString valueText(int row) const;
+  Q_INVOKABLE [[nodiscard]] QString rowColor(int row) const;
   Q_INVOKABLE [[nodiscard]] bool hasExtremes(int row) const;
   Q_INVOKABLE [[nodiscard]] double minSeenFrac(int row) const;
   Q_INVOKABLE [[nodiscard]] double maxSeenFrac(int row) const;
@@ -120,6 +125,7 @@ private:
   QStringList m_units;
   QStringList m_valueTexts;
   QVariantList m_bandsAsVariant;
+  QVariantList m_widgets;
   QVector<bool> m_ranged;
   QVector<bool> m_numeric;
   QVector<bool> m_extremesOk;

@@ -29,8 +29,14 @@
 #include <QString>
 
 #include "Core/Async/TaskTree.h"
+#include "Core/Bus/Subscription.h"
 #include "Misc/Diagnostics/DiagnosticsShared.h"
 #include "Misc/ProblemCenter.h"
+
+namespace Core::Bus {
+class MessageBus;
+struct DeviceOpenAttempted;
+}  // namespace Core::Bus
 
 namespace Misc {
 
@@ -80,6 +86,7 @@ private:
 
 public:
   [[nodiscard]] static ConnectionDiagnostics& instance();
+  void attachMessageBus(Core::Bus::MessageBus& bus);
 
   [[nodiscard]] bool running() const noexcept;
   [[nodiscard]] bool hasFailure() const noexcept;
@@ -111,6 +118,7 @@ private:
   void restoreStanding(BusMask scope, const ResultCache& standing);
   void appendCached(Bus bus, QList<ProblemCenter::Finding>& out) const;
   void addReachabilityProbe(Async::SequentialGroup* group, Bus bus);
+  void onOpenAttempted(const Core::Bus::DeviceOpenAttempted& message);
   void onRunFinished(Async::Outcome outcome, const Async::StepError& error);
 
   [[nodiscard]] bool allowAutoProbe(Bus bus);
@@ -125,6 +133,8 @@ private:
   Misc::ProblemCenter* m_problems;
   ResultCache m_results;
   std::array<QElapsedTimer, Diagnostics::kBusCount> m_autoRunClocks;
+  Core::Bus::MessageBus* m_bus;
+  Core::Bus::Subscription m_openAttempts;
 };
 
 }  // namespace Misc

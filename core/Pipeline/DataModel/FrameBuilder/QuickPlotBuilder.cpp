@@ -24,13 +24,26 @@
 #include <utility>
 #include <vector>
 
+#include "Core/Bus/MessageBus.h"
+#include "Core/Bus/Messages.h"
+#include "Core/Services.h"
 #include "Core/SSAssert.h"
-#include "IO/ConnectionManager.h"
 #include "IO/PipelineHost.h"
 
-#ifdef BUILD_COMMERCIAL
-#  include "IO/Drivers/Audio.h"
-#endif
+//--------------------------------------------------------------------------------------------------
+// Retained facts
+//--------------------------------------------------------------------------------------------------
+
+/**
+ * @brief The bus type of the primary source as the connection manager last retained it, or UART
+ *        before any link state was published.
+ */
+[[nodiscard]] static int activeBusType()
+{
+  const auto* bus = &Core::services().bus;
+  const auto link = bus ? bus->latest<Core::Bus::ConnectionStateChanged>() : nullptr;
+  return link ? link->busType : static_cast<int>(SerialStudio::BusType::UART);
+}
 
 //--------------------------------------------------------------------------------------------------
 // Construction
@@ -72,12 +85,10 @@ void DataModel::QuickPlotBuilder::setHeaders(const QStringList& headers)
  */
 DataModel::Source DataModel::QuickPlotBuilder::makeSource() const
 {
-  static auto& ioManager = IO::ConnectionManager::instance();
-
   DataModel::Source src;
   src.sourceId = 0;
   src.title    = tr("Device A");
-  src.busType  = static_cast<int>(ioManager.busType());
+  src.busType  = activeBusType();
   return src;
 }
 
@@ -92,9 +103,7 @@ void DataModel::QuickPlotBuilder::build(const QStringList& channels)
   SS_ASSERT(m_operationMode == SerialStudio::QuickPlot, return);
 
 #ifdef BUILD_COMMERCIAL
-  static auto& ioManager = IO::ConnectionManager::instance();
-  const auto busType     = ioManager.busType();
-  if (busType == SerialStudio::BusType::Audio) {
+  if (activeBusType() == static_cast<int>(SerialStudio::BusType::Audio)) {
     buildAudio(channels);
     return;
   }
@@ -158,10 +167,22 @@ void DataModel::QuickPlotBuilder::build(const QStringList& channels)
 
 #ifdef BUILD_COMMERCIAL
 /**
+ * @brief The miniaudio ma_format ordinals the AudioCaptureFormat topic carries, mirrored here so
+ *        the pipeline sizes the audio lane without the driver's header.
+ */
+enum AudioSampleFormat : int {
+  kAudioFormatU8  = 1,
+  kAudioFormatS16 = 2,
+  kAudioFormatS24 = 3,
+  kAudioFormatS32 = 4,
+  kAudioFormatF32 = 5,
+};
+
+/**
  * @brief Returns the numeric display range of a miniaudio capture format, or the normalized
  * -1..1 range when the driver publishes normalized samples.
  */
-static void audioFormatRange(ma_format fmt, bool normalized, double& minValue, double& maxValue)
+static void audioFormatRange(const int fmt, bool normalized, double& minValue, double& maxValue)
 {
   if (normalized) {
     minValue = -1.0;
@@ -170,23 +191,23 @@ static void audioFormatRange(ma_format fmt, bool normalized, double& minValue, d
   }
 
   switch (fmt) {
-    case ma_format_u8:
+    case kAudioFormatU8:
       maxValue = 255;
       minValue = 0;
       break;
-    case ma_format_s16:
+    case kAudioFormatS16:
       maxValue = 32767;
       minValue = -32768;
       break;
-    case ma_format_s24:
+    case kAudioFormatS24:
       maxValue = 8388607;
       minValue = -8388608;
       break;
-    case ma_format_s32:
+    case kAudioFormatS32:
       maxValue = 2147483647;
       minValue = -2147483648;
       break;
-    case ma_format_f32:
+    case kAudioFormatF32:
       maxValue = 1.0;
       minValue = -1.0;
       break;
@@ -207,19 +228,19 @@ void DataModel::QuickPlotBuilder::buildAudio(const QStringList& channels)
   SS_ASSERT(m_operationMode == SerialStudio::QuickPlot, return);
 
 #ifdef BUILD_COMMERCIAL
-  ma_format format = ma_format_unknown;
-  quint32 sampleRate{};
+  int format      = 0;
+  int sampleRate  = 0;
   bool haveAudio  = false;
   bool normalized = false;
   IO::PipelineHost::runOnGuiThreadBlocking([&] {
-    static auto& ioManager = IO::ConnectionManager::instance();
-    const auto* audioPtr   = ioManager.audio();
-    if (!audioPtr)
+    const auto* bus  = &Core::services().bus;
+    const auto audio = bus ? bus->latest<Core::Bus::AudioCaptureFormat>() : nullptr;
+    if (!audio)
       return;
 
-    format     = audioPtr->config().capture.format;
-    sampleRate = audioPtr->config().sampleRate;
-    normalized = audioPtr->normalization();
+    format     = audio->format;
+    sampleRate = audio->sampleRate;
+    normalized = audio->normalized;
     haveAudio  = true;
   });
 

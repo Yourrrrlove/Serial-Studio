@@ -24,7 +24,7 @@
 class AppState;
 
 namespace IO {
-class ConnectionManager;
+class IPayloadInjector;
 }  // namespace IO
 
 namespace DataModel {
@@ -45,7 +45,7 @@ public:
                            const ReplayLayout& layout,
                            AppState& appState,
                            DataModel::FrameBuilder& frameBuilder,
-                           IO::ConnectionManager& connectionManager);
+                           IO::IPayloadInjector& payloadInjector);
 
   ReplaySynthesis(ReplaySynthesis&&)                 = delete;
   ReplaySynthesis(const ReplaySynthesis&)            = delete;
@@ -72,7 +72,7 @@ private:
   const ReplayLayout& m_layout;
   AppState& m_appState;
   DataModel::FrameBuilder& m_frameBuilder;
-  IO::ConnectionManager& m_connectionManager;
+  IO::IPayloadInjector& m_payloadInjector;
   std::vector<PlayerStreamBlockIndex> m_streamBlocks;
   std::vector<std::vector<double>> m_streamChannelBuf;
 };

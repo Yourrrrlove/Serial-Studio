@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <utility>
 
 #include "Core/SSAssert.h"
 
@@ -151,7 +152,7 @@ UI::DashboardIngest::DashboardIngest(const IngestBindings& bindings, IngestHost&
 int UI::DashboardIngest::groupWidgetCount(const SerialStudio::DashboardWidget widget) const
 {
   const auto it = m_widgetGroups.constFind(widget);
-  return it != m_widgetGroups.cend() ? it->count() : 0;
+  return it != m_widgetGroups.cend() ? static_cast<int>(it->count()) : 0;
 }
 
 /**
@@ -161,7 +162,7 @@ int UI::DashboardIngest::groupWidgetCount(const SerialStudio::DashboardWidget wi
 int UI::DashboardIngest::datasetWidgetCount(const SerialStudio::DashboardWidget widget) const
 {
   const auto it = m_widgetDatasets.constFind(widget);
-  return it != m_widgetDatasets.cend() ? it->count() : 0;
+  return it != m_widgetDatasets.cend() ? static_cast<int>(it->count()) : 0;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -331,7 +332,7 @@ void UI::DashboardIngest::applyBlockColumn(const DataModel::BlockColumn& column,
 
     auto& ring = ringIt.value();
     for (std::size_t i = 0; i < count; ++i)
-      ring.appendDecimated(baseSec + static_cast<double>(i) * dtSec, column.values[i]);
+      ring.appendDecimated(baseSec + (static_cast<double>(i) * dtSec), column.values[i]);
 
     feedPlotBlockSweep(plotIndex, column, block, baseSec);
   }
@@ -350,7 +351,7 @@ void UI::DashboardIngest::applyBlockColumn(const DataModel::BlockColumn& column,
 
     auto& ring = rings[curveIndex];
     for (std::size_t i = 0; i < count; ++i)
-      ring.appendDecimated(baseSec + static_cast<double>(i) * dtSec, column.values[i]);
+      ring.appendDecimated(baseSec + (static_cast<double>(i) * dtSec), column.values[i]);
   }
 
   feedSampleRings(column, targets, block.sourceId, count);
@@ -496,7 +497,7 @@ void UI::DashboardIngest::feedPlotBlockSweep(int plotIndex,
 
   for (std::size_t i = 0; i < count; ++i) {
     const double value = column.values[i];
-    const double st    = sweep.advance(baseSec + static_cast<double>(i) * dtSec, value);
+    const double st    = sweep.advance(baseSec + (static_cast<double>(i) * dtSec), value);
     if (st >= 0)
       sweep.back[0].appendDecimated(st, value);
   }
@@ -541,7 +542,7 @@ void UI::DashboardIngest::feedMultiplotBlockSweep(int groupIndex,
   const auto count   = static_cast<std::size_t>(block.samples);
 
   for (std::size_t i = 0; i < count; ++i) {
-    const double st = sweep.advance(baseSec + static_cast<double>(i) * dtSec, trigger->values[i]);
+    const double st = sweep.advance(baseSec + (static_cast<double>(i) * dtSec), trigger->values[i]);
     if (st < 0)
       continue;
 
@@ -584,8 +585,9 @@ const UI::StreamTargets& UI::DashboardIngest::streamTargetsFor(int uniqueId)
         targets.waterfallIndexes.push_back(i);
 #endif
 
-  const auto groups    = m_widgetGroups.constFind(SerialStudio::DashboardMultiPlot);
-  const int groupCount = (groups != m_widgetGroups.cend()) ? groups.value().size() : 0;
+  const auto groups = m_widgetGroups.constFind(SerialStudio::DashboardMultiPlot);
+  const int groupCount =
+    (groups != m_widgetGroups.cend()) ? static_cast<int>(groups.value().size()) : 0;
   for (int g = 0; g < groupCount; ++g) {
     const auto& datasets = groups.value()[g].datasets;
     for (std::size_t c = 0; c < datasets.size(); ++c) {
@@ -653,7 +655,7 @@ double UI::DashboardIngest::advancePlotClock(int sourceId,
     // code-verify on
 
     clk.samplePeriodSec =
-      (clk.samplePeriodSec > 0) ? (0.8 * clk.samplePeriodSec + 0.2 * period) : period;
+      (clk.samplePeriodSec > 0) ? ((0.8 * clk.samplePeriodSec) + (0.2 * period)) : period;
     clk.groupStartSec = clk.relativeFrameTimeSec;
     clk.groupCount    = 1;
   }
@@ -792,7 +794,7 @@ void UI::DashboardIngest::updateDataSeries(int sourceId)
       sweep.back[j].appendDecimated(st, *p.timeCurves[j].value);
   };
 
-  SS_ASSERT_LOG(static_cast<int>(m_multiplotPushes.size()) == multiCount);
+  SS_ASSERT_LOG(std::cmp_equal(m_multiplotPushes.size(), multiCount));
   for (const auto& p : m_multiplotPushes) {
     if (!*p.activeFlag)
       continue;
@@ -979,7 +981,7 @@ void UI::DashboardIngest::updateWaterfallSeries(int sourceId)
 void UI::DashboardIngest::setFftAudioTap(const int index, const bool enabled, const quint32 key)
 {
   SS_ASSERT_LOG(static_cast<int>(m_fftPushes.size()) == m_fftValues.size());
-  if (index < 0 || index >= static_cast<int>(m_fftPushes.size()))
+  if (index < 0 || std::cmp_greater_equal(index, m_fftPushes.size()))
     return;
 
   m_fftPushes[index].record     = enabled;
@@ -996,7 +998,7 @@ void UI::DashboardIngest::setWaterfallAudioTap(const int index,
                                                const quint32 key)
 {
   SS_ASSERT_LOG(static_cast<int>(m_waterfallPushes.size()) == m_waterfallValues.size());
-  if (index < 0 || index >= static_cast<int>(m_waterfallPushes.size()))
+  if (index < 0 || std::cmp_greater_equal(index, m_waterfallPushes.size()))
     return;
 
   m_waterfallPushes[index].record     = enabled;
@@ -1051,7 +1053,7 @@ void UI::DashboardIngest::buildGpsPushes()
   for (int i = 0; i < gpsCount; ++i) {
     const auto& group = m_host.getGroupWidget(SerialStudio::DashboardGPS, i);
 
-    GpsPush push;
+    GpsPush push{};
     push.sourceId = group.sourceId;
     push.series   = &m_gpsValues[i];
     push.lat      = {&kNoGpsFix, &kNeverNumeric};
@@ -1090,7 +1092,7 @@ void UI::DashboardIngest::buildFftPushes()
   for (int i = 0; i < fftCount; ++i) {
     const auto& dataset = m_host.getDatasetWidget(SerialStudio::DashboardFFT, i);
 
-    SeriesPush push;
+    SeriesPush push{};
     push.sourceId   = dataset.sourceId;
     push.activeFlag = &m_activeFFTPlots[i];
     push.buf        = &m_fftValues[i];
@@ -1120,7 +1122,7 @@ void UI::DashboardIngest::buildWaterfallPushes()
   for (int i = 0; i < waterfallCount; ++i) {
     const auto& dataset = m_host.getDatasetWidget(SerialStudio::DashboardWaterfall, i);
 
-    SeriesPush push;
+    SeriesPush push{};
     push.sourceId   = dataset.sourceId;
     push.activeFlag = &m_activeWaterfalls[i];
     push.buf        = &m_waterfallValues[i];
@@ -1147,7 +1149,7 @@ void UI::DashboardIngest::buildPlot3DPushes()
   for (int i = 0; i < plot3DCount; ++i) {
     const auto& group = m_host.getGroupWidget(SerialStudio::DashboardPlot3D, i);
 
-    Plot3DPush push;
+    Plot3DPush push{};
     push.sourceId = group.sourceId;
     push.ring     = &m_plot3DRings[i];
     push.x        = &kZeroAxisSource;

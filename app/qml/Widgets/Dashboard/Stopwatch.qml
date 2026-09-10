@@ -380,7 +380,8 @@ Item {
         }
 
         ScrollBar.vertical: ScrollBar {
-          policy: ScrollBar.AsNeeded
+          policy: lapList.contentHeight > lapList.height ? ScrollBar.AlwaysOn
+                                                         : ScrollBar.AlwaysOff
         }
 
         delegate: Rectangle {

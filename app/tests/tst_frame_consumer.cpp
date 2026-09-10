@@ -24,8 +24,8 @@
 #include <QTest>
 #include <type_traits>
 
-#include "DataModel/Frame.h"
-#include "DataModel/FrameConsumer.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/DataModel/FrameConsumer.h"
 
 // Every test function here is self-contained: no state is carried between slots, so Qt Test's
 // declaration-order execution is never load-bearing. Every clock value is an explicit

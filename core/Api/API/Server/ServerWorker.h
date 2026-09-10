@@ -28,9 +28,9 @@
 #include <QSet>
 #include <QTcpSocket>
 
-#include "DataModel/DataBlock.h"
-#include "DataModel/Frame.h"
-#include "DataModel/FrameConsumer.h"
+#include "Core/DataModel/DataBlock.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/DataModel/FrameConsumer.h"
 
 namespace API {
 

@@ -28,8 +28,8 @@
 #include <QTest>
 #include <vector>
 
-#include "API/CommandProtocol.h"
 #include "API/Server/ClientReception.h"
+#include "Core/Api/CommandProtocol.h"
 
 /**
  * @brief A host that keeps its connections in the same shape Server does -- a QHash keyed by

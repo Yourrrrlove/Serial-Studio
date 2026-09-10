@@ -23,6 +23,7 @@
 
 #include "Core/SSAssert.h"
 #include "UI/Dashboard.h"
+#include "UI/Widgets/DatasetWidgetLinks.h"
 
 //--------------------------------------------------------------------------------------------------
 // DataGridRowsModel: backing list model
@@ -283,50 +284,12 @@ void Widgets::DataGrid::rebuildRows()
     cache.isNumeric = dataset.isNumeric;
     cache.raw       = dataset.value;
     cache.formatted = formatValue(dataset);
-    rows.append({dataset.title, cache.formatted, datasetWidgets(dataset)});
+    rows.append({dataset.title, cache.formatted, datasetWidgetLinks(m_dashboard, dataset)});
     m_valueCache.push_back(std::move(cache));
   }
 
   m_rowsModel->reset(rows);
   m_lastRowCount = rows.size();
-}
-
-/**
- * @brief Builds the icon-button metadata for every dashboard widget displaying
- *        @p dataset: one {windowId, icon, title} map per widget, in dashboard order,
- *        so the QML side stays a plain Repeater. Plot entries are appended last so the
- *        right-aligned plot button lands in the same column on every row that has one.
- */
-QVariantList Widgets::DataGrid::datasetWidgets(const DataModel::Dataset& dataset) const
-{
-  SS_ASSERT(VALIDATE_WIDGET(SerialStudio::DashboardDataGrid, m_index), return {});
-
-  QVariantList widgets;
-  QVariantList plots;
-  const auto& map = m_dashboard.widgetMap();
-  for (auto it = map.constBegin(); it != map.constEnd(); ++it) {
-    const auto type = it.value().first;
-    if (!SerialStudio::isDatasetWidget(type))
-      continue;
-
-    const auto& shown = GET_DATASET(type, it.value().second);
-    if (shown.sourceId != dataset.sourceId || shown.groupId != dataset.groupId
-        || shown.datasetId != dataset.datasetId)
-      continue;
-
-    QVariantMap entry;
-    entry.insert(QStringLiteral("windowId"), it.key());
-    entry.insert(QStringLiteral("icon"), SerialStudio::dashboardWidgetIcon(type));
-    entry.insert(QStringLiteral("title"), SerialStudio::dashboardWidgetTitle(type));
-
-    if (type == SerialStudio::DashboardPlot)
-      plots.append(entry);
-    else
-      widgets.append(entry);
-  }
-
-  widgets += plots;
-  return widgets;
 }
 
 /**

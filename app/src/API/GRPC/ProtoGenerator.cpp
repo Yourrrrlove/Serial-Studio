@@ -18,7 +18,7 @@
 #  include <QTextStream>
 
 #  include "API/CommandRegistry.h"
-#  include "SerialStudio.h"
+#  include "Core/SerialStudio.h"
 
 //--------------------------------------------------------------------------------------------------
 // Public methods

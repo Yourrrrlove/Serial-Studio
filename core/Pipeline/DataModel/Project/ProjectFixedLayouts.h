@@ -21,8 +21,8 @@
 
 #pragma once
 
-#include "DataModel/Frame.h"
-#include "SerialStudio.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/SerialStudio.h"
 
 /**
  * @brief The canonical dataset layouts of the fixed-shape group widgets (accelerometer, gyroscope,

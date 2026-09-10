@@ -89,7 +89,7 @@ Item {
       return root.focused ? Cpp_ThemeManager.colors["window_caption_active_top"]
                           : Cpp_ThemeManager.colors["window_caption_inactive_top"]
 
-    const top = SerialStudio.getDeviceTopColor(root.deviceIndex + 1)
+    const top = SerialStudioHelpers.getDeviceTopColor(root.deviceIndex + 1)
     if (root.focused)
       return top
 
@@ -103,7 +103,7 @@ Item {
       return root.focused ? Cpp_ThemeManager.colors["window_caption_active_bottom"]
                           : Cpp_ThemeManager.colors["window_caption_inactive_bottom"]
 
-    const bot = SerialStudio.getDeviceBottomColor(root.deviceIndex + 1)
+    const bot = SerialStudioHelpers.getDeviceBottomColor(root.deviceIndex + 1)
     if (root.focused)
       return bot
 

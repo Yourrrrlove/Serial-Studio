@@ -33,7 +33,9 @@ Design choices specific to this repo:
     burn the tokens this hook exists to avoid).
   - The expected line is duplicated from CLAUDE.md on purpose: reading it
     from the doc at check time would let a corrupted doc validate itself.
-    If CLAUDE.md's canary changes, update EXPECTED_CANARY here in lockstep.
+    The `qt-version` anchor in scripts/doc-anchors.json binds this copy, so
+    claim-verify.py fails when either side drifts (the 2026-08-20 Qt bump
+    left this file three weeks behind, warning on every healthy turn).
 """
 
 import json
@@ -44,7 +46,7 @@ RETRY_ATTEMPTS = 8
 RETRY_DELAY_S = 0.4
 
 EXPECTED_CANARY = (
-    "canary: qt 6.11.1 | cpp20 | hotpath 256k (native 1024k, js 64k) "
+    "canary: qt 6.11.2 | cpp20 | hotpath 256k (native 1024k, js 64k) "
     "| queue 65536 | api 7777 | style 100/2"
 )
 LOST_MARKER = "canary: lost"

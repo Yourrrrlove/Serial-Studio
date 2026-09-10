@@ -20,22 +20,31 @@
  */
 
 #include <limits>
+#include <QColor>
 #include <QString>
 #include <QTest>
 
-#include "DataModel/Project/PropertyHooks.h"
-#include "SerialStudio.h"
+#include "Core/DataModel/PropertyValidators.h"
+#include "Core/SerialStudio.h"
 
 // Every test function here is self-contained: no state is carried between slots, so Qt Test's
 // declaration-order execution is never load-bearing.
 
 /**
- * @brief Boundary sweep of the four ProjectModel-free validators in PropertyValidators.cpp.
+ * @brief Boundary sweep of the four ProjectModel-free validators in PropertyValidators.cpp; the
+ *        colour hook is installed the way the composition root installs it.
  */
 class TstPropertyValidators : public QObject {
   Q_OBJECT
 
 private slots:
+
+  void initTestCase()
+  {
+    DataModel::PropertyHooks::setColorValidator(
+      [](const QString& color) { return QColor::fromString(color).isValid(); });
+  }
+
   void isValidColor_data();
   void isValidColor();
 

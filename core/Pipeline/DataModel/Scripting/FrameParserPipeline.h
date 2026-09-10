@@ -29,8 +29,8 @@
 #include <QStringList>
 #include <QVector>
 
+#include "Core/SerialStudio.h"
 #include "DataModel/Scripting/ReplayRowCodec.h"
-#include "SerialStudio.h"
 
 namespace DataModel {
 

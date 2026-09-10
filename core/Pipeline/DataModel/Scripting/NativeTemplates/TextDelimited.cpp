@@ -22,11 +22,13 @@
 #include "DataModel/Scripting/NativeTemplates/TextDelimited.h"
 
 #include <cstring>
+#include <QJsonObject>
+#include <QList>
 
 #include "Core/DSPSimd.h"
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
 #include "DataModel/Scripting/NativeTemplates/NativeTemplateSupport.h"
-#include "SerialStudio.h"
 
 using DataModel::INativeParser;
 using DataModel::INativeTemplate;

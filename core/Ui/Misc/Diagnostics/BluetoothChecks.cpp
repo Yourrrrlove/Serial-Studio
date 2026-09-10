@@ -27,6 +27,7 @@
 #  include <QPermissions>
 #endif
 
+#include "API/HandlerContext.h"
 #include "IO/ConnectionManager.h"
 #include "IO/Drivers/BluetoothLE.h"
 
@@ -123,7 +124,7 @@ static void reportAdapter(QList<Result>& out)
  */
 [[nodiscard]] static bool reportPlatformSupport(QList<Result>& out)
 {
-  static auto& manager = IO::ConnectionManager::instance();
+  auto& manager = API::handlerContext().connectionManager;
 
   auto* ble = manager.bluetoothLE();
   if (ble != nullptr && ble->operatingSystemSupported())

@@ -28,17 +28,23 @@
 #include <QTimer>
 #include <QUrl>
 
+#include "API/HandlerContext.h"
+#include "Core/Bus/MessageBus.h"
+#include "Core/Bus/Messages.h"
+#include "Core/Services.h"
+#include "Core/SSAssert.h"
+#include "DataModel/PipelineModules.h"
 #include "Misc/Utilities.h"
 
 #ifdef BUILD_COMMERCIAL
 #  include "AppState.h"
 #  include "Console/Handler.h"
+#  include "Core/Licensing/CommercialToken.h"
+#  include "Core/SerialStudio.h"
+#  include "Core/WorkspaceManager.h"
 #  include "DataModel/ProjectModel.h"
 #  include "IO/ConnectionManager.h"
-#  include "Licensing/CommercialToken.h"
-#  include "Licensing/LemonSqueezy.h"
-#  include "Misc/WorkspaceManager.h"
-#  include "SerialStudio.h"
+#  include "Replay/PlayerState.h"
 #endif
 
 //--------------------------------------------------------------------------------------------------
@@ -74,8 +80,8 @@ void Console::ExportWorker::processItems(const std::vector<ExportDataPtr>& items
   if (items.empty())
     return;
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  const bool connected           = connectionManager.isConnected();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  const bool connected    = connectionManager.isConnected();
 
   for (const auto& dataPtr : items) {
     const int devId = dataPtr->deviceId;
@@ -139,10 +145,10 @@ void Console::ExportWorker::createFile(int deviceId)
 
   fileName += QStringLiteral(".txt");
 
-  static auto& appState     = AppState::instance();
-  static auto& projectModel = DataModel::ProjectModel::instance();
-  const auto opMode         = appState.operationMode();
-  const auto& projectTitle  = projectModel.title();
+  auto& appState           = DataModel::pipelineModules().appState;
+  auto& projectModel       = DataModel::pipelineModules().projectModel;
+  const auto opMode        = appState.operationMode();
+  const auto& projectTitle = projectModel.title();
   QString subdirName;
   switch (opMode) {
     case SerialStudio::ProjectFile:
@@ -156,7 +162,7 @@ void Console::ExportWorker::createFile(int deviceId)
       break;
   }
 
-  static auto& workspaceManager = Misc::WorkspaceManager::instance();
+  auto& workspaceManager = Core::services().workspaceManager;
   QDir dir(workspaceManager.path("Console"));
   if (!dir.exists(subdirName))
     dir.mkpath(subdirName);
@@ -196,8 +202,9 @@ Console::Export::Export()
   , m_isOpen(false)
   , m_exportEnabled(false)
   , m_persistSettings(true)
+  , m_bus(nullptr)
 #else
-  : m_isOpen(false), m_exportEnabled(false), m_persistSettings(true)
+  : m_isOpen(false), m_exportEnabled(false), m_persistSettings(true), m_bus(nullptr)
 #endif
 {
 #ifdef BUILD_COMMERCIAL
@@ -208,12 +215,11 @@ Console::Export::Export()
           &Export::onWorkerOpenChanged,
           Qt::QueuedConnection);
 
-  static auto& lemonSqueezy = Licensing::LemonSqueezy::instance();
-  connect(&lemonSqueezy, &Licensing::LemonSqueezy::activatedChanged, this, [=, this] {
-    if (exportEnabled()
-        && (!Licensing::CommercialToken::current().isValid() || !SS_LICENSE_GUARD()))
-      setExportEnabled(false);
-  });
+  m_licenseWatch = Core::services().bus.subscribe<Core::Bus::LicenseStateChanged>(
+    this, [this](const std::shared_ptr<const Core::Bus::LicenseStateChanged>& license) {
+      if (exportEnabled() && (!license->activated || !SS_LICENSE_GUARD()))
+        setExportEnabled(false);
+    });
 #endif
 
   setExportEnabled(m_settings.value("ConsoleExport", false).toBool());
@@ -279,6 +285,15 @@ void Console::Export::closeFile()
 }
 
 /**
+ * @brief Adopts the root-owned message bus this module publishes on and subscribes to.
+ */
+void Console::Export::attachMessageBus(Core::Bus::MessageBus& bus)
+{
+  SS_ASSERT(m_bus == nullptr, return);
+  m_bus = &bus;
+}
+
+/**
  * @brief Configures signal/slot connections with dependent modules.
  */
 void Console::Export::setupExternalConnections()
@@ -288,7 +303,7 @@ void Console::Export::setupExternalConnections()
           &Console::Handler::deviceDataReady,
           this,
           &Console::Export::registerData);
-  connect(&IO::ConnectionManager::instance(),
+  connect(&API::handlerContext().connectionManager,
           &IO::ConnectionManager::connectedChanged,
           this,
           &Console::Export::closeFile);

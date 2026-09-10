@@ -355,7 +355,7 @@ Widgets.Pane {
                 id: _freezeCombo
 
                 readonly property bool paintsTitle:
-                  SerialStudio.dashboardWidgetPaintsTitle(modelData.widgetType)
+                  SerialStudioHelpers.dashboardWidgetPaintsTitle(modelData.widgetType)
                 readonly property var modeKeys:
                   paintsTitle ? ["bar", "painted", "hidden"] : ["bar", "hidden"]
 

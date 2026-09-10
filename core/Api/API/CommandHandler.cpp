@@ -22,28 +22,20 @@
 #include "API/CommandHandler.h"
 
 #include "API/CommandRegistry.h"
-#include "API/Handlers/AssistantHandler.h"
 #include "API/Handlers/BluetoothLEHandler.h"
-#include "API/Handlers/ConsoleHandler.h"
 #include "API/Handlers/ControlScriptHandler.h"
 #include "API/Handlers/CSVExportHandler.h"
 #include "API/Handlers/CSVPlayerHandler.h"
-#include "API/Handlers/DashboardHandler.h"
 #include "API/Handlers/DataTablesHandler.h"
-#include "API/Handlers/DiagnosticsHandler.h"
-#include "API/Handlers/ExtensionHandler.h"
 #include "API/Handlers/IOManagerHandler.h"
 #include "API/Handlers/MirrorHandler.h"
 #include "API/Handlers/NetworkHandler.h"
-#include "API/Handlers/ProblemsHandler.h"
 #include "API/Handlers/ProjectHandler.h"
 #include "API/Handlers/ScriptsHandler.h"
 #include "API/Handlers/SourceHandler.h"
 #include "API/Handlers/StreamHandler.h"
 #include "API/Handlers/SystemHandler.h"
 #include "API/Handlers/UARTHandler.h"
-#include "API/Handlers/WindowHandler.h"
-#include "API/Handlers/WorkspacesHandler.h"
 #include "API/Server.h"
 
 #ifdef BUILD_COMMERCIAL
@@ -53,12 +45,10 @@
 #  include "API/Handlers/HIDHandler.h"
 #  include "API/Handlers/Iec104Handler.h"
 #  include "API/Handlers/InfluxHandler.h"
-#  include "API/Handlers/LicensingHandler.h"
 #  include "API/Handlers/MDF4ExportHandler.h"
 #  include "API/Handlers/MDF4PlayerHandler.h"
 #  include "API/Handlers/ModbusHandler.h"
 #  include "API/Handlers/MqttHandler.h"
-#  include "API/Handlers/NotificationsHandler.h"
 #  include "API/Handlers/OpcUaHandler.h"
 #  include "API/Handlers/ProcessHandler.h"
 #  include "API/Handlers/S7Handler.h"
@@ -87,9 +77,6 @@ API::CommandHandler::CommandHandler(QObject* parent) : QObject(parent), m_initia
 API::CommandHandler& API::CommandHandler::instance()
 {
   static CommandHandler singleton;
-  if (!singleton.m_initialized)
-    singleton.initializeHandlers();
-
   return singleton;
 }
 
@@ -229,10 +216,47 @@ QJsonObject API::CommandHandler::getAvailableCommands() const
   return result;
 }
 
+//--------------------------------------------------------------------------------------------------
+// ICommandExecutor
+//--------------------------------------------------------------------------------------------------
+
 /**
- * @brief Initialize all command handlers
+ * @brief Runs one in-process command for a script or an assistant tool; trusted origin, so the
+ *        remote consent gate never applies here.
  */
-void API::CommandHandler::initializeHandlers()
+API::CommandResponse API::CommandHandler::execute(const CommandRequest& request)
+{
+  return processCommand(request, CommandOrigin::Trusted);
+}
+
+/**
+ * @brief Reports whether @p name is a registered command.
+ */
+bool API::CommandHandler::hasCommand(const QString& name) const
+{
+  static auto& registry = CommandRegistry::instance();
+  return registry.hasCommand(name);
+}
+
+/**
+ * @brief Lists every registered command name, sorted as the registry keeps them.
+ */
+QStringList API::CommandHandler::commandNames() const
+{
+  static auto& registry = CommandRegistry::instance();
+  return registry.availableCommands();
+}
+
+//--------------------------------------------------------------------------------------------------
+// Handler registration
+//--------------------------------------------------------------------------------------------------
+
+/**
+ * @brief Registers the command handlers that live at or below the API layer. The handlers that
+ *        reach the user interface register through UI::ApiHandlers::registerAll() and the
+ *        licensing set through the composition root, so this library never names them.
+ */
+void API::CommandHandler::registerCoreHandlers()
 {
   if (m_initialized)
     return;
@@ -250,20 +274,12 @@ void API::CommandHandler::initializeHandlers()
   Handlers::BluetoothLEHandler::registerCommands();
   Handlers::CSVExportHandler::registerCommands();
   Handlers::ProjectHandler::registerCommands(registry);
-  Handlers::ConsoleHandler::registerCommands();
   Handlers::CSVPlayerHandler::registerCommands();
-  Handlers::DashboardHandler::registerCommands();
-  Handlers::WindowHandler::registerCommands();
   Handlers::SourceHandler::registerCommands();
-  Handlers::ExtensionHandler::registerCommands();
   Handlers::DataTablesHandler::registerCommands();
-  Handlers::WorkspacesHandler::registerCommands();
   Handlers::ScriptsHandler::registerCommands();
   Handlers::ControlScriptHandler::registerCommands();
   Handlers::SystemHandler::registerCommands();
-  Handlers::AssistantHandler::registerCommands();
-  Handlers::ProblemsHandler::registerCommands();
-  Handlers::DiagnosticsHandler::registerCommands();
   Handlers::StreamHandler::registerCommands();
   Handlers::MirrorHandler::registerCommands();
 
@@ -277,8 +293,6 @@ void API::CommandHandler::initializeHandlers()
   Handlers::HIDHandler::registerCommands();
   Handlers::USBHandler::registerCommands();
   Handlers::ProcessHandler::registerCommands();
-  Handlers::LicensingHandler::registerCommands();
-  Handlers::NotificationsHandler::registerCommands();
   Handlers::SessionsHandler::registerCommands();
   Handlers::MqttHandler::registerCommands();
   Handlers::InfluxHandler::registerCommands();

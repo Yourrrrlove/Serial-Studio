@@ -27,7 +27,7 @@
 #include <QByteArray>
 #include <QString>
 
-#include "Licensing/CommercialToken.h"
+#include "Core/Licensing/CommercialToken.h"
 
 namespace Licensing {
 

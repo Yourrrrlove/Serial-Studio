@@ -31,7 +31,6 @@
  * @brief The bus the composition root published, or null before it did. A plain pointer and not a
  *        Meyers singleton on purpose: the root owns the object and controls its lifetime.
  */
-static Core::Bus::MessageBus* s_instance = nullptr;
 
 //--------------------------------------------------------------------------------------------------
 // Construction
@@ -52,9 +51,6 @@ Core::Bus::MessageBus::MessageBus(QObject* parent) : QObject(parent), m_nextId(0
  */
 Core::Bus::MessageBus::~MessageBus()
 {
-  if (s_instance == this)
-    s_instance = nullptr;
-
   const std::lock_guard<std::mutex> lock(m_mutex);
   for (const auto& guard : m_guards)
     QObject::disconnect(guard.second);
@@ -62,23 +58,6 @@ Core::Bus::MessageBus::~MessageBus()
   m_guards.clear();
   m_subscribers.clear();
   m_retained.clear();
-}
-
-/**
- * @brief Returns the bus the composition root published, or null when none was.
- */
-Core::Bus::MessageBus* Core::Bus::MessageBus::instance()
-{
-  return s_instance;
-}
-
-/**
- * @brief Publishes the root-owned bus, or withdraws it with a null argument at shutdown.
- */
-void Core::Bus::MessageBus::setInstance(MessageBus* bus)
-{
-  SS_ASSERT_LOG(bus == nullptr || s_instance == nullptr);
-  s_instance = bus;
 }
 
 //--------------------------------------------------------------------------------------------------

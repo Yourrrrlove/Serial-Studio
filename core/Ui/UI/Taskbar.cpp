@@ -24,9 +24,12 @@
 #include <QSignalBlocker>
 
 #include "AppState.h"
+#include "Core/IconRegistry.h"
+#include "Core/Services.h"
 #include "DataModel/FrameBuilder.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
-#include "Misc/IconRegistry.h"
+#include "DataModel/WidgetResolution.h"
 #include "UI/Dashboard.h"
 #include "UI/UISessionRegistry.h"
 #include "UI/WidgetExtensions.h"
@@ -78,10 +81,10 @@
 UI::Taskbar::Taskbar(QQuickItem* parent)
   : QQuickItem(parent)
   , m_dashboard(UI::Dashboard::instance())
-  , m_projectModel(DataModel::ProjectModel::instance())
+  , m_projectModel(DataModel::pipelineModules().projectModel)
   , m_uiSessionRegistry(UISessionRegistry::instance())
   , m_widgetRegistry(WidgetRegistry::instance())
-  , m_appState(AppState::instance())
+  , m_appState(DataModel::pipelineModules().appState)
   , m_activeGroupId(-1)
   , m_desiredGroupId(-1)
   , m_rebuildInProgress(false)
@@ -95,7 +98,7 @@ UI::Taskbar::Taskbar(QQuickItem* parent)
   , m_windowMap(m_dashboard, m_widgetRegistry)
   , m_focusCycler()
   , m_search(m_fullModel)
-  , m_workspaces(*this, m_dashboard, m_projectModel, m_appState, Misc::IconRegistry::instance())
+  , m_workspaces(*this, m_dashboard, m_projectModel, m_appState, Core::services().iconRegistry)
 {
   qmlRegisterUncreatableType<UI::TaskbarModel>(
     "SerialStudio.UI", 1, 0, "TaskbarModel", "TaskbarModel is exposed by Taskbar singleton");

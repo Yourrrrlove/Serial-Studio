@@ -38,8 +38,9 @@
 #  include <windows.h>
 #endif
 
+#include "Core/IconRegistry.h"
+#include "Core/Services.h"
 #include "Misc/CommonFonts.h"
-#include "Misc/IconRegistry.h"
 #include "Misc/ThemeManager.h"
 
 namespace CSD {
@@ -199,7 +200,7 @@ void Titlebar::paint(QPainter* painter)
   painter->drawText(rect, Qt::AlignCenter, title());
 #endif
 
-  static auto& registry = Misc::IconRegistry::instance();
+  auto& registry = Core::services().iconRegistry;
 
   // clang-format off
   const QString closeSvg =
@@ -559,7 +560,7 @@ void Titlebar::drawButton(QPainter* painter, Button button, const QString& svgPa
                              .arg(pixelSize.width())
                              .arg(pixelSize.height())
                              .arg(QString::number(dpr, 'f', 3));
-  auto cacheIt           = m_iconCache.constFind(cacheKey);
+  auto cacheIt = m_iconCache.constFind(cacheKey);
   if (cacheIt != m_iconCache.cend()) {
     painter->drawPixmap(iconRect.topLeft(), cacheIt.value());
     return;

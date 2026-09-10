@@ -25,13 +25,15 @@
 #include <QJsonObject>
 #include <QStringList>
 
-#include "API/EnumLabels.h"
+#include "API/CommandRegistry.h"
 #include "API/Handlers/ProjectApiSupport.h"
 #include "API/SchemaBuilder.h"
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/EnumLabels.h"
+#include "Core/SerialStudio.h"
+#include "Core/SSAssert.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
-#include "Misc/BackupManager.h"
-#include "SerialStudio.h"
 
 using namespace API::Handlers::ProjectApiSupport;
 
@@ -345,8 +347,8 @@ API::CommandResponse API::Handlers::ProjectDatasetCommands::datasetAdd(const QSt
     return CommandResponse::makeError(
       id, ErrorCode::InvalidParam, QStringLiteral("Invalid options: must be 0-255 (bit flags)"));
 
-  static auto& project = DataModel::ProjectModel::instance();
-  const auto& groups   = project.groups();
+  auto& project      = DataModel::pipelineModules().projectModel;
+  const auto& groups = project.groups();
   if (groupId < 0 || static_cast<size_t>(groupId) >= groups.size())
     return CommandResponse::makeError(
       id, ErrorCode::InvalidParam, QStringLiteral("Group id not found: %1").arg(groupId));
@@ -414,8 +416,8 @@ API::CommandResponse API::Handlers::ProjectDatasetCommands::datasetAddMany(
     return CommandResponse::makeError(
       id, ErrorCode::InvalidParam, QStringLiteral("Invalid options: must be 0-255 (bit flags)"));
 
-  static auto& project = DataModel::ProjectModel::instance();
-  const auto& groups   = project.groups();
+  auto& project      = DataModel::pipelineModules().projectModel;
+  const auto& groups = project.groups();
   if (groupId < 0 || static_cast<size_t>(groupId) >= groups.size())
     return CommandResponse::makeError(
       id, ErrorCode::InvalidParam, QStringLiteral("Group id not found: %1").arg(groupId));
@@ -498,10 +500,10 @@ API::CommandResponse API::Handlers::ProjectDatasetCommands::datasetDelete(const 
     return CommandResponse::makeError(
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: datasetId"));
 
-  const int groupId    = params.value(QStringLiteral("groupId")).toInt();
-  const int datasetId  = params.value(Keys::DatasetId).toInt();
-  static auto& project = DataModel::ProjectModel::instance();
-  const auto& groups   = project.groups();
+  const int groupId   = params.value(QStringLiteral("groupId")).toInt();
+  const int datasetId = params.value(Keys::DatasetId).toInt();
+  auto& project       = DataModel::pipelineModules().projectModel;
+  const auto& groups  = project.groups();
   if (groupId < 0 || static_cast<size_t>(groupId) >= groups.size())
     return CommandResponse::makeError(
       id, ErrorCode::InvalidParam, QStringLiteral("Group id not found: %1").arg(groupId));
@@ -548,9 +550,12 @@ API::CommandResponse API::Handlers::ProjectDatasetCommands::datasetDelete(const 
   QString backupPath;
   qint64 preEpoch = 0;
   if (!isDryRun) {
-    static auto& backupManager = Misc::BackupManager::instance();
-    backupPath                 = backupManager.snapshot(QStringLiteral("pre-datasetDelete"));
-    preEpoch                   = captureProjectEpoch();
+    auto* checkpoints = API::CommandRegistry::instance().checkpointStore();
+    SS_ASSERT_LOG(checkpoints != nullptr);
+    if (checkpoints != nullptr)
+      backupPath = checkpoints->snapshot(QStringLiteral("pre-datasetDelete"));
+
+    preEpoch = captureProjectEpoch();
     project.deleteDataset(groupId, datasetId);
   }
 
@@ -588,10 +593,10 @@ API::CommandResponse API::Handlers::ProjectDatasetCommands::datasetDuplicate(
     return CommandResponse::makeError(
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: datasetId"));
 
-  const int groupId    = params.value(QStringLiteral("groupId")).toInt();
-  const int datasetId  = params.value(Keys::DatasetId).toInt();
-  static auto& project = DataModel::ProjectModel::instance();
-  const auto& groups   = project.groups();
+  const int groupId   = params.value(QStringLiteral("groupId")).toInt();
+  const int datasetId = params.value(Keys::DatasetId).toInt();
+  auto& project       = DataModel::pipelineModules().projectModel;
+  const auto& groups  = project.groups();
   if (groupId < 0 || static_cast<size_t>(groupId) >= groups.size())
     return CommandResponse::makeError(
       id, ErrorCode::InvalidParam, QStringLiteral("Group id not found: %1").arg(groupId));
@@ -652,8 +657,8 @@ API::CommandResponse API::Handlers::ProjectDatasetCommands::datasetSetOption(
     option = optionJson.toInt();
   }
 
-  static auto& project = DataModel::ProjectModel::instance();
-  const auto& groups   = project.groups();
+  auto& project      = DataModel::pipelineModules().projectModel;
+  const auto& groups = project.groups();
   if (groupId < 0 || static_cast<size_t>(groupId) >= groups.size())
     return CommandResponse::makeError(
       id, ErrorCode::InvalidParam, QStringLiteral("Group id not found: %1").arg(groupId));
@@ -709,8 +714,8 @@ API::CommandResponse API::Handlers::ProjectDatasetCommands::datasetSetOptions(
     options = optionsJson.toInt();
   }
 
-  static auto& project = DataModel::ProjectModel::instance();
-  const auto& groups   = project.groups();
+  auto& project      = DataModel::pipelineModules().projectModel;
+  const auto& groups = project.groups();
   if (groupId < 0 || static_cast<size_t>(groupId) >= groups.size())
     return CommandResponse::makeError(
       id, ErrorCode::InvalidParam, QStringLiteral("Group id not found: %1").arg(groupId));
@@ -729,8 +734,8 @@ API::CommandResponse API::Handlers::ProjectDatasetCommands::datasetSetOptions(
 
   const QString chosen = widgetForDatasetOptions(options);
   const bool wasOneOf  = d.widget == QStringLiteral("bar") || d.widget == QStringLiteral("gauge")
-                      || d.widget == QStringLiteral("compass")
-                      || d.widget == QStringLiteral("meter");
+                     || d.widget == QStringLiteral("compass")
+                     || d.widget == QStringLiteral("meter");
   if (!chosen.isEmpty())
     d.widget = chosen;
   else if (wasOneOf)

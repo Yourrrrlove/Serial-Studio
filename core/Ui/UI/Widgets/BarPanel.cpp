@@ -24,10 +24,13 @@
 #include <cmath>
 #include <QVariantMap>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/SSAssert.h"
 #include "DSP.h"
 #include "UI/Dashboard.h"
+#include "UI/SerialStudioHelpers.h"
 #include "UI/WidgetBands.h"
+#include "UI/Widgets/DatasetWidgetLinks.h"
 
 //--------------------------------------------------------------------------------------------------
 // Constructor & initialization
@@ -84,6 +87,8 @@ void Widgets::BarPanel::buildRows()
   m_maxSeenFracs.resize(n);
   m_bandsAsVariant.clear();
   m_bandsAsVariant.reserve(n);
+  m_widgets.clear();
+  m_widgets.reserve(n);
 
   for (size_t i = 0; i < group.datasets.size(); ++i) {
     const auto& dataset = group.datasets[i];
@@ -133,6 +138,7 @@ void Widgets::BarPanel::buildRows()
     }
 
     m_bandsAsVariant.append(QVariant(rowBands));
+    m_widgets.append(QVariant(datasetWidgetLinks(m_dashboard, dataset)));
   }
 }
 
@@ -189,6 +195,15 @@ const QVariantList& Widgets::BarPanel::bands() const noexcept
 }
 
 /**
+ * @brief Returns, per row, the {windowId, icon, title} list of the other dashboard widgets that
+ *        show that row's dataset (plot, gauge, ...), for the row's pop-out buttons.
+ */
+const QVariantList& Widgets::BarPanel::widgets() const noexcept
+{
+  return m_widgets;
+}
+
+/**
  * @brief Monotonic change counter bumped on every applied update. QML bindings reference it as
  *        their sole notify dependency and read row state through the scalar accessors below, so
  *        a tick converts a handful of scalars instead of every per-row list.
@@ -204,6 +219,19 @@ int Widgets::BarPanel::revision() const noexcept
 double Widgets::BarPanel::frac(int row) const
 {
   return m_fracs.value(row, 0.0);
+}
+
+/**
+ * @brief The fill colour a row uses outside any alarm band: the dataset's accent (an explicit
+ *        override wins, else the theme palette), resolved on demand so a theme switch re-reads it.
+ */
+QString Widgets::BarPanel::rowColor(const int row) const
+{
+  SS_ASSERT(VALIDATE_WIDGET(SerialStudio::DashboardBarPanel, m_index), return QString());
+  const auto& group = GET_GROUP(SerialStudio::DashboardBarPanel, m_index);
+  SS_ASSERT(row >= 0 && row < static_cast<int>(group.datasets.size()), return QString());
+  const auto& dataset = group.datasets[static_cast<size_t>(row)];
+  return UI::SerialStudioHelpers::getDatasetAccentColor(dataset).name();
 }
 
 /**
@@ -337,11 +365,11 @@ bool Widgets::BarPanel::refreshRow(int index, const DataModel::Dataset& dataset)
     }
   }
 
-  const bool changed    = (numeric != m_numeric[index]) || (severity != m_severities[index])
-                       || (extremesOk != m_extremesOk[index]) || (text != m_valueTexts[index])
-                       || DSP::notEqual(frac, m_fracs[index])
-                       || DSP::notEqual(minSeenFrac, m_minSeenFracs[index])
-                       || DSP::notEqual(maxSeenFrac, m_maxSeenFracs[index]);
+  const bool changed = (numeric != m_numeric[index]) || (severity != m_severities[index])
+                    || (extremesOk != m_extremesOk[index]) || (text != m_valueTexts[index])
+                    || DSP::notEqual(frac, m_fracs[index])
+                    || DSP::notEqual(minSeenFrac, m_minSeenFracs[index])
+                    || DSP::notEqual(maxSeenFrac, m_maxSeenFracs[index]);
   m_numeric[index]      = numeric;
   m_severities[index]   = severity;
   m_extremesOk[index]   = extremesOk;

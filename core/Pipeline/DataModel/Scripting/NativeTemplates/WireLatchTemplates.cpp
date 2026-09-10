@@ -25,7 +25,7 @@
 #include "DataModel/Scripting/NativeTemplates/NativeTemplate.h"
 
 #ifdef BUILD_COMMERCIAL
-#  include "IO/Drivers/OpcUaWire.h"
+#  include "Protocols/OpcUa/OpcUaWire.h"
 #endif
 
 using DataModel::INativeParser;

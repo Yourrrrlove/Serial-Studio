@@ -30,15 +30,22 @@
 
 #include "AppState.h"
 #include "Console/TextFormat.h"
+#include "Console/WelcomeText.h"
+#include "Core/Bus/MessageBus.h"
+#include "Core/Bus/Messages.h"
 #include "Core/Checksum.h"
+#include "Core/SerialStudio.h"
+#include "Core/Services.h"
 #include "Core/SSAssert.h"
+#include "Core/TimerEvents.h"
+#include "Core/Translator.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
+#include "DataModel/TextCodec.h"
 #include "IO/ConnectionManager.h"
 #include "Misc/CommonFonts.h"
-#include "Misc/TimerEvents.h"
-#include "Misc/Translator.h"
-#include "SerialStudio.h"
-#include "SessionContext.h"
+
+Console::Handler* Console::Handler::s_instance = nullptr;
 
 //--------------------------------------------------------------------------------------------------
 // Constructor & singleton access
@@ -84,8 +91,9 @@ static QString decoratedTimestamp(bool addTimestamp, bool ansiColors)
 /**
  * @brief Constructs the console handler singleton.
  */
-Console::Handler::Handler()
-  : m_dataMode(DataMode::DataUTF8)
+Console::Handler::Handler(Core::Bus::MessageBus& bus, IO::ConnectionManager& connectionManager)
+  : m_bus(bus)
+  , m_dataMode(DataMode::DataUTF8)
   , m_lineEnding(LineEnding::NoLineEnding)
   , m_displayMode(DisplayMode::DisplayPlainText)
   , m_encoding(SerialStudio::EncUtf8)
@@ -104,9 +112,10 @@ Console::Handler::Handler()
   , m_fontFamilyIndex(0)
   , m_textBuffer(10 * 1024)
   , m_commonFonts(&Misc::CommonFonts::instance())
-  , m_connectionManager(nullptr)
-  , m_appState(nullptr)
-  , m_projectModel(nullptr)
+  , m_translator(nullptr)
+  , m_connectionManager(&connectionManager)
+  , m_appState(&DataModel::pipelineModules().appState)
+  , m_projectModel(&DataModel::pipelineModules().projectModel)
   , m_annotations(new AnnotationModel(this))
   , m_annotationDecoder(new AnnotationDecoder(m_annotations, this))
   , m_annotationFilter(new AnnotationFilter(this))
@@ -146,7 +155,7 @@ Console::Handler::Handler()
   m_ansiColorsEnabled = m_vt100Emulation && m_ansiColors;
   m_fontFamilyIndex   = availableFonts().indexOf(m_fontFamily);
 
-  static auto& timerEvents = Misc::TimerEvents::instance();
+  auto& timerEvents = Core::services().timerEvents;
   connect(&timerEvents, &Misc::TimerEvents::uiTimeout, this, [this]() {
     if (!m_pendingDisplay.isEmpty()) {
       Q_EMIT displayString(m_pendingDisplay);
@@ -160,13 +169,13 @@ Console::Handler::Handler()
 }
 
 /**
- * @brief Returns this session's console handler. The object is owned by the SessionContext and
- *        built by the composition root, so a reach before adoption is a named fatal instead of
- *        an out-of-order lazy construction (spec 0039 M2, wave B1).
+ * @brief Returns this session's console handler, bound by the session context right after adoption;
+ *        a reach before that is a named fatal (spec 0039 M2, spec 0077 T66).
  */
 Console::Handler& Console::Handler::instance()
 {
-  return SessionContext::current().console();
+  SS_ASSERT(s_instance != nullptr, qFatal("Console::Handler::instance() before adoption"));
+  return *s_instance;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -331,6 +340,15 @@ QStringList Console::Handler::displayModes() const
 QStringList Console::Handler::textEncodings() const
 {
   return SerialStudio::textEncodings();
+}
+
+/**
+ * @brief Returns the localized welcome guide for the current language and licence tier.
+ */
+QString Console::Handler::welcomeConsoleText() const
+{
+  SS_ASSERT(m_translator != nullptr, return {});
+  return Console::welcomeConsoleText(m_translator->language());
 }
 
 /**
@@ -535,14 +553,12 @@ void Console::Handler::historyDown()
  */
 void Console::Handler::setupExternalConnections()
 {
-  m_connectionManager = &IO::ConnectionManager::instance();
-  m_appState          = &AppState::instance();
-  m_projectModel      = &DataModel::ProjectModel::instance();
-
-  connect(&Misc::Translator::instance(),
+  m_translator = &Core::services().translator;
+  connect(m_translator, &Misc::Translator::languageChanged, this, &Handler::languageChanged);
+  connect(m_translator,
           &Misc::Translator::languageChanged,
           this,
-          &Console::Handler::languageChanged);
+          &Console::Handler::welcomeConsoleTextChanged);
 
   auto notifyTerminal = [this] {
     Q_EMIT vt100EmulationChanged();
@@ -551,7 +567,10 @@ void Console::Handler::setupExternalConnections()
   };
 
   connect(m_projectModel, &DataModel::ProjectModel::groupsChanged, this, notifyTerminal);
-  connect(m_appState, &AppState::operationModeChanged, this, notifyTerminal);
+  m_terminalModeWatch = m_bus.subscribe<Core::Bus::OperationModeChanged>(
+    this, [notifyTerminal](const std::shared_ptr<const Core::Bus::OperationModeChanged>&) {
+      notifyTerminal();
+    });
   connect(m_connectionManager, &IO::ConnectionManager::connectedChanged, this, notifyTerminal);
 
   connect(m_projectModel,
@@ -901,6 +920,45 @@ void Console::Handler::hotpathRxDeviceData(int deviceId, const QByteArray& data)
 
   const auto processed = appendToDevice(deviceId, str, showTimestamp());
   Q_EMIT deviceDataReady(deviceId, processed);
+}
+
+/**
+ * @brief Raw-tap entry for device chunks (spec 0077): every received chunk lands in that device's
+ *        console buffer.
+ */
+void Console::Handler::onDeviceBytes(int deviceId, const IO::CapturedDataPtr& data)
+{
+  SS_ASSERT(data != nullptr, return);
+
+  hotpathRxDeviceData(deviceId, data->data);
+}
+
+/**
+ * @brief Raw-tap entry for a stream-lane source's terminal-only text.
+ */
+void Console::Handler::onConsoleBytes(int deviceId, const IO::CapturedDataPtr& data)
+{
+  SS_ASSERT(data != nullptr, return);
+
+  hotpathRxDeviceData(deviceId, data->data);
+}
+
+/**
+ * @brief Raw-tap entry for payloads injected by a player, a script or the API (no device routing).
+ */
+void Console::Handler::onInjectedBytes(const IO::CapturedDataPtr& data)
+{
+  SS_ASSERT(data != nullptr, return);
+
+  hotpathRxData(data->data);
+}
+
+/**
+ * @brief Raw-tap entry for the bytes a write actually put on the wire: the local echo.
+ */
+void Console::Handler::onSentBytes(int deviceId, const QByteArray& data)
+{
+  displaySentData(deviceId, data);
 }
 
 /**

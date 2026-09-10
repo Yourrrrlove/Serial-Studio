@@ -37,12 +37,14 @@
 #include <QTimer>
 #include <QUrl>
 
+#include "API/HandlerContext.h"
 #include "API/Server.h"
+#include "Core/JsonValidator.h"
+#include "Core/Services.h"
+#include "Core/WorkspaceManager.h"
 #include "Misc/Extensions/ExtensionCatalog.h"
-#include "Misc/JsonValidator.h"
 #include "Misc/ProblemCenter.h"
 #include "Misc/Utilities.h"
-#include "Misc/WorkspaceManager.h"
 #include "UI/Dashboard.h"
 
 //--------------------------------------------------------------------------------------------------
@@ -67,7 +69,7 @@ Misc::ExtensionManager::ExtensionManager()
   , m_selectedIndex(-1)
   , m_pendingManifests(0)
   , m_pendingExtensionMetas(0)
-  , m_installer(m_nam, Misc::WorkspaceManager::instance())
+  , m_installer(m_nam, Core::services().workspaceManager)
   , m_autoUpdater(m_settings)
 {
   m_nam.setTransferTimeout(15 * 1000);
@@ -1265,7 +1267,7 @@ bool Misc::ExtensionManager::ensureApiServerForLaunch(const QString& id, bool us
   }
 #endif
 
-  static auto& server = API::Server::instance();
+  auto& server = API::handlerContext().server;
   if (server.enabled())
     return true;
 

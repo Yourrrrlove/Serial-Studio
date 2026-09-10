@@ -30,14 +30,18 @@
 #include <QJsonDocument>
 #include <QSysInfo>
 
+#include "API/HandlerContext.h"
 #include "API/Mirror/MirrorClient.h"
 #include "AppState.h"
+#include "Core/Bus/MessageBus.h"
+#include "Core/Bus/Messages.h"
+#include "Core/SerialStudio.h"
+#include "Core/Services.h"
 #include "Core/SSAssert.h"
+#include "DataModel/IDashboardFrames.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
 #include "IO/ConnectionManager.h"
-#include "SerialStudio.h"
-#include "SessionContext.h"
-#include "UI/Dashboard.h"
 
 //--------------------------------------------------------------------------------------------------
 // Constants & module state
@@ -135,8 +139,16 @@ static double nonFiniteValue(const QString& tag)
  *        adds: it is direct so a snapshot arriving in the same event-loop turn as the attach is
  *        not dropped by a stream-available flag that is still a turn behind.
  */
-API::MirrorSession::MirrorSession(SessionContext& ctx)
-  : m_ctx(ctx)
+API::MirrorSession::MirrorSession(Core::Bus::MessageBus& bus,
+                                  DataModel::IDashboardFrames& dashboard,
+                                  IO::ConnectionManager& connectionManager,
+                                  DataModel::ProjectModel& projectModel,
+                                  AppState& appState)
+  : m_bus(bus)
+  , m_dashboard(dashboard)
+  , m_connectionManager(connectionManager)
+  , m_projectModel(projectModel)
+  , m_appState(appState)
   , m_client(new MirrorClient(this))
   , m_attached(false)
   , m_canAttach(true)
@@ -153,17 +165,20 @@ API::MirrorSession::MirrorSession(SessionContext& ctx)
   connect(m_client, &MirrorClient::staleChanged, this, &MirrorSession::onLinkStatusChanged);
   connect(m_client, &MirrorClient::linkedChanged, this, &MirrorSession::onLinkStatusChanged);
 
-  connect(this,
-          &MirrorSession::attachedChanged,
-          &m_ctx.dashboard(),
-          &UI::Dashboard::updateStreamAvailable,
-          Qt::DirectConnection);
+  connect(
+    this,
+    &MirrorSession::attachedChanged,
+    this,
+    [this] { m_bus.publish<Core::Bus::MirrorAttachedChanged>(m_attached); },
+    Qt::DirectConnection);
 
-  connect(&m_ctx.connectionManager(),
+  connect(&m_connectionManager,
           &IO::ConnectionManager::connectedChanged,
           this,
           &MirrorSession::refreshCanAttach);
-  connect(&m_ctx.dashboard(), &UI::Dashboard::dataReset, this, &MirrorSession::refreshCanAttach);
+  m_dataResetWatch = m_bus.subscribe<Core::Bus::DashboardDataReset>(
+    this,
+    [this](const std::shared_ptr<const Core::Bus::DashboardDataReset>&) { refreshCanAttach(); });
 
   refreshCanAttach();
 }
@@ -173,7 +188,11 @@ API::MirrorSession::MirrorSession(SessionContext& ctx)
  */
 API::MirrorSession& API::MirrorSession::instance()
 {
-  static MirrorSession singleton(SessionContext::current());
+  static MirrorSession singleton(Core::services().bus,
+                                 API::handlerContext().dashboard,
+                                 API::handlerContext().connectionManager,
+                                 DataModel::pipelineModules().projectModel,
+                                 DataModel::pipelineModules().appState);
   return singleton;
 }
 
@@ -381,7 +400,7 @@ void API::MirrorSession::setAttached(const bool value)
  */
 void API::MirrorSession::refreshCanAttach()
 {
-  const bool value = m_attached || !m_ctx.dashboard().streamAvailable();
+  const bool value = m_attached || !m_dashboard.streamAvailable();
   if (m_canAttach == value)
     return;
 
@@ -398,7 +417,7 @@ void API::MirrorSession::refreshCanAttach()
  */
 void API::MirrorSession::captureLocalState()
 {
-  auto& project = m_ctx.projectModel();
+  auto& project = m_projectModel;
 
   m_local.valid         = true;
   m_local.path          = project.jsonFilePath();
@@ -406,7 +425,7 @@ void API::MirrorSession::captureLocalState()
   m_local.frozen        = project.frozen();
   m_local.modified      = project.modified();
   m_local.plotRange     = project.plotTimeRange();
-  m_local.operationMode = static_cast<int>(m_ctx.appState().operationMode());
+  m_local.operationMode = static_cast<int>(m_appState.operationMode());
 }
 
 /**
@@ -419,8 +438,8 @@ void API::MirrorSession::restoreLocalState()
   if (!m_local.valid)
     return;
 
-  auto& project   = m_ctx.projectModel();
-  auto& appState  = m_ctx.appState();
+  auto& project   = m_projectModel;
+  auto& appState  = m_appState;
   const auto mode = static_cast<SerialStudio::OperationMode>(m_local.operationMode);
 
   appState.setOperationMode(SerialStudio::ProjectFile);
@@ -518,9 +537,9 @@ void API::MirrorSession::onStructure(const QJsonObject& structure)
  */
 bool API::MirrorSession::applyRemoteState(const QJsonObject& structure)
 {
-  auto& project = m_ctx.projectModel();
+  auto& project = m_projectModel;
 
-  m_ctx.appState().setOperationMode(SerialStudio::ProjectFile);
+  m_appState.setOperationMode(SerialStudio::ProjectFile);
   const auto document = QJsonDocument(structure.value(QStringLiteral("project")).toObject());
   if (!project.loadFromJsonDocument(document)) {
     setError(QStringLiteral("MIRROR_BAD_PROJECT"),
@@ -543,7 +562,7 @@ bool API::MirrorSession::applyRemoteState(const QJsonObject& structure)
  */
 DataModel::Frame API::MirrorSession::buildSourceFrame(const int sourceId) const
 {
-  const auto& project = m_ctx.projectModel();
+  const auto& project = m_projectModel;
 
   DataModel::Frame frame;
   frame.sourceId = sourceId;
@@ -627,7 +646,7 @@ bool API::MirrorSession::buildTemplates(const QJsonObject& structure)
  */
 void API::MirrorSession::publishStructures()
 {
-  auto& dashboard = m_ctx.dashboard();
+  auto& dashboard = m_dashboard;
   for (const auto& frame : m_frames) {
     auto structure        = std::make_shared<DataModel::StructureSnapshot>();
     structure->generation = frame->structureGeneration;
@@ -736,7 +755,7 @@ void API::MirrorSession::publishFrames(const QJsonObject& snapshot)
       m_tNsAnchor[i] = times.at(m_tNsIndex[i]).toInteger(0);
   }
 
-  auto& dashboard = m_ctx.dashboard();
+  auto& dashboard = m_dashboard;
   for (std::size_t i = 0; i < m_frames.size(); ++i) {
     const qint64 stamp = times.at(m_tNsIndex[i]).toInteger(m_tNsAnchor[i]);
     const auto delta   = std::chrono::nanoseconds(qMax<qint64>(0, stamp - m_tNsAnchor[i]));

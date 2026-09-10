@@ -26,9 +26,9 @@
 #include <memory>
 #include <vector>
 
+#include "Core/DataModel/DataBlock.h"
+#include "Core/DataModel/Frame.h"
 #include "Core/HotpathOptimization.h"
-#include "DataModel/DataBlock.h"
-#include "DataModel/Frame.h"
 
 namespace DataModel {
 

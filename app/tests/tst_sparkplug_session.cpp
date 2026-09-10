@@ -26,7 +26,7 @@
 #include <QStringList>
 #include <QTest>
 
-#include "DataModel/FrameKeys.h"
+#include "Core/DataModel/FrameKeys.h"
 #include "IO/Drivers/MQTT/SparkplugSession.h"
 
 using IO::Drivers::SparkplugSession;

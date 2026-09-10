@@ -30,7 +30,9 @@
 
 #include "DataModel/Importers/ProtoParser.h"
 
-class SessionContext;
+namespace DataModel {
+class ProjectModel;
+}  // namespace DataModel
 
 namespace DataModel {
 
@@ -57,7 +59,7 @@ signals:
   void fileNameChanged();
 
 public:
-  explicit ProtoImporter(SessionContext& ctx);
+  explicit ProtoImporter(ProjectModel& projectModel);
   ProtoImporter(ProtoImporter&&)                 = delete;
   ProtoImporter(const ProtoImporter&)            = delete;
   ProtoImporter& operator=(ProtoImporter&&)      = delete;
@@ -133,7 +135,7 @@ private:
   [[nodiscard]] QString selectGroupWidget(const ProtoMessage& message) const;
 
 private:
-  SessionContext& m_ctx;
+  ProjectModel& m_projectModel;
   QString m_protoFilePath;
   QVector<ProtoMessage> m_messages;
 };

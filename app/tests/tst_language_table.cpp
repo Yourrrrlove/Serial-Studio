@@ -23,7 +23,7 @@
 #include <QSet>
 #include <QTest>
 
-#include "Misc/LanguageTable.h"
+#include "Core/LanguageTable.h"
 
 // Every test function here is self-contained: no state is carried between slots, so Qt Test's
 // declaration-order execution is never load-bearing.

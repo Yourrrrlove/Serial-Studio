@@ -425,7 +425,7 @@ def check_icon_render_sizes(errors: list[str]) -> None:
 
 SKILLS = RCC / "ai" / "skills"
 DATASET_MANIFEST = RCC / "properties" / "dataset.json"
-SERIALSTUDIO_H = ROOT / "app" / "src" / "SerialStudio.h"
+SERIALSTUDIO_H = ROOT / "core" / "Core" / "SerialStudio.h"
 REGISTRY_GENERATOR = ROOT / "scripts" / "generate-property-registry.py"
 
 # Prose that claims the API rejects a spelling it actually accepts. The dataset manifest
@@ -484,7 +484,7 @@ def dataset_name_space(manifest: dict) -> tuple[set[str], set[str]]:
 
 
 def dataset_option_bits() -> dict[str, int]:
-    """Parse the DatasetOption bitflags out of SerialStudio.h -- the corpus tables' ground truth."""
+    """Parse the DatasetOption bitflags out of Core/SerialStudio.h, the corpus tables' truth."""
     text = SERIALSTUDIO_H.read_text(encoding="utf-8")
     block = re.search(r"enum DatasetOption\s*\{(.*?)\}", text, re.DOTALL)
     if not block:
@@ -520,7 +520,7 @@ def check_option_bit_tables(errors: list[str]) -> None:
     """Every widget-option bit stated in the corpus must match the DatasetOption enum."""
     bits = dataset_option_bits()
     if not bits:
-        fail(errors, "could not parse DatasetOption from app/src/SerialStudio.h")
+        fail(errors, "could not parse DatasetOption from core/Core/SerialStudio.h")
         return
 
     for path in sorted(SKILLS.glob("*.md")):
@@ -699,10 +699,11 @@ def check_api_snapshot(errors: list[str]) -> None:
 # ---------------------------------------------------------------------------------------------------
 
 PROPERTY_SCHEMA = RCC / "properties" / "schema.json"
-FRAME_H = ROOT / "core" / "Pipeline" / "DataModel" / "Frame.h"
-FRAME_KEYS_H = ROOT / "core" / "Pipeline" / "DataModel" / "FrameKeys.h"
+FRAME_H = ROOT / "core" / "Core" / "DataModel" / "Frame.h"
+FRAME_KEYS_H = ROOT / "core" / "Core" / "DataModel" / "FrameKeys.h"
 HOOKS_H = ROOT / "core" / "Pipeline" / "DataModel" / "Project" / "PropertyHooks.h"
-EDITOR_H = ROOT / "core" / "Pipeline" / "DataModel" / "ProjectEditor.h"
+VALIDATORS_H = ROOT / "core" / "Core" / "DataModel" / "PropertyValidators.h"
+EDITOR_H = ROOT / "core" / "Ui" / "ProjectEditor" / "ProjectEditor.h"
 MODEL_H = ROOT / "core" / "Pipeline" / "DataModel" / "ProjectModel.h"
 GENERATED_REGISTRY = (
     ROOT / "core" / "Pipeline" / "DataModel" / "Generated" / "DatasetRegistry.h"
@@ -877,7 +878,7 @@ def check_manifest_keys(errors: list[str], manifest: dict, keys: set[str]) -> No
             fail(
                 errors,
                 f"dataset.json: {owner} names jsonKey '{constant}', which is not a "
-                "Keys:: constant in core/Pipeline/DataModel/FrameKeys.h",
+                "Keys:: constant in core/Core/DataModel/FrameKeys.h",
             )
 
 
@@ -885,6 +886,9 @@ def check_manifest_hooks(errors: list[str], manifest: dict) -> None:
     """Every referenced hook is declared, of the right kind, and backed by C++."""
     hooks = manifest["hooks"]
     hooks_text = HOOKS_H.read_text(encoding="utf-8") if HOOKS_H.exists() else ""
+    hooks_text += (
+        VALIDATORS_H.read_text(encoding="utf-8") if VALIDATORS_H.exists() else ""
+    )
     frame_text = FRAME_H.read_text(encoding="utf-8") if FRAME_H.exists() else ""
     hook_symbols = declared_symbols(hooks_text)
     frame_symbols = declared_symbols(frame_text)
@@ -916,7 +920,10 @@ def check_manifest_hooks(errors: list[str], manifest: dict) -> None:
     for name, declared in hooks.items():
         pool = frame_symbols if declared["kind"] == "subEntity" else hook_symbols
         home = (
-            "Frame.h" if declared["kind"] == "subEntity" else "Project/PropertyHooks.h"
+            "core/Core/DataModel/Frame.h"
+            if declared["kind"] == "subEntity"
+            else "core/Pipeline/DataModel/Project/PropertyHooks.h or "
+            "core/Core/DataModel/PropertyValidators.h"
         )
         symbol = re.search(r"(\w+)\(", declared["signature"])
         if symbol and symbol.group(1) in pool:
@@ -927,8 +934,8 @@ def check_manifest_hooks(errors: list[str], manifest: dict) -> None:
             continue
         fail(
             errors,
-            f"dataset.json: hook '{name}' is not declared in core/Pipeline/DataModel/{home} "
-            "and is not marked caller-owned",
+            f"dataset.json: hook '{name}' is not declared in {home} and is not marked "
+            "caller-owned",
         )
 
 
@@ -1108,7 +1115,9 @@ EXTENSION_INSTALLER_CPP = (
 WIDGET_SCHEMA = EXTENSIONS / "schema" / "widget-manifest.json"
 BUNDLED_WIDGETS = EXTENSIONS / "widget"
 WIDGET_CATALOG_CPP = ROOT / "core" / "Ui" / "UI" / "WidgetExtensions.cpp"
-SERIALSTUDIO_CPP = ROOT / "app" / "src" / "SerialStudio.cpp"
+WIDGET_RESOLUTION_CPP = (
+    ROOT / "core" / "Pipeline" / "DataModel" / "WidgetResolution.cpp"
+)
 MODULE_MANAGER_CPP = ROOT / "app" / "src" / "Misc" / "ModuleManager.cpp"
 CONTEXT_REGISTRY_CPP = ROOT / "core" / "Ui" / "Misc" / "ContextRegistry.cpp"
 
@@ -1240,8 +1249,8 @@ def catalog_reserved_ids() -> list[str]:
 
 
 def builtin_widget_strings() -> set[str]:
-    """Return every widget string SerialStudio.cpp maps to a builtin dashboard widget."""
-    text = SERIALSTUDIO_CPP.read_text(encoding="utf-8")
+    """Return every widget string WidgetResolution.cpp maps to a builtin dashboard widget."""
+    text = WIDGET_RESOLUTION_CPP.read_text(encoding="utf-8")
     block = re.search(r"SerialStudio::getDashboardWidget\(.*?\n\}", text, re.DOTALL)
     found = set(re.findall(r'widget == "([^"]+)"', block.group(0) if block else ""))
     table = re.search(r"kDatasetWidgetMap = \{(.*?)\};", text, re.DOTALL)
@@ -1349,7 +1358,7 @@ def check_widget_reserved_ids(errors: list[str], schema: dict) -> None:
     for widget in sorted(builtin_widget_strings() - set(catalog)):
         fail(
             errors,
-            f"builtin widget string '{widget}' is resolvable in SerialStudio.cpp but is not "
+            f"builtin widget string '{widget}' is resolvable in WidgetResolution.cpp but is not "
             "reserved, so an extension package could claim it (spec 0038 R10)",
         )
 

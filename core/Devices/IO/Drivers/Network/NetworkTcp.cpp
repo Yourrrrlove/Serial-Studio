@@ -208,6 +208,7 @@ void IO::Drivers::Network::appendTcpProperties(QList<IO::DriverProperty>& props)
   tcp.value = m_tcpPort;
   tcp.min   = 1;
   tcp.max   = 65535;
+  tcp.showWhen(QStringLiteral("socketTypeIndex"), {static_cast<int>(Tcp)});
   props.append(tcp);
 }
 

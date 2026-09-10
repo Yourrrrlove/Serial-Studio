@@ -23,6 +23,7 @@
 
 #include <memory>
 
+#include "Core/IO/HAL_Driver.h"
 #include "Core/SSAssert.h"
 #include "DataModel/Scripting/CFrameParser.h"
 #include "DataModel/Scripting/FrameParser.h"
@@ -30,7 +31,6 @@
 #include "DataModel/Scripting/JsScriptEngine.h"
 #include "DataModel/Scripting/LuaScriptEngine.h"
 #include "IO/FrameReader.h"
-#include "IO/HAL_Driver.h"
 
 //--------------------------------------------------------------------------------------------------
 // Internal helpers

@@ -37,8 +37,8 @@
 #include <QUrl>
 #include <QWebSocket>
 
+#include "Core/IO/HAL_Driver.h"
 #include "IO/AsyncTcpDial.h"
-#include "IO/HAL_Driver.h"
 
 namespace IO {
 namespace Drivers {

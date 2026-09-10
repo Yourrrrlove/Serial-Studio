@@ -26,8 +26,8 @@
 #include <QFile>
 #include <QJsonDocument>
 
+#include "Core/LanguageTable.h"
 #include "Core/SSAssert.h"
-#include "Misc/LanguageTable.h"
 
 //--------------------------------------------------------------------------------------------------
 // Catalog constants

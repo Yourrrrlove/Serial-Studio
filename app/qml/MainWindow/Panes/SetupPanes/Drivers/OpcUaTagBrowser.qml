@@ -23,9 +23,9 @@
 import QtCore
 import QtQuick
 import QtQuick.Window
-import QtQuick.Effects
 import QtQuick.Layouts
 import QtQuick.Controls
+import QtQuick.Controls.impl
 
 import "../../../../Widgets" as Widgets
 
@@ -330,20 +330,16 @@ Window {
               anchors.leftMargin: _row.padding + _row.depth * _row.indentation
 
               //
-              // Greyed out once a browse proves the node is a leaf
+              // Tinted like the row's text; faded once a browse proves the node is a leaf
               //
-              Image {
+              IconImage {
                 enabled: _row.hasChildren
                 sourceSize: Qt.size(8, 8)
                 rotation: _row.expanded ? 0 : 270
                 Layout.alignment: Qt.AlignVCenter
                 opacity: _row.hasChildren ? 1 : 0.2
+                color: Cpp_ThemeManager.colors["text"]
                 source: Cpp_Misc_IconRegistry.icon("editor", "indicator", 16)
-
-                layer.enabled: !_row.hasChildren && Cpp_Misc_GraphicsBackend.effectsEnabled
-                layer.effect: MultiEffect {
-                  saturation: -1.0
-                }
 
                 MouseArea {
                   anchors.fill: parent

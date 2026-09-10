@@ -27,9 +27,10 @@
 #include <QStyleHints>
 #include <QTimer>
 
+#include "Core/Services.h"
+#include "Core/Translator.h"
+#include "Core/WorkspaceManager.h"
 #include "Misc/ExtensionManager.h"
-#include "Misc/Translator.h"
-#include "Misc/WorkspaceManager.h"
 
 //--------------------------------------------------------------------------------------------------
 // Utility functions
@@ -123,7 +124,7 @@ Misc::ThemeManager::ThemeManager()
   setTheme(themeIndex);
 
   updateLocalizedThemeNames();
-  static auto& translator = Misc::Translator::instance();
+  auto& translator = Core::services().translator;
   connect(&translator,
           &Misc::Translator::languageChanged,
           this,
@@ -366,7 +367,7 @@ void Misc::ThemeManager::loadSystemTheme()
  */
 void Misc::ThemeManager::updateLocalizedThemeNames()
 {
-  static auto& translator = Translator::instance();
+  auto& translator = Core::services().translator;
   m_catalog.updateLocalizedNames(translator.language());
   Q_EMIT languageChanged();
 }
@@ -399,7 +400,7 @@ bool Misc::ThemeManager::eventFilter(QObject* watched, QEvent* event)
  */
 void Misc::ThemeManager::loadUserThemes()
 {
-  static auto& workspaceManager = Misc::WorkspaceManager::instance();
+  auto& workspaceManager = Core::services().workspaceManager;
   m_catalog.reloadUserThemes(workspaceManager.path("Extensions/theme"));
 }
 

@@ -371,6 +371,7 @@ The [notification](Notifications.md) log has a **Filter by channel** field, an u
 
 - [Getting Started](Getting-Started.md): the main-window layout and a first connection walkthrough.
 - [Command Palette](Command-Palette.md): reach any of these buttons' commands, plus workspaces and widgets, from one Ctrl+K search box.
+- [Problem Center](Problem-Center.md) and [Macros](Macros.md): the two tool windows that have no button here and open only from the palette.
 - [Operation Modes](Operation-Modes.md): how the Console / Dashboard view and parsing are chosen.
 - [Widget Reference](Widget-Reference.md): every widget type and its configuration fields.
 - [Plots](Plots.md): the plot toolbar and Sweep / Trigger mode in detail.

@@ -25,6 +25,7 @@
 #include <QMetaObject>
 
 #include "API/CommandRegistry.h"
+#include "API/HandlerContext.h"
 #include "API/SchemaBuilder.h"
 #include "IO/ConnectionManager.h"
 
@@ -159,8 +160,8 @@ API::CommandResponse API::Handlers::UARTHandler::setDevice(const QString& id,
       id, ErrorCode::InvalidParam, QStringLiteral("Device name cannot be empty"));
   }
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* uart                     = connectionManager.uart();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  auto* uart              = connectionManager.uart();
   QMetaObject::invokeMethod(
     uart, [uart, device]() { uart->registerDevice(device); }, Qt::AutoConnection);
 
@@ -180,9 +181,9 @@ API::CommandResponse API::Handlers::UARTHandler::setPortIndex(const QString& id,
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: portIndex"));
   }
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  const int portIndex            = params.value(QStringLiteral("portIndex")).toInt();
-  const auto& portList           = connectionManager.uart()->portList();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  const int portIndex     = params.value(QStringLiteral("portIndex")).toInt();
+  const auto& portList    = connectionManager.uart()->portList();
 
   if (portIndex < 0 || portIndex >= portList.count()) {
     return CommandResponse::makeError(id,
@@ -223,8 +224,8 @@ API::CommandResponse API::Handlers::UARTHandler::setBaudRate(const QString& id,
       QStringLiteral("baudRate must be between 1 and %1").arg(kMaxBaudRate));
   }
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* uart                     = connectionManager.uart();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  auto* uart              = connectionManager.uart();
   QMetaObject::invokeMethod(
     uart, [uart, baudRate]() { uart->setBaudRate(baudRate); }, Qt::AutoConnection);
 
@@ -244,9 +245,9 @@ API::CommandResponse API::Handlers::UARTHandler::setParity(const QString& id,
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: parityIndex"));
   }
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  const int parityIndex          = params.value(QStringLiteral("parityIndex")).toInt();
-  const auto& parityList         = connectionManager.uart()->parityList();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  const int parityIndex   = params.value(QStringLiteral("parityIndex")).toInt();
+  const auto& parityList  = connectionManager.uart()->parityList();
 
   if (parityIndex < 0 || parityIndex >= parityList.count()) {
     return CommandResponse::makeError(id,
@@ -279,9 +280,9 @@ API::CommandResponse API::Handlers::UARTHandler::setDataBits(const QString& id,
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: dataBitsIndex"));
   }
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  const int dataBitsIndex        = params.value(QStringLiteral("dataBitsIndex")).toInt();
-  const auto& dataBitsList       = connectionManager.uart()->dataBitsList();
+  auto& connectionManager  = API::handlerContext().connectionManager;
+  const int dataBitsIndex  = params.value(QStringLiteral("dataBitsIndex")).toInt();
+  const auto& dataBitsList = connectionManager.uart()->dataBitsList();
 
   if (dataBitsIndex < 0 || dataBitsIndex >= dataBitsList.count()) {
     return CommandResponse::makeError(id,
@@ -314,9 +315,9 @@ API::CommandResponse API::Handlers::UARTHandler::setStopBits(const QString& id,
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: stopBitsIndex"));
   }
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  const int stopBitsIndex        = params.value(QStringLiteral("stopBitsIndex")).toInt();
-  const auto& stopBitsList       = connectionManager.uart()->stopBitsList();
+  auto& connectionManager  = API::handlerContext().connectionManager;
+  const int stopBitsIndex  = params.value(QStringLiteral("stopBitsIndex")).toInt();
+  const auto& stopBitsList = connectionManager.uart()->stopBitsList();
 
   if (stopBitsIndex < 0 || stopBitsIndex >= stopBitsList.count()) {
     return CommandResponse::makeError(id,
@@ -349,9 +350,9 @@ API::CommandResponse API::Handlers::UARTHandler::setFlowControl(const QString& i
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: flowControlIndex"));
   }
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  const int flowControlIndex     = params.value(QStringLiteral("flowControlIndex")).toInt();
-  const auto& flowControlList    = connectionManager.uart()->flowControlList();
+  auto& connectionManager     = API::handlerContext().connectionManager;
+  const int flowControlIndex  = params.value(QStringLiteral("flowControlIndex")).toInt();
+  const auto& flowControlList = connectionManager.uart()->flowControlList();
 
   if (flowControlIndex < 0 || flowControlIndex >= flowControlList.count()) {
     return CommandResponse::makeError(
@@ -385,9 +386,9 @@ API::CommandResponse API::Handlers::UARTHandler::setDtrEnabled(const QString& id
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: dtrEnabled"));
   }
 
-  const bool dtrEnabled          = params.value(QStringLiteral("dtrEnabled")).toBool();
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* uart                     = connectionManager.uart();
+  const bool dtrEnabled   = params.value(QStringLiteral("dtrEnabled")).toBool();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  auto* uart              = connectionManager.uart();
   QMetaObject::invokeMethod(
     uart, [uart, dtrEnabled]() { uart->setDtrEnabled(dtrEnabled); }, Qt::AutoConnection);
 
@@ -407,9 +408,9 @@ API::CommandResponse API::Handlers::UARTHandler::setAutoReconnect(const QString&
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: autoReconnect"));
   }
 
-  const bool autoReconnect       = params.value(QStringLiteral("autoReconnect")).toBool();
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* uart                     = connectionManager.uart();
+  const bool autoReconnect = params.value(QStringLiteral("autoReconnect")).toBool();
+  auto& connectionManager  = API::handlerContext().connectionManager;
+  auto* uart               = connectionManager.uart();
   QMetaObject::invokeMethod(
     uart, [uart, autoReconnect]() { uart->setAutoReconnect(autoReconnect); }, Qt::AutoConnection);
 
@@ -430,8 +431,8 @@ API::CommandResponse API::Handlers::UARTHandler::getPortList(const QString& id,
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  const auto& portList           = connectionManager.uart()->portList();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  const auto& portList    = connectionManager.uart()->portList();
 
   QJsonArray ports;
   for (int i = 0; i < portList.count(); ++i) {
@@ -455,8 +456,8 @@ API::CommandResponse API::Handlers::UARTHandler::getBaudRateList(const QString& 
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  const auto& baudRateList       = connectionManager.uart()->baudRateList();
+  auto& connectionManager  = API::handlerContext().connectionManager;
+  const auto& baudRateList = connectionManager.uart()->baudRateList();
 
   QJsonArray baudRates;
   for (const auto& rate : baudRateList)
@@ -476,8 +477,8 @@ API::CommandResponse API::Handlers::UARTHandler::getConfiguration(const QString&
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* uart                     = connectionManager.uart();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  auto* uart              = connectionManager.uart();
 
   QJsonObject result;
 

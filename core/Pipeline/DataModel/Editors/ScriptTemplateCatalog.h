@@ -59,4 +59,6 @@ private:
                                                 const QString& suffix,
                                                 const char* translationContext);
 
+[[nodiscard]] QString defaultOutputWidgetTemplate();
+
 }  // namespace DataModel

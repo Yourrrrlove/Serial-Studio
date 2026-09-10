@@ -11,13 +11,15 @@
 #include <algorithm>
 #include <cmath>
 #include <QFile>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QList>
 #include <QRegularExpression>
 #include <QSet>
 
 #include "AI/Logging.h"
-#include "SerialStudio.h"
+#include "Core/SerialStudio.h"
 
 /**
  * @brief English stopwords skipped during query tokenization.

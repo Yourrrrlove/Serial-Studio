@@ -3385,7 +3385,7 @@ service SerialStudioTypedAPI {
   // Reset to a blank project (one default UART source, no groups, no datasets, no actions, no workspaces). DESTRUCTIVE: discards the loaded project. Use only when the user explicitly says "start over" or "new project". For starting a TYPED project, prefer project.template.apply -- it gives the user a useful skeleton instead of an empty canvas. Pass dryRun:true to see what the current project (wouldDiscard) looks like before wiping it.
   rpc ProjectNew(ProjectNewRequest) returns (CommandResponse);
 
-  // Open a .ssproj or .json project file. Replaces the current project. Auto-switches operationMode to ProjectFile if it was QuickPlot or ConsoleOnly. Path must be absolute. Pass dryRun:true to read the file and return wouldDiscard + wouldApply summaries without loading.
+  // Open a .ssproj or .json project file. Replaces the current project. Auto-switches operationMode to ProjectFile if it was QuickPlot or ConsoleOnly. Path must be absolute. Pass dryRun:true to read the file and return wouldDiscard + wouldApply summaries without loading. Re-opening the project that is already loaded is a no-op that keeps unsaved edits: the reply reports reloaded:false for it.
   rpc ProjectOpen(ProjectOpenRequest) returns (CommandResponse);
 
   // Add an output widget to a group (params: groupId, type)
@@ -3418,13 +3418,13 @@ service SerialStudioTypedAPI {
   // Replay the most recently undone project-document step. Returns {performed:false, reason} when there is nothing to redo. Any new mutation after an undo discards the redo tail.
   rpc ProjectRedo(ProjectRedoRequest) returns (CommandResponse);
 
-  // Write the current project to disk. Note: the AI runtime auto-saves after every successful mutating tool call within ~1 second, so you do NOT need to call this explicitly when editing. Call it ONLY when the user explicitly says "save" or wants a different file path -- in which case pass {filePath: "/abs/path"} for headless save-as.
+  // Write the current project to disk. The AI runtime does NOT write the project file: a successful mutating tool call takes a checkpoint, not a save. Call this when the user asks to save, or pass {filePath: "/abs/path"} for a headless save-as.
   rpc ProjectSave(ProjectSaveRequest) returns (CommandResponse);
 
   // Case-insensitive substring search across every project entity type: datasets (title, alias, units), groups, actions, sources, workspaces, and data tables (title/name). Returns compact typed rows -- never full objects -- with matchCount, window/nextOffset paging (default limit 20, max 100), and projectEpoch. THE starting point for finding anything in a large project; drill into hits with project.dataset.getByUniqueId / getByPath or project.group.get.
   rpc ProjectSearch(ProjectSearchRequest) returns (CommandResponse);
 
-  // Rename the project (only the in-app title). Does not move or rename the .ssproj file on disk; auto-save still writes to the existing file path. To save to a different file, use project.save{filePath}.
+  // Rename the project (only the in-app title). Does not move or rename the .ssproj file on disk; the title reaches disk on the next save. To save to a different file, use project.save{filePath}.
   rpc ProjectSetTitle(ProjectSetTitleRequest) returns (CommandResponse);
 
   // Composite read of the active project: title, sources, groups + datasets, workspaces summary, and data tables summary -- in one round trip. Pass verbose=true for source-level frame settings and frame parser source. Prefer this over chaining list/get calls.

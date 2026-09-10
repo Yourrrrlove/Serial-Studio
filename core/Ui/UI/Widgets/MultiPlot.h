@@ -21,12 +21,14 @@
 
 #pragma once
 
+#include <QList>
 #include <QQuickItem>
+#include <QVariantList>
 #include <QVector>
 #include <QXYSeries>
 
+#include "Core/SerialStudio.h"
 #include "Misc/ThemeManager.h"
-#include "SerialStudio.h"
 #include "UI/Dashboard.h"
 #include "UI/Widgets/PlotBase.h"
 
@@ -86,6 +88,9 @@ class MultiPlot : public QQuickItem {
              CONSTANT)
   Q_PROPERTY(QStringList labels
              READ labels
+             CONSTANT)
+  Q_PROPERTY(QVariantList widgets
+             READ widgets
              CONSTANT)
   Q_PROPERTY(QStringList colors
              READ colors
@@ -162,6 +167,7 @@ public:
   [[nodiscard]] bool logY() const noexcept;
   [[nodiscard]] const QStringList& colors() const noexcept;
   [[nodiscard]] const QStringList& labels() const noexcept;
+  [[nodiscard]] const QVariantList& widgets() const noexcept;
   [[nodiscard]] const QList<bool>& visibleCurves() const noexcept;
   [[nodiscard]] bool sweepEnabled() const noexcept;
   [[nodiscard]] double triggerLevel() const noexcept;
@@ -221,6 +227,7 @@ private:
   QString m_xLabel;
   QStringList m_colors;
   QStringList m_labels;
+  QVariantList m_widgets;
   QList<bool> m_stringCurves;
   QList<bool> m_visibleCurves;
   QList<QList<QPointF>> m_data;

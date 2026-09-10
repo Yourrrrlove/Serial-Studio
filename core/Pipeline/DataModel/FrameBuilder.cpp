@@ -29,7 +29,6 @@ extern "C" {
 // clang-format on
 
 #include <algorithm>
-#include <charconv>
 #include <cmath>
 #include <cstdio>
 #include <limits>
@@ -44,36 +43,19 @@ extern "C" {
 #include <QDebug>
 #include <stdexcept>
 
-#include "API/Server.h"
-#include "AppState.h"
+#include "Core/IO/IDeviceWriter.h"
+#include "Core/Services.h"
 #include "Core/SSAssert.h"
-#include "CSV/Export.h"
-#include "CSV/Player.h"
+#include "Core/TimerEvents.h"
+#include "DataModel/ActionBytes.h"
 #include "DataModel/NotificationCenter.h"
 #include "DataModel/ProjectModel.h"
 #include "DataModel/Scripting/ControlScript.h"
+#include "DataModel/Scripting/DeviceWriteApi.h"
 #include "DataModel/Scripting/FrameParser.h"
 #include "DataModel/Scripting/FrameParserPipeline.h"
-#include "IO/ConnectionManager.h"
-#include "MDF4/Export.h"
-#include "MDF4/Player.h"
-#include "Misc/TimerEvents.h"
-#include "SessionContext.h"
-#include "UI/Dashboard.h"
 
-#ifdef BUILD_COMMERCIAL
-#  include "InfluxDB/Export.h"
-#  include "Licensing/CommercialToken.h"
-#  include "Licensing/LemonSqueezy.h"
-#  include "MQTT/Publisher.h"
-#  include "Sessions/Export.h"
-#  include "Sessions/Player.h"
-#  include "UI/Widgets/AudioExport.h"
-#endif
-
-#ifdef ENABLE_GRPC
-#  include "API/GRPC/GRPCServer.h"
-#endif
+DataModel::FrameBuilder* DataModel::FrameBuilder::s_instance = nullptr;
 
 //--------------------------------------------------------------------------------------------------
 // Constants
@@ -145,12 +127,14 @@ extern "C" {
 /**
  * @brief Constructs the FrameBuilder singleton and wires its watchdog/license hooks.
  */
-DataModel::FrameBuilder::FrameBuilder()
-  : m_quickPlotChannels(-1)
+DataModel::FrameBuilder::FrameBuilder(Core::Bus::MessageBus& bus)
+  : m_bus(bus)
+  , m_quickPlotChannels(-1)
   , m_parseBudgetEnabled(true)
   , m_lastConnectedState(false)
   , m_lastPausedState(false)
   , m_playerOpen(false)
+  , m_playerOpenMask{}
   , m_captureDatasetValues(false)
   , m_captureFlagsDirty(true)
   , m_externalTableApiUsers(false)
@@ -185,17 +169,11 @@ DataModel::FrameBuilder::FrameBuilder()
   , m_stager(*this, m_framePoolGeneration, m_maskSinks)
   , m_publisher(m_maskSinks)
   , m_deferredProjectSnapshot(std::nullopt)
+  , m_wiring(*this, m_playerOpenMask)
 {
   m_framePool.reserve(kFramePoolSize);
   for (int i = 0; i < kFramePoolSize; ++i)
     m_framePool.emplace_back(std::make_shared<PooledFrameSlot>());
-
-#ifdef BUILD_COMMERCIAL
-  static auto& lemonSqueezy = Licensing::LemonSqueezy::instance();
-  connect(&lemonSqueezy, &Licensing::LemonSqueezy::activatedChanged, this, [this] {
-    syncFromProjectModel();
-  });
-#endif
 
   if (auto* app = qApp)
     connect(app, &QCoreApplication::aboutToQuit, this, &DataModel::FrameBuilder::prepareShutdown);
@@ -214,14 +192,12 @@ void DataModel::FrameBuilder::prepareShutdown()
 }
 
 /**
- * @brief Returns this session's frame builder. The object is owned by the SessionContext and built
- *        by the composition root, so a reach before adoption is a named fatal instead of an
- *        out-of-order lazy construction. Every hotpath caller binds it once into a static or a
- *        member reference, so the frame path never re-enters this (spec 0039 M2, wave D1).
+ * @brief Returns this session's frame builder; a reach before adoption is a named fatal.
  */
 DataModel::FrameBuilder& DataModel::FrameBuilder::instance()
 {
-  return SessionContext::current().frameBuilder();
+  SS_ASSERT(s_instance != nullptr, qFatal("FrameBuilder::instance() before adoption"));
+  return *s_instance;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -568,26 +544,11 @@ const DataModel::FrameBuilder::LatestFrameInfo* DataModel::FrameBuilder::latestF
  */
 void DataModel::FrameBuilder::setupExternalConnections()
 {
-  connect(&IO::ConnectionManager::instance(),
-          &IO::ConnectionManager::connectedChanged,
-          this,
-          &DataModel::FrameBuilder::onConnectedChanged);
-
-  connect(&IO::ConnectionManager::instance(),
-          &IO::ConnectionManager::pausedChanged,
-          this,
-          &DataModel::FrameBuilder::onPausedChanged);
-
   connect(&IO::PipelineHost::instance(),
           &IO::PipelineHost::parkedOnGuiChanged,
           this,
           &DataModel::FrameBuilder::onPipelineParkedChanged,
           Qt::DirectConnection);
-
-  connect(&AppState::instance(),
-          &AppState::operationModeChanged,
-          this,
-          &DataModel::FrameBuilder::onOperationModeChanged);
 
   connect(&DataModel::ProjectModel::instance(),
           &DataModel::ProjectModel::sourceDeleted,
@@ -609,144 +570,88 @@ void DataModel::FrameBuilder::setupExternalConnections()
           this,
           [this] { compileTransforms(); });
 
-  connect(&Misc::TimerEvents::instance(),
+  connect(&Core::services().timerEvents,
           &Misc::TimerEvents::timeout1Hz,
           this,
           &DataModel::FrameBuilder::collectTransformEngineGarbage);
 
-  connect(&Misc::TimerEvents::instance(), &Misc::TimerEvents::timeout1Hz, this, [this] {
+  connect(&Core::services().timerEvents, &Misc::TimerEvents::timeout1Hz, this, [this] {
     m_parseBudget.maintain(BudgetClock::now());
     m_latestTap.publishParseLoads();
   });
 
-  wireDisplayTickHooks(Misc::TimerEvents::instance(), IO::PipelineHost::instance());
+  wireDisplayTickHooks(Core::services().timerEvents, IO::PipelineHost::instance());
 
-  const auto onPlayer = &DataModel::FrameBuilder::onPlayerOpenChanged;
-  connect(&CSV::Player::instance(), &CSV::Player::openChanged, this, onPlayer);
-  connect(&MDF4::Player::instance(), &MDF4::Player::openChanged, this, onPlayer);
-#ifdef BUILD_COMMERCIAL
-  connect(&Sessions::Player::instance(), &Sessions::Player::openChanged, this, onPlayer);
-#endif
+  m_wiring.watchPlayers();
+  m_wiring.watchOperationMode();
+  m_wiring.watchLinkState();
+  m_wiring.watchLicense();
 
-  const AsyncSinks sinks = resolveAsyncSinks();
-  m_publisher.bind(resolveBlockSinks(sinks, IO::PipelineHost::instance()));
-  wireAsyncSinkHooks(sinks);
+  wireAsyncSinkHooks();
 
-  m_operationMode = AppState::instance().operationMode();
-  m_playerOpen    = SerialStudio::isAnyPlayerOpen();
+  m_operationMode = IO::PipelineHost::instance().operationMode();
+  m_playerOpen    = anyPlayerOpen();
   refreshLatestFrameCapture();
 }
 
 /**
- * @brief Binds the publisher's sink table without wiring a signal, for a composition root that
- *        skips setupExternalConnections(): the publish path holds its pipeline as a bound
- *        pointer, so such a root publishes through a null host. Sinks resolve on the caller's
- *        thread -- one built on the pipeline thread would take pipeline affinity.
+ * @brief Adopts the sinks the composition root resolved (spec 0077): the publisher's table plus
+ *        the two read-only observers the masked lane reaches by slot, with the pipeline the
+ *        dashboard hop goes through. Every root binds here BEFORE any wiring, or the first flushed
+ *        block publishes through a null host. Binds on the builder's thread when called elsewhere.
  */
-void DataModel::FrameBuilder::bindBlockSinks()
+void DataModel::FrameBuilder::bindBlockSinks(std::span<DataModel::IBlockSink* const> sinks,
+                                             DataModel::IBlockSink* server,
+                                             DataModel::IBlockSink* grpc)
 {
+  SS_ASSERT(sinks.size() <= BlockPublisher::Sinks::kMaxSinks, return);
+
   static auto& pipeline = IO::PipelineHost::instance();
 
-  const BlockPublisher::Sinks sinks = resolveBlockSinks(resolveAsyncSinks(), pipeline);
+  BlockPublisher::Sinks table;
+  table.pipeline = &pipeline;
+  table.server   = server;
+  table.grpc     = grpc;
+  for (auto* sink : sinks) {
+    SS_ASSERT(sink != nullptr, return);
+    table.sinks[table.sinkCount++] = sink;
+  }
 
   if (QThread::currentThread() != thread()) {
-    invokeOnBuilderThreadBlocking([this, sinks] { m_publisher.bind(sinks); });
+    invokeOnBuilderThreadBlocking([this, table] { m_publisher.bind(table); });
     return;
   }
 
-  m_publisher.bind(sinks);
-}
-
-// code-verify off
-// arch-singleton-instance sanctions setupExternalConnections by name, and this is the half of that
-// body a headless root needs without the wiring. Duplicating the list instead is the stale-flag
-// failure wireAsyncSinkHooks() documents.
-/**
- * @brief Resolves every export/output module the publisher and the cached flags depend on -- the
- *        second half of the setupExternalConnections() composition-root body, split out so the
- *        sink list has one definition that both binding and wiring read.
- */
-DataModel::FrameBuilder::AsyncSinks DataModel::FrameBuilder::resolveAsyncSinks()
-{
-  AsyncSinks sinks;
-  sinks.csv    = &CSV::Export::instance();
-  sinks.mdf4   = &MDF4::Export::instance();
-  sinks.server = &API::Server::instance();
-  sinks.script = &DataModel::ControlScript::instance();
-#ifdef BUILD_COMMERCIAL
-  sinks.sessions = &Sessions::Export::instance();
-  sinks.mqtt     = &MQTT::Publisher::instance();
-  sinks.audio    = &Widgets::AudioExport::instance();
-  sinks.influx   = &InfluxDB::Export::instance();
-#endif
-#ifdef ENABLE_GRPC
-  sinks.grpc = &API::GRPC::GRPCServer::instance();
-#endif
-
-  return sinks;
-}
-
-// code-verify on
-
-/**
- * @brief Projects the wiring sink list onto the publisher's, adding the pipeline the dashboard
- *        hop goes through. Both are resolved in this one composition-root body, so the publish
- *        path itself reaches through no singleton.
- */
-DataModel::BlockPublisher::Sinks DataModel::FrameBuilder::resolveBlockSinks(const AsyncSinks& s,
-                                                                            IO::PipelineHost& host)
-{
-  BlockPublisher::Sinks sinks;
-  sinks.pipeline = &host;
-  sinks.server   = s.server;
-  sinks.csv      = s.csv;
-  sinks.mdf4     = s.mdf4;
-#ifdef BUILD_COMMERCIAL
-  sinks.sessions = s.sessions;
-  sinks.mqtt     = s.mqtt;
-  sinks.audio    = s.audio;
-  sinks.influx   = s.influx;
-#endif
-#ifdef ENABLE_GRPC
-  sinks.grpc = s.grpc;
-#endif
-
-  return sinks;
+  m_publisher.bind(table);
 }
 
 /**
- * @brief Wires every input of the cached any-async-sink and latest-frame-capture flags. A sink
- *        missing from here leaves the flag stale, and the recording then produces a valid-looking
- *        empty file, so this list is the flags' contract rather than a convenience.
+ * @brief Wires every input of the cached any-async-sink and latest-frame-capture flags: each bound
+ *        sink's activity edge, the API observer's edge for the capture flag and the control
+ *        script's running edge. A sink left out of the bound table never reaches the flag and its
+ *        recording is a valid-looking empty file, so that table is the flags' contract.
  */
-void DataModel::FrameBuilder::wireAsyncSinkHooks(const AsyncSinks& sinks)
+void DataModel::FrameBuilder::wireAsyncSinkHooks()
 {
-  SS_ASSERT(sinks.csv && sinks.mdf4, return);
-  SS_ASSERT(sinks.server && sinks.script, return);
+  const auto& sinks = m_publisher.sinks();
+  SS_ASSERT(sinks.pipeline != nullptr, return);
+  SS_ASSERT_LOG(sinks.sinkCount > 0);
 
   const auto refresh = [this] {
     m_publisher.refreshSinkFlag();
   };
-  connect(sinks.csv, &CSV::Export::enabledChanged, this, refresh);
-  connect(sinks.mdf4, &MDF4::Export::enabledChanged, this, refresh);
-  connect(sinks.server, &API::Server::enabledChanged, this, [this] {
-    m_publisher.refreshSinkFlag();
+  for (std::size_t i = 0; i < sinks.sinkCount; ++i)
+    connect(sinks.sinks[i], &DataModel::IBlockSink::sinkActivityChanged, this, refresh);
+
+  if (sinks.server)
+    connect(sinks.server, &DataModel::IBlockSink::sinkActivityChanged, this, [this] {
+      refreshLatestFrameCapture();
+    });
+
+  static auto& controlScript = DataModel::ControlScript::instance();
+  connect(&controlScript, &DataModel::ControlScript::runningChanged, this, [this] {
     refreshLatestFrameCapture();
   });
-  connect(sinks.server, &API::Server::clientCountChanged, this, refresh);
-  connect(sinks.script, &DataModel::ControlScript::runningChanged, this, [this] {
-    refreshLatestFrameCapture();
-  });
-#ifdef BUILD_COMMERCIAL
-  connect(sinks.sessions, &Sessions::Export::enabledChanged, this, refresh);
-  connect(sinks.mqtt, &MQTT::Publisher::configurationChanged, this, refresh);
-  connect(sinks.audio, &Widgets::AudioExport::activeSessionsChanged, this, refresh);
-  connect(sinks.influx, &InfluxDB::Export::enabledChanged, this, refresh);
-#endif
-#ifdef ENABLE_GRPC
-  connect(sinks.grpc, &API::GRPC::GRPCServer::enabledChanged, this, refresh);
-  connect(sinks.grpc, &API::GRPC::GRPCServer::clientCountChanged, this, refresh);
-#endif
 }
 
 /**
@@ -811,7 +716,7 @@ void DataModel::FrameBuilder::forgetPublishedStructures()
 void DataModel::FrameBuilder::onPlayerOpenChanged()
 {
   const bool wasOpen  = m_playerOpen;
-  m_playerOpen        = SerialStudio::isAnyPlayerOpen();
+  m_playerOpen        = anyPlayerOpen();
   m_captureFlagsDirty = true;
   rebuildTransformsForPlayback();
 
@@ -845,16 +750,17 @@ void DataModel::FrameBuilder::releaseReplayPoolStorage()
 }
 
 /**
- * @brief Recomputes the cached latest-frame capture flag (control script or API server active);
- *        drops the retained chunks when every consumer is gone so FrameReader slots unpin.
+ * @brief Recomputes the cached latest-frame capture flag (control script running, or the API
+ *        observer consuming: enabled with a client attached); drops the retained chunks when every
+ *        consumer is gone so FrameReader slots unpin.
  */
 void DataModel::FrameBuilder::refreshLatestFrameCapture()
 {
   const bool wasEnabled = m_captureLatestFrame;
 
   static auto& controlScript = DataModel::ControlScript::instance();
-  static auto& server        = API::Server::instance();
-  m_captureLatestFrame       = controlScript.running() || server.enabled();
+  const auto* server         = m_publisher.sinks().server;
+  m_captureLatestFrame       = controlScript.running() || (server && server->sinkActive());
 
   if (wasEnabled && !m_captureLatestFrame)
     clearLatestFrames();
@@ -1555,17 +1461,16 @@ void DataModel::FrameBuilder::onConnectedChanged()
   parser.readCode();
   compileTransforms();
 
-  static auto& ioManager = IO::ConnectionManager::instance();
-  const auto& actions    = m_frame.actions;
+  auto* writer        = &DataModel::requireDeviceWriter();
+  const auto& actions = m_frame.actions;
   for (const auto& action : actions)
     if (action.autoExecuteOnConnect) {
       const int actionSource  = action.sourceId;
       const QByteArray txData = get_tx_bytes(action);
-      const QString title     = action.title;
       QMetaObject::invokeMethod(
-        &ioManager,
-        [actionSource, txData, title] {
-          const qint64 written = ioManager.writeDataToDevice(actionSource, txData);
+        qApp,
+        [writer, actionSource, txData, title = action.title] {
+          const qint64 written = writer->writeDataToDevice(actionSource, txData);
           if (written < 0) [[unlikely]]
             qWarning() << "[FrameBuilder] Auto-execute write failed for action:" << title;
         },

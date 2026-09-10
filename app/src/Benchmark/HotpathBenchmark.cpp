@@ -41,20 +41,21 @@
 
 #include "API/Server.h"
 #include "AppState.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/IO/HAL_Driver.h"
+#include "Core/Runtime.h"
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
 #include "CSV/Export.h"
-#include "DataModel/Frame.h"
 #include "DataModel/FrameBuilder.h"
 #include "DataModel/ProjectModel.h"
 #include "DataModel/Scripting/FrameParser.h"
 #include "DataModel/Scripting/JsWatchdogThread.h"
 #include "IO/ConnectionManager.h"
 #include "IO/FrameReader.h"
-#include "IO/HAL_Driver.h"
 #include "IO/PipelineHost.h"
 #include "IO/StreamWorker.h"
 #include "Platform/AppPlatform.h"
-#include "SerialStudio.h"
 #include "SessionContext.h"
 #include "UI/Dashboard.h"
 #ifdef BUILD_COMMERCIAL
@@ -85,7 +86,6 @@ void __gcov_dump(void);
 
 namespace Benchmark {
 
-static bool s_benchmarkActive           = false;
 static constexpr int kDashboardChannels = 13;
 static constexpr int kStringChannels    = 3;
 
@@ -171,7 +171,7 @@ static constexpr int kReportColumns = 7;
  */
 bool HotpathBenchmark::active() noexcept
 {
-  return s_benchmarkActive;
+  return Core::Runtime::benchmarkActive();
 }
 
 /**
@@ -179,7 +179,7 @@ bool HotpathBenchmark::active() noexcept
  */
 void HotpathBenchmark::setActive(bool active) noexcept
 {
-  s_benchmarkActive = active;
+  Core::Runtime::setBenchmarkActive(active);
 
   static auto& dashboard = UI::Dashboard::instance();
   dashboard.updateStreamAvailable();

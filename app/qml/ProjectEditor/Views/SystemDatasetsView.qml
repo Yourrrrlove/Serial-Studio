@@ -82,7 +82,7 @@ Widgets.Pane {
     if (!q)
       return datasets
 
-    const match = (s) => SerialStudio.searchMatches(q, String(s || ""))
+    const match = (s) => SerialStudioHelpers.searchMatches(q, String(s || ""))
     return datasets.filter(d =>
                            match(d.uniqueId) ||
                            match(paddedId(d.uniqueId)) ||

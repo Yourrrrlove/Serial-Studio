@@ -14,14 +14,19 @@ through their directory name (`#include "Core/SSAssert.h"`, root = `core/`);
 the five partition libraries carved out of `app/src` keep their ORIGINAL
 relative paths, so each of `core/Pipeline`, `core/Devices`, `core/Storage`,
 `core/Api`, `core/Ui` is an include root of its own and `#include
-"DataModel/Frame.h"` still resolves. That only stays unambiguous while no two
+"Core/DataModel/Frame.h"` still resolves. That only stays unambiguous while no two
 roots hold the same relative path, which is what `include-ambiguous` gates.
 
-Two enforcement modes. `Core` and `Protocols` are STRICT: any include outside
-the allowed set is an error. The five partition layers are RATCHETED: an
-out-of-graph include is debt, counted per directed edge and compared against
-`scripts/layer-baseline.json`. Growth on an edge fails; shrinkage is a note.
-The intended graph is `LAYERS` below, and it is the target, not the tree.
+Every layer is STRICT (spec 0077): any include outside its allowed set is an
+error. The ratchet of spec 0076 stays as machinery (`DEBT_LAYERS`, the edge
+baseline `scripts/layer-baseline.json`) but no layer is on it any more, so the
+baseline holds no edges; the graph in `LAYERS` below is the tree.
+
+The CMake side is checked too: each `core/<Layer>/CMakeLists.txt` may name as
+an include root only its own directory and the roots of layers it may include,
+and may link only `SerialStudio::` targets of those layers; the closure is
+transitive through the allowed layers' own graphs, which is what a PUBLIC link
+exports. `core/CMakeLists.txt` may not link the partitions to each other.
 
 Checks:
 
@@ -32,7 +37,11 @@ Checks:
     layer-upward         a STRICT layer includes something outside its own
                          layer and its allowed lower layers             (error)
     layer-debt-growth    a ratcheted edge carries more includes than the
-                         checked-in baseline allows                     (error)
+                         checked-in baseline allows (no layer is ratcheted
+                         since spec 0077; kept for the machinery)        (error)
+    cmake-root-violation a core/<Layer>/CMakeLists.txt names an include root
+                         or a SerialStudio:: link outside the layer's
+                         graph, or the root list links partitions          (error)
     core-unowned         a source under core/ listed in zero or in more than
                          one core/**/CMakeLists.txt                     (error)
     pair-split           a .cpp and its sibling .h listed in different
@@ -78,7 +87,7 @@ LAYERS = {
     "Protocols": ("Core",),
     "Pipeline": ("Core", "Protocols"),
     "Devices": ("Core", "Protocols"),
-    "Storage": ("Core", "Pipeline"),
+    "Storage": ("Core", "Protocols", "Pipeline"),
     "Api": ("Core", "Pipeline", "Devices", "Storage"),
     "Ui": ("Core", "Pipeline", "Devices", "Storage", "Api"),
     "App": ("Core", "Protocols", "Pipeline", "Devices", "Storage", "Api", "Ui"),
@@ -94,8 +103,14 @@ LAYERS = {
     ),
 }
 
-# Layers whose out-of-graph includes are ratcheted debt rather than errors.
-DEBT_LAYERS = ("Pipeline", "Devices", "Storage", "Api", "Ui")
+# Layers whose out-of-graph includes are ratcheted debt rather than errors. Empty since spec 0077:
+# every layer is strict, and the tuple stays so a future carve-out can ratchet its first days.
+DEBT_LAYERS: tuple[str, ...] = ()
+
+# The library target each core/ layer builds, as named in its CMakeLists.txt.
+LAYER_TARGETS = {
+    layer: f"SerialStudio{layer}" for layer in LAYERS if layer not in ("App", "Tests")
+}
 
 # Layers reached through their own directory name, from the core/ root.
 PREFIXED_LAYERS = ("Core", "Protocols")
@@ -143,6 +158,15 @@ GENERATED_INCLUDES = (
 
 _INCLUDE_RE = re.compile(r'^\s*#\s*include\s*"([^"]+)"')
 _CMAKE_TOKEN_RE = re.compile(r"[A-Za-z0-9_./+${}-]+\.(?:h|cpp|c|mm)\b")
+_CMAKE_CALL_RE = re.compile(
+    r"target_(include_directories|link_libraries)\s*\(\s*([^\s()]+)([^()]*)\)", re.S
+)
+_CMAKE_CORE_ROOT_RE = re.compile(r"^\$\{CMAKE_SOURCE_DIR\}/core/([A-Za-z]+)/?$")
+_CMAKE_APP_ROOT_RE = re.compile(r"^\$\{CMAKE_SOURCE_DIR\}/app/src/?$")
+_CMAKE_LINK_RE = re.compile(r"^SerialStudio(?:::)?([A-Za-z]+)$")
+_CMAKE_SIBLING_ROOT_RE = re.compile(
+    r"^\$\{CMAKE_CURRENT_SOURCE_DIR\}/\.\./([A-Za-z]+)/?$"
+)
 
 
 # ---------------------------------------------------------------------------
@@ -294,6 +318,21 @@ def _allowed_layers(layer: str) -> set[str]:
     return {layer} | set(LAYERS.get(layer, ()))
 
 
+def _closure_layers(layer: str) -> set[str]:
+    """The layers a PUBLIC link may legitimately expose to `layer`: its allowed layers and,
+    transitively, theirs. Protocols reaches Api through Pipeline this way without Api being
+    allowed to include it directly."""
+    seen: set[str] = set()
+    pending = [layer]
+    while pending:
+        current = pending.pop()
+        if current in seen:
+            continue
+        seen.add(current)
+        pending.extend(LAYERS.get(current, ()))
+    return seen
+
+
 def _record_violation(report, edges, source, number, target, resolved, layer):
     """Files one out-of-graph include as a strict error or as ratcheted debt."""
     reached = layer_of(resolved) or "Unknown"
@@ -367,9 +406,9 @@ def write_baseline(edges: dict) -> None:
     """Rewrites the edge baseline from the current tree."""
     payload = {
         "purpose": (
-            "Out-of-graph includes each ratcheted core/ layer carries today. "
-            "scripts/layer-verify.py fails when an edge grows past its count, "
-            "so new upward coupling blocks while this backlog is worked down."
+            "Out-of-graph includes each ratcheted core/ layer carries today. Empty since "
+            "spec 0077: every layer is strict, so an out-of-graph include is an error, not "
+            "debt. scripts/layer-verify.py fails when an edge grows past its count."
         ),
         "regenerate": "python3 scripts/layer-verify.py --accept",
         "generated": datetime.date.today().isoformat(),
@@ -511,6 +550,86 @@ def check_pair_split(report: Report, owners: dict) -> None:
         )
 
 
+def cmake_graph_entries(text: str) -> list[tuple[int, str, str, str]]:
+    """Returns `(line, target, kind, token)` for every root or link a CMake text names.
+
+    `kind` is "root" for a target_include_directories() entry and "link" for a
+    target_link_libraries() entry; the line is where the call starts. A link may name the
+    alias (`SerialStudio::Ui`) or the target (`SerialStudioUi`); a root may be spelled from
+    `${CMAKE_SOURCE_DIR}/core/<Layer>` or `${CMAKE_CURRENT_SOURCE_DIR}/../<Layer>`.
+    """
+    text = strip_cmake_comments(text)
+    entries: list[tuple[int, str, str, str]] = []
+    for match in _CMAKE_CALL_RE.finditer(text):
+        line = text.count("\n", 0, match.start()) + 1
+        kind = "root" if match.group(1) == "include_directories" else "link"
+        target = match.group(2)
+        for token in match.group(3).split():
+            if token in ("PUBLIC", "PRIVATE", "INTERFACE"):
+                continue
+            entries.append((line, target, kind, token))
+    return entries
+
+
+def _graph_token_layer(kind: str, token: str) -> str | None:
+    """Maps a root or link token onto a layer name; None for Qt, third-party and variables."""
+    if kind == "root":
+        if _CMAKE_APP_ROOT_RE.match(token):
+            return "App"
+        match = _CMAKE_CORE_ROOT_RE.match(token) or _CMAKE_SIBLING_ROOT_RE.match(token)
+        return match.group(1) if match else None
+    match = _CMAKE_LINK_RE.match(token)
+    return match.group(1) if match else None
+
+
+def check_cmake_graph(report: Report, root: Path | None = None) -> None:
+    """Every core/<Layer>/CMakeLists.txt names only roots and links inside the layer's graph."""
+    base = (root or REPO_ROOT) / CORE_ROOT
+    targets = {name: layer for layer, name in LAYER_TARGETS.items()}
+    for layer in LAYER_TARGETS:
+        cml = base / layer / "CMakeLists.txt"
+        if not cml.is_file():
+            continue
+        for line, target, kind, token in cmake_graph_entries(read_text(cml)):
+            owner = targets.get(target)
+            if owner is None:
+                continue
+            allowed = _closure_layers(owner)
+            reached = _graph_token_layer(kind, token)
+            if reached is None or reached in allowed:
+                continue
+            report.add(
+                "cmake-root-violation",
+                cml,
+                line,
+                f"{target} names {token} as a {kind}; allowed layers: "
+                f"{', '.join(sorted(allowed))}",
+            )
+    root_cml = base / "CMakeLists.txt"
+    if not root_cml.is_file():
+        return
+    for line, target, kind, token in cmake_graph_entries(read_text(root_cml)):
+        if kind != "link":
+            continue
+        layer = targets.get(target)
+        reached = _graph_token_layer(kind, token)
+        if layer is None or (
+            reached is not None and reached not in _closure_layers(layer)
+        ):
+            report.add(
+                "cmake-root-violation",
+                root_cml,
+                line,
+                f"{target} links {token} from the root list; each partition links only its "
+                "own CMakeLists.txt's downward set",
+            )
+
+
+def read_text(path: Path) -> str:
+    """Reads `path` as UTF-8 text, tolerating stray bytes."""
+    return path.read_text(encoding="utf-8", errors="replace")
+
+
 def check_app_cmake(report: Report) -> None:
     """App-side CMake entries must exist, and must never name a core/ source."""
     app_cml = REPO_ROOT / "app" / "CMakeLists.txt"
@@ -605,6 +724,7 @@ def main(argv: list[str]) -> int:
 
     check_debt(report, edges, load_baseline(report))
     check_core_ownership(report)
+    check_cmake_graph(report)
     check_app_cmake(report)
     render(report, edges, args)
     return 1 if report.errors else 0
@@ -612,7 +732,13 @@ def main(argv: list[str]) -> int:
 
 def accept(report: Report, edges: dict) -> int:
     """Rewrites the baseline, unless the include census is untrustworthy."""
-    blockers = ("include-unresolved", "include-ambiguous", "layer-upward")
+    blockers = (
+        "include-unresolved",
+        "include-ambiguous",
+        "layer-upward",
+        "cmake-root-violation",
+    )
+    check_cmake_graph(report)
     if report.has(*blockers):
         for err in report.errors:
             if err["rule"] in blockers:

@@ -27,7 +27,7 @@
 #include <QJsonObject>
 #include <QNetworkReply>
 
-#include "AppInfo.h"
+#include "Core/AppInfo.h"
 #include "Misc/ThemeManager.h"
 
 //--------------------------------------------------------------------------------------------------

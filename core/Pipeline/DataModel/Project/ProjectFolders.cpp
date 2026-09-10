@@ -24,17 +24,16 @@
 #include <algorithm>
 #include <QHash>
 #include <QInputDialog>
-#include <QMessageBox>
 #include <QTimer>
 
 #include "AppState.h"
+#include "Core/Prompt/UserPrompt.h"
+#include "DataModel/Project/EntityKinds.h"
 #include "DataModel/Project/ProjectHistory.h"
 #include "DataModel/Project/ProjectNaming.h"
 #include "DataModel/Project/ProjectTables.h"
 #include "DataModel/Project/ProjectWorkspaces.h"
-#include "DataModel/ProjectEditor.h"
 #include "DataModel/ProjectModel.h"
-#include "Misc/Utilities.h"
 
 namespace DataModel {
 
@@ -504,9 +503,8 @@ void DataModel::ProjectFolders::promptAddWorkspaceFolder(int parentFolderId)
     return;
 
   const int newId = addWorkspaceFolder(parentFolderId, name.trimmed());
-  QTimer::singleShot(0, &m_model, [newId] {
-    static auto& projectEditor = DataModel::ProjectEditor::instance();
-    projectEditor.selectWorkspaceFolder(newId);
+  QTimer::singleShot(0, &m_model, [this, newId] {
+    Q_EMIT m_model.editorSelectionRequested(DataModel::KindWorkspaceFolder, newId, QString());
   });
 }
 
@@ -528,9 +526,8 @@ void DataModel::ProjectFolders::promptAddWorkspaceInFolder(int parentFolderId)
 
   const int newId = m_model.m_workspaces.addWorkspace(name.trimmed());
   moveWorkspaceToFolder(newId, parentFolderId);
-  QTimer::singleShot(0, &m_model, [newId] {
-    static auto& projectEditor = DataModel::ProjectEditor::instance();
-    projectEditor.selectWorkspace(newId);
+  QTimer::singleShot(0, &m_model, [this, newId] {
+    Q_EMIT m_model.editorSelectionRequested(DataModel::KindWorkspace, newId, QString());
   });
 }
 
@@ -566,16 +563,16 @@ void DataModel::ProjectFolders::confirmDeleteWorkspaceFolder(int folderId)
   if (name.isEmpty())
     return;
 
-  const int choice = Misc::Utilities::showMessageBox(
+  const int choice = Core::Prompt::showMessageBox(
     ProjectModel::tr("Delete folder \"%1\"?").arg(name),
     ProjectModel::tr(
       "The folder is removed; its workspaces and sub-folders move up to the parent."),
-    QMessageBox::Warning,
+    Core::Prompt::Warning,
     ProjectModel::tr("Delete Folder"),
-    QMessageBox::Yes | QMessageBox::Cancel,
-    QMessageBox::Cancel);
+    Core::Prompt::Yes | Core::Prompt::Cancel,
+    Core::Prompt::Cancel);
 
-  if (choice == QMessageBox::Yes)
+  if (choice == Core::Prompt::Yes)
     deleteWorkspaceFolder(folderId);
 }
 
@@ -741,9 +738,8 @@ void DataModel::ProjectFolders::promptAddGroupFolder(int parentFolderId)
     return;
 
   const int newId = addGroupFolder(parentFolderId, name.trimmed());
-  QTimer::singleShot(0, &m_model, [newId] {
-    static auto& projectEditor = DataModel::ProjectEditor::instance();
-    projectEditor.selectGroupFolder(newId);
+  QTimer::singleShot(0, &m_model, [this, newId] {
+    Q_EMIT m_model.editorSelectionRequested(DataModel::KindGroupFolder, newId, QString());
   });
 }
 
@@ -779,15 +775,15 @@ void DataModel::ProjectFolders::confirmDeleteGroupFolder(int folderId)
   if (name.isEmpty())
     return;
 
-  const int choice = Misc::Utilities::showMessageBox(
+  const int choice = Core::Prompt::showMessageBox(
     ProjectModel::tr("Delete folder \"%1\"?").arg(name),
     ProjectModel::tr("The folder is removed; its groups and sub-folders move up to the parent."),
-    QMessageBox::Warning,
+    Core::Prompt::Warning,
     ProjectModel::tr("Delete Folder"),
-    QMessageBox::Yes | QMessageBox::Cancel,
-    QMessageBox::Cancel);
+    Core::Prompt::Yes | Core::Prompt::Cancel,
+    Core::Prompt::Cancel);
 
-  if (choice == QMessageBox::Yes)
+  if (choice == Core::Prompt::Yes)
     deleteGroupFolder(folderId);
 }
 
@@ -963,9 +959,8 @@ void DataModel::ProjectFolders::promptAddTableFolder(int parentFolderId)
     return;
 
   const int newId = addTableFolder(parentFolderId, name.trimmed());
-  QTimer::singleShot(0, &m_model, [newId] {
-    static auto& projectEditor = DataModel::ProjectEditor::instance();
-    projectEditor.selectTableFolder(newId);
+  QTimer::singleShot(0, &m_model, [this, newId] {
+    Q_EMIT m_model.editorSelectionRequested(DataModel::KindTableFolder, newId, QString());
   });
 }
 
@@ -986,9 +981,8 @@ void DataModel::ProjectFolders::promptAddTableInFolder(int parentFolderId)
     return;
 
   const QString added = m_model.m_tables.addTable(name.trimmed(), parentFolderId);
-  QTimer::singleShot(0, &m_model, [added] {
-    static auto& projectEditor = DataModel::ProjectEditor::instance();
-    projectEditor.selectUserTable(added);
+  QTimer::singleShot(0, &m_model, [this, added] {
+    Q_EMIT m_model.editorSelectionRequested(DataModel::KindUserTable, -1, added);
   });
 }
 
@@ -1024,16 +1018,16 @@ void DataModel::ProjectFolders::confirmDeleteTableFolder(int folderId)
   if (name.isEmpty())
     return;
 
-  const int choice = Misc::Utilities::showMessageBox(
+  const int choice = Core::Prompt::showMessageBox(
     ProjectModel::tr("Delete folder \"%1\"?").arg(name),
     ProjectModel::tr("The folder is removed; its tables and sub-folders move up to the parent. The "
                      "accessor path of those tables changes accordingly."),
-    QMessageBox::Warning,
+    Core::Prompt::Warning,
     ProjectModel::tr("Delete Folder"),
-    QMessageBox::Yes | QMessageBox::Cancel,
-    QMessageBox::Cancel);
+    Core::Prompt::Yes | Core::Prompt::Cancel,
+    Core::Prompt::Cancel);
 
-  if (choice == QMessageBox::Yes)
+  if (choice == Core::Prompt::Yes)
     deleteTableFolder(folderId);
 }
 

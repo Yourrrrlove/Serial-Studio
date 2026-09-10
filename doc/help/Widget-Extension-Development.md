@@ -220,7 +220,7 @@ While iterating on the QML, restart the application to pick up the edit.
 ## When a Package Fails to Load
 
 A package that cannot render never disappears silently. The widget slot shows a placeholder
-naming the cause, and the problem center lists a matching entry:
+naming the cause, and the [Problem Center](Problem-Center.md) lists a matching entry:
 
 | Reported as | Cause |
 |-------------|-------|

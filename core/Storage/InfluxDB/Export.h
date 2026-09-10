@@ -36,14 +36,19 @@
 #  include <QString>
 #  include <QUrl>
 
-#  include "DataModel/DataBlock.h"
-#  include "DataModel/Frame.h"
-#  include "DataModel/FrameConsumer.h"
+#  include "Core/Bus/Subscription.h"
+#  include "Core/Crypto/CredentialVault.h"
+#  include "Core/DataModel/DataBlock.h"
+#  include "Core/DataModel/Frame.h"
+#  include "Core/DataModel/FrameConsumer.h"
 #  include "InfluxDB/LineProtocol.h"
-#  include "MQTT/CredentialVault.h"
 
 class QNetworkAccessManager;
 class QNetworkReply;
+
+namespace Core::Bus {
+class MessageBus;
+}  // namespace Core::Bus
 
 namespace InfluxDB {
 
@@ -219,11 +224,13 @@ private:
 
 public:
   [[nodiscard]] static Export& instance();
+  void attachMessageBus(Core::Bus::MessageBus& bus);
   [[nodiscard]] static bool urlSchemeAllowed(const QString& url);
 
   [[nodiscard]] bool isOpen() const;
   [[nodiscard]] bool hasToken() const;
   [[nodiscard]] bool exportEnabled() const;
+  [[nodiscard]] bool sinkActive() const noexcept override;
 
   [[nodiscard]] QString url() const;
   [[nodiscard]] QString organization() const;
@@ -250,7 +257,7 @@ public slots:
   void setMeasurement(const QString& measurement);
   void setToken(const QString& token);
 
-  void ingestBlock(const DataModel::DataBlockPtr& block);
+  void ingestBlock(const DataModel::DataBlockPtr& block) override;
 
 protected:
   DataModel::FrameConsumerWorkerBase* createWorker() override;
@@ -295,6 +302,9 @@ private:
   quint64 m_lastPointsWrittenSeen;
   quint64 m_lastPointsDroppedSeen;
   quint64 m_lastHttpErrorsSeen;
+
+  Core::Bus::MessageBus* m_bus;
+  Core::Bus::Subscription m_licenseWatch;
 };
 
 }  // namespace InfluxDB

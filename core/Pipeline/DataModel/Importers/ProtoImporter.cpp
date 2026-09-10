@@ -30,12 +30,11 @@
 #include <QStandardPaths>
 #include <QTextStream>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/Prompt/UserPrompt.h"
+#include "Core/SerialStudio.h"
 #include "DataModel/Importers/ProtoParser.h"
 #include "DataModel/ProjectModel.h"
-#include "Misc/Utilities.h"
-#include "SerialStudio.h"
-#include "SessionContext.h"
 
 //--------------------------------------------------------------------------------------------------
 // Internal: scalar-to-widget mapping helpers
@@ -105,14 +104,15 @@ using namespace ::detail::proto;
 /**
  * @brief Constructs a proto importer bound to one session.
  */
-DataModel::ProtoImporter::ProtoImporter(SessionContext& ctx) : m_ctx(ctx) {}
+DataModel::ProtoImporter::ProtoImporter(ProjectModel& projectModel) : m_projectModel(projectModel)
+{}
 
 /**
  * @brief Returns the singleton ProtoImporter instance.
  */
 DataModel::ProtoImporter& DataModel::ProtoImporter::instance()
 {
-  static ProtoImporter instance(SessionContext::current());
+  static ProtoImporter instance(DataModel::ProjectModel::instance());
   return instance;
 }
 
@@ -223,20 +223,19 @@ void DataModel::ProtoImporter::showPreview(const QString& filePath)
 {
   QFile file(filePath);
   if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-    Misc::Utilities::showMessageBox(
-      tr("Failed to open proto file: %1").arg(file.errorString()),
-      tr("Verify the file path and read permissions, then try again."),
-      QMessageBox::Critical,
-      tr("Protobuf Import Error"));
+    Core::Prompt::showMessageBox(tr("Failed to open proto file: %1").arg(file.errorString()),
+                                 tr("Verify the file path and read permissions, then try again."),
+                                 Core::Prompt::Critical,
+                                 tr("Protobuf Import Error"));
     return;
   }
 
   static constexpr qsizetype kMaxProtoFileBytes = 10 * 1024 * 1024;
   if (file.size() > kMaxProtoFileBytes) {
-    Misc::Utilities::showMessageBox(tr("Proto file is too large (the limit is 10 MB)."),
-                                    tr("Verify you selected the correct .proto definition file."),
-                                    QMessageBox::Critical,
-                                    tr("Protobuf Import Error"));
+    Core::Prompt::showMessageBox(tr("Proto file is too large (the limit is 10 MB)."),
+                                 tr("Verify you selected the correct .proto definition file."),
+                                 Core::Prompt::Critical,
+                                 tr("Protobuf Import Error"));
     return;
   }
 
@@ -247,20 +246,20 @@ void DataModel::ProtoImporter::showPreview(const QString& filePath)
   ProtoParser parser(src);
   if (!parser.parse()) {
     const auto& err = parser.error();
-    Misc::Utilities::showMessageBox(
+    Core::Prompt::showMessageBox(
       tr("Failed to parse proto file at line %1: %2").arg(QString::number(err.line), err.message),
       tr("Only proto3 syntax is supported. Verify the file format and try again."),
-      QMessageBox::Critical,
+      Core::Prompt::Critical,
       tr("Protobuf Import Error"));
     return;
   }
 
   const auto messages = parser.messages();
   if (messages.isEmpty()) {
-    Misc::Utilities::showMessageBox(tr("Proto file contains no message definitions"),
-                                    tr("The selected file has no `message` blocks to import."),
-                                    QMessageBox::Warning,
-                                    tr("Protobuf Import Warning"));
+    Core::Prompt::showMessageBox(tr("Proto file contains no message definitions"),
+                                 tr("The selected file has no `message` blocks to import."),
+                                 Core::Prompt::Warning,
+                                 tr("Protobuf Import Warning"));
     return;
   }
 
@@ -288,7 +287,7 @@ void DataModel::ProtoImporter::confirmImport()
   for (const auto& m : m_messages)
     totalFields += countFieldsRecursive(m);
 
-  auto& pm = m_ctx.projectModel();
+  auto& pm = m_projectModel;
   QObject::connect(
     &pm,
     &ProjectModel::importCompleted,
@@ -297,12 +296,12 @@ void DataModel::ProtoImporter::confirmImport()
       if (!accepted)
         return;
 
-      Misc::Utilities::showMessageBox(
+      Core::Prompt::showMessageBox(
         tr("Successfully imported %1 message(s) and %2 field(s) from the proto file.")
           .arg(messageCount)
           .arg(totalFields),
         tr("The project editor is now open for customization."),
-        QMessageBox::Information,
+        Core::Prompt::Information,
         tr("Protobuf Import Complete"));
     },
     Qt::SingleShotConnection);

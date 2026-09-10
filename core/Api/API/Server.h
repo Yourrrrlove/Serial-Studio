@@ -31,15 +31,16 @@
 #include <QTcpServer>
 #include <QTcpSocket>
 
-#include "API/CommandProtocol.h"
 #include "API/Server/ClientReception.h"
 #include "API/Server/ConnectionState.h"
 #include "API/Server/ServerAuth.h"
 #include "API/Server/ServerWorker.h"
-#include "DataModel/DataBlock.h"
-#include "DataModel/Frame.h"
-#include "DataModel/FrameConsumer.h"
-#include "IO/HAL_Driver.h"
+#include "Core/Api/CommandProtocol.h"
+#include "Core/DataModel/DataBlock.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/DataModel/FrameConsumer.h"
+#include "Core/IO/HAL_Driver.h"
+#include "Core/IO/IRawByteTap.h"
 #include "IO/StreamWorker.h"
 
 #define API_TCP_PORT 7777
@@ -54,7 +55,8 @@ class MirrorPublisher;
  */
 class Server
   : public DataModel::FrameConsumer<DataModel::DataBlockPtr>
-  , public ReceptionHost {
+  , public ReceptionHost
+  , public IO::IRawByteTap {
   // clang-format off
   Q_OBJECT
   Q_PROPERTY(int clientCount
@@ -98,6 +100,7 @@ public:
   [[nodiscard]] static Server& instance();
   [[nodiscard]] static int maxClients() noexcept;
   [[nodiscard]] bool enabled() const noexcept;
+  [[nodiscard]] bool sinkActive() const noexcept override;
   [[nodiscard]] bool hasStreamSubscribers() const noexcept;
   [[nodiscard]] int clientCount() const noexcept;
   [[nodiscard]] int port() const noexcept;
@@ -116,8 +119,10 @@ public slots:
   void setEnabled(const bool enabled);
   void setExternalConnections(const bool enabled);
   void hotpathTxData(const QByteArray& data);
+  void onDeviceBytes(int deviceId, const IO::CapturedDataPtr& data) override;
+  void onInjectedBytes(const IO::CapturedDataPtr& data) override;
   void setupExternalConnections();
-  void ingestBlock(const DataModel::DataBlockPtr& block);
+  void ingestBlock(const DataModel::DataBlockPtr& block) override;
   void broadcastLifecycleEvent(const QString& eventName);
 
 protected:

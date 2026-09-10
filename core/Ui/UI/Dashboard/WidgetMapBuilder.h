@@ -28,8 +28,8 @@
 #include <QVector>
 #include <vector>
 
-#include "DataModel/Frame.h"
-#include "SerialStudio.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/SerialStudio.h"
 
 class AppState;
 

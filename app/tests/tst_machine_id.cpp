@@ -23,8 +23,8 @@
 #include <QStandardPaths>
 #include <QTest>
 
+#include "Core/Crypto/SimpleCrypt.h"
 #include "Licensing/MachineID.h"
-#include "Licensing/SimpleCrypt.h"
 
 // The suite runs in Qt's test mode, so the seeded fingerprint lands in a throwaway config
 // location and never touches the developer's real licensing store.

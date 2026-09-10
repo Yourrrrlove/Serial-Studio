@@ -22,7 +22,6 @@
 #include "IO/Drivers/Network.h"
 
 #include "IO/ConnectionManager.h"
-#include "Misc/Utilities.h"
 
 static constexpr int kHttpMinIntervalMs = 10;
 
@@ -860,9 +859,9 @@ void IO::Drivers::Network::reportLinkError(const QString& error)
 
 /**
  * @brief Returns the Network configuration as a flat list of editable properties: every
- *        transport's rows, not just the active one's. The list IS what a project persists, and
- *        setDriverProperty() already offers every key to every transport, so gating the rows on
- *        the current type silently dropped the other three transports' settings on save.
+ *        transport's rows, not just the active one's. The list IS what a project persists, so
+ *        gating the rows on the current type silently dropped the other three transports' settings
+ *        on save; each row's visibleWhen rule names the socket types that show it instead.
  */
 QList<IO::DriverProperty> IO::Drivers::Network::driverProperties() const
 {
@@ -889,6 +888,8 @@ void IO::Drivers::Network::appendTlsProperty(QList<IO::DriverProperty>& props) c
   tls.description = tr("Accept self-signed or mismatched certificates");
   tls.type        = IO::DriverProperty::CheckBox;
   tls.value       = m_ignoreTlsErrors;
+  tls.showWhen(QStringLiteral("socketTypeIndex"),
+               {static_cast<int>(WebSocket), static_cast<int>(Http)});
   props.append(tls);
 }
 
@@ -928,6 +929,7 @@ void IO::Drivers::Network::appendAddressProperty(QList<IO::DriverProperty>& prop
   addr.label = tr("Remote Address");
   addr.type  = IO::DriverProperty::Text;
   addr.value = m_address;
+  addr.showWhen(QStringLiteral("socketTypeIndex"), {static_cast<int>(Tcp), static_cast<int>(Udp)});
   props.append(addr);
 }
 

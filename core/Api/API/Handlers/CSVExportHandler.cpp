@@ -25,6 +25,7 @@
 #include <QJsonObject>
 
 #include "API/CommandRegistry.h"
+#include "API/HandlerContext.h"
 #include "CSV/Export.h"
 
 //--------------------------------------------------------------------------------------------------
@@ -107,8 +108,8 @@ API::CommandResponse API::Handlers::CSVExportHandler::setEnabled(const QString& 
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: enabled"));
   }
 
-  const bool enabled     = params.value(QStringLiteral("enabled")).toBool();
-  static auto& csvExport = CSV::Export::instance();
+  const bool enabled = params.value(QStringLiteral("enabled")).toBool();
+  auto& csvExport    = API::handlerContext().csvExport;
   csvExport.setExportEnabled(enabled);
 
   QJsonObject result;
@@ -135,7 +136,7 @@ API::CommandResponse API::Handlers::CSVExportHandler::setInterval(const QString&
       QStringLiteral("Invalid intervalMs: must be an integer >= 0 (0 = one row per frame)"));
   }
 
-  static auto& csvExport = CSV::Export::instance();
+  auto& csvExport = API::handlerContext().csvExport;
   csvExport.setExportInterval(interval);
 
   QJsonObject result;
@@ -151,7 +152,7 @@ API::CommandResponse API::Handlers::CSVExportHandler::close(const QString& id,
 {
   Q_UNUSED(params)
 
-  static auto& csvExport = CSV::Export::instance();
+  auto& csvExport = API::handlerContext().csvExport;
   csvExport.closeFile();
 
   QJsonObject result;
@@ -171,7 +172,7 @@ API::CommandResponse API::Handlers::CSVExportHandler::getStatus(const QString& i
 {
   Q_UNUSED(params)
 
-  static auto& csvExport = CSV::Export::instance();
+  auto& csvExport = API::handlerContext().csvExport;
 
   QJsonObject result;
   result[QStringLiteral("enabled")]    = csvExport.exportEnabled();

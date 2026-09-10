@@ -28,13 +28,18 @@
 #include <QSettings>
 #include <vector>
 
-#include "DataModel/DataBlock.h"
-#include "DataModel/ExportSchema.h"
+#include "Core/Bus/Subscription.h"
+#include "Core/DataModel/DataBlock.h"
+#include "Core/DataModel/ExportSchema.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/DataModel/FrameConsumer.h"
 #include "DataModel/ExportStructure.h"
-#include "DataModel/Frame.h"
-#include "DataModel/FrameConsumer.h"
 
 class AppState;
+
+namespace Core::Bus {
+class MessageBus;
+}  // namespace Core::Bus
 
 namespace DataModel {
 class FrameBuilder;
@@ -146,7 +151,7 @@ class Export
 #ifdef BUILD_COMMERCIAL
   : public DataModel::FrameConsumer<DataModel::DataBlockPtr>
 #else
-  : public QObject
+  : public DataModel::IBlockSink
 #endif
 {
   // clang-format off
@@ -175,16 +180,18 @@ private:
 
 public:
   [[nodiscard]] static Export& instance();
+  void attachMessageBus(Core::Bus::MessageBus& bus);
 
   [[nodiscard]] bool isOpen() const;
   [[nodiscard]] bool exportEnabled() const;
+  [[nodiscard]] bool sinkActive() const noexcept override;
 
 public slots:
   void closeFile();
   void setupExternalConnections();
   void setExportEnabled(const bool enabled);
   void setSettingsPersistent(const bool persistent);
-  void ingestBlock(const DataModel::DataBlockPtr& block);
+  void ingestBlock(const DataModel::DataBlockPtr& block) override;
 
 protected:
 #ifdef BUILD_COMMERCIAL
@@ -206,6 +213,9 @@ private:
   std::atomic<bool> m_isOpen;
   std::atomic<bool> m_exportEnabled;
   bool m_persistSettings;
+  Core::Bus::MessageBus* m_bus;
+  Core::Bus::Subscription m_operationModeWatch;
+  Core::Bus::Subscription m_licenseWatch;
 #ifdef BUILD_COMMERCIAL
   DataModel::Frame m_sessionStructure;
 #endif

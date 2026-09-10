@@ -19,8 +19,8 @@
 #  include <QDebug>
 #  include <QSqlError>
 
+#  include "Core/SerialStudio.h"
 #  include "Core/SSAssert.h"
-#  include "SerialStudio.h"
 #  include "Sessions/BlockReader.h"
 #  include "Sessions/StreamBlockCodec.h"
 

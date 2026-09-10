@@ -23,8 +23,8 @@
 
 #include <QCoreApplication>
 
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
-#include "SerialStudio.h"
 
 //--------------------------------------------------------------------------------------------------
 // Latched parser base

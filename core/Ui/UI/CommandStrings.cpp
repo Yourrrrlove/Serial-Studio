@@ -21,10 +21,11 @@
 
 // AUTO-GENERATED lupdate stub ("Commands" context) from app/rcc/commands/; regenerate, never edit.
 
-#include <QCoreApplication>
+#include <array>
+#include <QtTranslation>
 
 // clang-format off
-[[maybe_unused]] static const char* const kCommandStrings[] = {
+[[maybe_unused]] static constexpr std::array<const char*, 337> kCommandStrings = {{
   QT_TRANSLATE_NOOP("Commands", "3D Plot"),
   QT_TRANSLATE_NOOP("Commands", "AI Assistant"),
   QT_TRANSLATE_NOOP("Commands", "AI Wiki & Chat"),
@@ -362,5 +363,5 @@
   QT_TRANSLATE_NOOP("Commands", "Watch another Serial Studio instance's dashboard over the network"),
   QT_TRANSLATE_NOOP("Commands", "Waterfall"),
   QT_TRANSLATE_NOOP("Commands", "Web View"),
-};
+}};
 // clang-format on

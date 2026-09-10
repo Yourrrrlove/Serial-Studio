@@ -26,9 +26,10 @@
 #include "AI/Redactor.h"
 #include "AI/SkillRouter.h"
 #include "AI/ToolDispatcher.h"
+#include "Core/Licensing/CommercialToken.h"
 #include "Core/SSAssert.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
-#include "Licensing/CommercialToken.h"
 
 //--------------------------------------------------------------------------------------------------
 // Construction / destruction
@@ -46,7 +47,7 @@ AI::Conversation::Conversation(QObject* parent)
   , m_dispatcher(nullptr)
   , m_reply(nullptr)
   , m_commands(CommandRegistry::instance())
-  , m_project(DataModel::ProjectModel::instance())
+  , m_project(DataModel::pipelineModules().projectModel)
   , m_assistantIndex(-1)
   , m_thinkingIsSynthetic(false)
   , m_toolCallCount(0)
@@ -1136,8 +1137,8 @@ void AI::Conversation::recordToolResult(const QString& callId,
 
   constexpr int kFsResultByteBudget = 48 * 1024;
   const bool isFsReadResult         = name == QStringLiteral("fs.read")
-                                   || name == QStringLiteral("fs.search")
-                                   || name == QStringLiteral("fs.list");
+                           || name == QStringLiteral("fs.search")
+                           || name == QStringLiteral("fs.list");
   const int kMaxToolResultBytes =
     isFsReadResult ? kFsResultByteBudget
                    : qBound(2048,

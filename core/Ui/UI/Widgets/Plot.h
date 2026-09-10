@@ -21,13 +21,14 @@
 
 #pragma once
 
+#include <QList>
 #include <QQuickItem>
 #include <QVector>
 #include <QXYSeries>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/SerialStudio.h"
 #include "DSP.h"
-#include "SerialStudio.h"
 #include "UI/Widgets/PlotBase.h"
 
 namespace UI {

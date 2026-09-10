@@ -17,6 +17,7 @@
 #include "AI/Tools/ToolScriptTools.h"
 #include "AI/Tools/ToolTileTools.h"
 #include "API/CommandRegistry.h"
+#include "API/HandlerContext.h"
 
 namespace AI::ToolDetail {
 
@@ -29,9 +30,9 @@ namespace AI::ToolDetail {
  */
 QJsonObject runCommand(const QString& name, const QJsonObject& args)
 {
-  const auto callId        = QUuid::createUuid().toString(QUuid::WithoutBraces);
-  static auto& apiRegistry = API::CommandRegistry::instance();
-  const auto response      = apiRegistry.execute(name, callId, args);
+  const auto callId   = QUuid::createUuid().toString(QUuid::WithoutBraces);
+  auto& apiRegistry   = API::handlerContext().registry;
+  const auto response = apiRegistry.execute(name, callId, args);
 
   QJsonObject reply;
   reply[QStringLiteral("ok")] = response.success;

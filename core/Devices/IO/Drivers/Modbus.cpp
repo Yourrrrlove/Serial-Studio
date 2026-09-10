@@ -26,6 +26,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QList>
 #include <QModbusDataUnit>
 #include <QModbusRtuSerialClient>
 #include <QModbusTcpClient>
@@ -36,16 +37,17 @@
 
 static constexpr int kDialDeadlineMs = 5000;
 
-#include "AppState.h"
+#include "Core/Bus/MessageBus.h"
+#include "Core/Bus/Messages.h"
+#include "Core/Prompt/UserPrompt.h"
+#include "Core/SerialStudio.h"
+#include "Core/Services.h"
 #include "Core/SSAssert.h"
-#include "DataModel/ProjectModel.h"
+#include "Core/TimerEvents.h"
+#include "Core/Translator.h"
 #include "IO/Drivers/Modbus/ModbusProjectGenerator.h"
 #include "IO/Drivers/SerialPortIdentity.h"
-#include "Misc/TimerEvents.h"
-#include "Misc/Translator.h"
-#include "Misc/Utilities.h"
 #include "Protocols/Modbus/ModbusRtuCodec.h"
-#include "SerialStudio.h"
 
 /**
  * @brief Maps the UI parity index to the corresponding QSerialPort::Parity enum.
@@ -106,8 +108,7 @@ static constexpr int kDialDeadlineMs = 5000;
  * @brief Constructs the Modbus driver and restores persisted settings and register groups.
  */
 IO::Drivers::Modbus::Modbus()
-  : m_appState(AppState::instance())
-  , m_projectModel(DataModel::ProjectModel::instance())
+  : m_generatedProject(this)
   , m_connecting(false)
   , m_pollTimer(new QTimer(this))
   , m_device(nullptr)
@@ -802,11 +803,10 @@ QString IO::Drivers::Modbus::registerGroupInfo(const int index) const
 void IO::Drivers::Modbus::generateProject()
 {
   if (m_registerGroups.isEmpty()) {
-    Misc::Utilities::showMessageBox(
-      tr("No register groups configured"),
-      tr("Add at least one register group before generating a project."),
-      QMessageBox::Warning,
-      tr("Modbus Project Generator"));
+    Core::Prompt::showMessageBox(tr("No register groups configured"),
+                                 tr("Add at least one register group before generating a project."),
+                                 Core::Prompt::Warning,
+                                 tr("Modbus Project Generator"));
     return;
   }
 
@@ -817,36 +817,29 @@ void IO::Drivers::Modbus::generateProject()
   const ModbusProjectGenerator generator(m_registerGroups.groups());
   const auto project = generator.buildProject(conn_settings);
 
-  m_appState.setOperationMode(SerialStudio::ProjectFile);
-  if (!m_projectModel.loadFromJsonDocument(QJsonDocument(project), QString())) {
-    logDriverError(tr("Failed to load generated project"),
-                   tr("The generated project JSON could not be loaded."));
-    return;
-  }
-
-  m_projectModel.setModified(true);
-
   const int total_datasets = generator.totalDatasets();
   const int groupCount     = m_registerGroups.count();
-  QObject::connect(
-    &m_projectModel,
-    &DataModel::ProjectModel::saveDialogCompleted,
-    this,
-    [groupCount, total_datasets](bool accepted) {
+  m_generatedProject.loadAndSave(
+    messageBus(),
+    QJsonDocument(project),
+    [this, groupCount, total_datasets](bool loaded, bool accepted) {
+      if (!loaded) {
+        logDriverError(tr("Failed to load generated project"),
+                       tr("The generated project JSON could not be loaded."));
+        return;
+      }
+
       if (!accepted)
         return;
 
-      Misc::Utilities::showMessageBox(
+      Core::Prompt::showMessageBox(
         tr("Successfully generated project with %1 groups and %2 datasets.")
           .arg(groupCount)
           .arg(total_datasets),
         tr("The project editor is now open for customization."),
-        QMessageBox::Information,
+        Core::Prompt::Information,
         tr("Modbus Project Generator"));
-    },
-    Qt::SingleShotConnection);
-
-  (void)m_projectModel.saveJsonFile(true);
+    });
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -921,15 +914,41 @@ void IO::Drivers::Modbus::setStopBitsIndex(const quint8 index)
  */
 void IO::Drivers::Modbus::setupExternalConnections()
 {
-  connect(&Misc::TimerEvents::instance(),
+  connect(&Core::services().timerEvents,
           &Misc::TimerEvents::timeout1Hz,
           this,
           &IO::Drivers::Modbus::refreshSerialPorts);
 
-  connect(&Misc::Translator::instance(),
+  connect(&Core::services().translator,
           &Misc::Translator::languageChanged,
           this,
           &IO::Drivers::Modbus::languageChanged);
+
+  if (auto* bus = messageBus())
+    m_registerGroupImport = bus->subscribe<Core::Bus::ModbusRegisterGroupsLoaded>(
+      this,
+      [this](const std::shared_ptr<const Core::Bus::ModbusRegisterGroupsLoaded>& message) {
+        applyImportedRegisterGroups(message->groups);
+      },
+      Qt::DirectConnection);
+}
+
+/**
+ * @brief Replaces the register groups with the blocks a register-map import computed (spec 0077):
+ *        the importer publishes them, and this UI-config driver is the one instance wired to
+ *        adopt them.
+ */
+void IO::Drivers::Modbus::applyImportedRegisterGroups(const QJsonDocument& groups)
+{
+  SS_ASSERT(groups.isArray(), return);
+
+  clearRegisterGroups();
+  for (const auto& value : groups.array()) {
+    const auto group = value.toObject();
+    addRegisterGroup(static_cast<quint8>(group.value(QStringLiteral("type")).toInt()),
+                     static_cast<quint16>(group.value(QStringLiteral("start")).toInt()),
+                     static_cast<quint16>(group.value(QStringLiteral("count")).toInt()));
+  }
 }
 
 //--------------------------------------------------------------------------------------------------

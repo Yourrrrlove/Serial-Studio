@@ -35,16 +35,17 @@ extern "C" {
 #include <cmath>
 #include <limits>
 #include <QDebug>
+#include <QList>
 #include <QScopedValueRollback>
 
 #include "Core/DSPSimd.h"
 #include "Core/HotpathOptimization.h"
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
 #include "DataModel/FrameBuilder.h"
 #include "DataModel/Scripting/LuaCompat.h"
 #include "DataModel/Scripting/LuaCompatJIT.h"
 #include "Platform/AppPlatform.h"
-#include "SerialStudio.h"
 
 //--------------------------------------------------------------------------------------------------
 // Lua sandbox helpers

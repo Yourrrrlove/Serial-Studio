@@ -21,16 +21,15 @@
 
 #pragma once
 
+#include <memory>
 #include <QString>
 
-#include "IO/FrameConfig.h"
-#include "IO/StreamWorker.h"
+#include "Core/IO/FrameConfig.h"
+#include "Core/IO/StreamConfig.h"
 
-class AppState;
-
-namespace DataModel {
-class ProjectModel;
-}  // namespace DataModel
+namespace Core::Bus {
+struct ProjectStructureSnapshot;
+}  // namespace Core::Bus
 
 namespace IO {
 
@@ -38,13 +37,15 @@ class HAL_Driver;
 
 /**
  * @brief Derives a source's framing, stream lane and stream-worker configuration from the
- *        project and the operation mode. Pure derivation: it opens nothing, owns no device and
- *        keeps no state, so the spec-0044 headless bootstrap can ask it for a FrameConfig with
- *        only the pinned constructor order behind it.
+ *        retained project snapshot and the operation mode. Pure derivation: it opens nothing, owns
+ * no device and keeps no state, so the spec-0044 headless bootstrap can ask it for a FrameConfig
+ * with only the pinned constructor order behind it.
  */
 class StreamConfigBuilder {
 public:
-  StreamConfigBuilder(AppState& appState, DataModel::ProjectModel& projectModel);
+  StreamConfigBuilder(const SerialStudio::OperationMode& operationMode,
+                      const FrameConfig& source0Config,
+                      const std::shared_ptr<const Core::Bus::ProjectStructureSnapshot>& project);
   StreamConfigBuilder(StreamConfigBuilder&&)                 = delete;
   StreamConfigBuilder(const StreamConfigBuilder&)            = delete;
   StreamConfigBuilder& operator=(StreamConfigBuilder&&)      = delete;
@@ -60,8 +61,9 @@ private:
   static void appendQuickPlotChannels(StreamConfig& config);
 
 private:
-  AppState& m_appState;
-  DataModel::ProjectModel& m_projectModel;
+  const SerialStudio::OperationMode& m_operationMode;
+  const FrameConfig& m_source0Config;
+  const std::shared_ptr<const Core::Bus::ProjectStructureSnapshot>& m_project;
 };
 
 }  // namespace IO

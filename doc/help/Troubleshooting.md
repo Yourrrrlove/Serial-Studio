@@ -2,6 +2,8 @@
 
 Quick solutions to common Serial Studio issues. If you can't find your problem here, check the [Getting More Help](#getting-more-help) section at the bottom.
 
+Before working through the sections below, open the [Problem Center](Problem-Center.md) (**Ctrl+K**, then `Problem Center`). It names the project mistakes, link conditions, and script errors it detects, each with a remedy, and **Connection Diagnostics** checks port permissions, Bluetooth state, and host reachability for you.
+
 ## Table of Contents
 
 - [Installation Issues](#installation-issues)
@@ -92,6 +94,8 @@ sudo chmod 666 /dev/ttyUSB0  # Replace with your port
 ```
 
 ## Connection Issues
+
+Run **Connection Diagnostics** first (**Ctrl+K**, then `Connection Diagnostics`). It reports denied serial port permissions with the exact command to run, a switched-off or unpermitted Bluetooth adapter, and a network host that does not resolve or refuses the port. See [Problem Center](Problem-Center.md#connection-diagnostics).
 
 ### Serial Port
 
@@ -313,6 +317,8 @@ If toggling the baud rate through the common values doesn't help, suspect encodi
 
 ## Dashboard & Visualization Issues
 
+The [Problem Center](Problem-Center.md) lists the project mistakes behind most empty or wrong widgets: a dataset with no frame position, two datasets reading the same index, a plot axis pointing at a deleted dataset, or an inverted range. Each finding has a **Go To** button that opens the Project Editor at the item to fix.
+
 ### Data shows as "0" or "NaN"
 
 **Possible causes:**
@@ -385,6 +391,8 @@ If toggling the baud rate through the common values doesn't help, suspect encodi
 3. **Report issue** if project file should be compatible
 
 ## Frame Parsing Issues
+
+While connected, the [Problem Center](Problem-Center.md) tells the two failure stages apart: `bytes-without-frames` means the delimiters do not match the stream, `frames-without-values` means frames arrive but the parser returns nothing, and `script.parser` findings show the parser's own errors or that the watchdog switched it off for overrunning its time budget.
 
 ### Frames not being detected
 

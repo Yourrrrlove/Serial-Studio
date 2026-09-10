@@ -36,9 +36,22 @@
 #include <QVector>
 #include <vector>
 
+#include "Core/SSAssert.h"
 #include "DataModel/FrameBuilder.h"
 #include "DataModel/ReplayPlaybackEngine.h"
 #include "MDF4/PlayerLoaderWorker.h"
+
+namespace Core::Bus {
+class MessageBus;
+}  // namespace Core::Bus
+
+namespace DataModel {
+class IReplayPlotSink;
+}  // namespace DataModel
+
+namespace IO {
+class IPayloadInjector;
+}  // namespace IO
 
 namespace MDF4 {
 /**
@@ -92,6 +105,12 @@ private:
 public:
   [[nodiscard]] static Player& instance();
 
+  void setPlotSink(DataModel::IReplayPlotSink* sink) noexcept { m_plotSink = sink; }
+
+  void setPayloadInjector(IO::IPayloadInjector* injector) noexcept { m_payloadInjector = injector; }
+
+  void attachMessageBus(Core::Bus::MessageBus& bus);
+
   [[nodiscard]] bool isOpen() const;
   [[nodiscard]] bool isPlaying() const;
   [[nodiscard]] int frameCount() const;
@@ -123,6 +142,19 @@ private slots:
   void onDecodeFinished(const MDF4::PlayerDecodePayloadPtr& payload);
 
 private:
+  [[nodiscard]] DataModel::IReplayPlotSink& plotSink() const
+  {
+    SS_ASSERT(m_plotSink != nullptr, qFatal("MDF4::Player: plot sink reached before binding"));
+    return *m_plotSink;
+  }
+
+  [[nodiscard]] IO::IPayloadInjector& payloadInjector() const
+  {
+    SS_ASSERT(m_payloadInjector != nullptr,
+              qFatal("MDF4::Player: payload injector reached before binding"));
+    return *m_payloadInjector;
+  }
+
   void startDecoding(const QString& filePath);
   void stopDecoding();
   void catchUpToTarget(double targetTime);
@@ -182,5 +214,9 @@ private:
   std::vector<std::vector<bool>> m_active;
 
   QMap<int, QVector<int>> m_sourceChannelsByIndex;
+
+  Core::Bus::MessageBus* m_bus;
+  DataModel::IReplayPlotSink* m_plotSink;
+  IO::IPayloadInjector* m_payloadInjector;
 };
 }  // namespace MDF4

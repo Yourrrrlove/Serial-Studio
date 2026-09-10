@@ -36,9 +36,12 @@
 #include <QVideoFrameFormat>
 #include <QVideoFrameInput>
 
+#include "API/HandlerContext.h"
+#include "Core/SerialStudio.h"
+#include "Core/Services.h"
+#include "Core/WorkspaceManager.h"
 #include "IO/ConnectionManager.h"
-#include "Misc/WorkspaceManager.h"
-#include "SerialStudio.h"
+#include "Replay/PlayerState.h"
 
 //--------------------------------------------------------------------------------------------------
 // VideoExportWorker
@@ -181,14 +184,14 @@ bool Widgets::VideoExportWorker::ensureSession(int groupId,
                                                const QString& groupTitle,
                                                const QImage& firstFrame)
 {
-  const auto dt                 = QDateTime::currentDateTime();
-  const auto stamp              = dt.toString(QStringLiteral("yyyy-MM-dd_HH-mm-ss-zzz"));
-  static auto& workspaceManager = Misc::WorkspaceManager::instance();
-  const auto base               = workspaceManager.path(QStringLiteral("Video Recordings"));
-  const QString path            = QStringLiteral("%1/%2/%3")
-                                    .arg(base,
-                                         Misc::WorkspaceManager::sanitizeName(projectTitle),
-                                         Misc::WorkspaceManager::sanitizeName(groupTitle));
+  const auto dt          = QDateTime::currentDateTime();
+  const auto stamp       = dt.toString(QStringLiteral("yyyy-MM-dd_HH-mm-ss-zzz"));
+  auto& workspaceManager = Core::services().workspaceManager;
+  const auto base        = workspaceManager.path(QStringLiteral("Video Recordings"));
+  const QString path     = QStringLiteral("%1/%2/%3")
+                         .arg(base,
+                              Misc::WorkspaceManager::sanitizeName(projectTitle),
+                              Misc::WorkspaceManager::sanitizeName(groupTitle));
 
   QDir dir(path);
   if (!dir.exists() && !dir.mkpath(QStringLiteral("."))) {
@@ -343,8 +346,8 @@ bool Widgets::ImageExport::exportEnabled() const
 QString Widgets::ImageExport::imagesPath(const QString& groupTitle,
                                          const QString& projectTitle) const
 {
-  static auto& workspaceManager = Misc::WorkspaceManager::instance();
-  const auto base               = workspaceManager.path(QStringLiteral("Video Recordings"));
+  auto& workspaceManager = Core::services().workspaceManager;
+  const auto base        = workspaceManager.path(QStringLiteral("Video Recordings"));
   return QStringLiteral("%1/%2/%3")
     .arg(base,
          Misc::WorkspaceManager::sanitizeName(projectTitle),
@@ -375,16 +378,19 @@ void Widgets::ImageExport::closeSession(int groupId)
  */
 void Widgets::ImageExport::setupExternalConnections()
 {
+  connect(&API::handlerContext().connectionManager,
+          &IO::ConnectionManager::connectedChanged,
+          this,
+          [this] {
+            if (!API::handlerContext().connectionManager.isConnected())
+              closeSession();
+          });
+
   connect(
-    &IO::ConnectionManager::instance(), &IO::ConnectionManager::connectedChanged, this, [this] {
-      if (!IO::ConnectionManager::instance().isConnected())
+    &API::handlerContext().connectionManager, &IO::ConnectionManager::pausedChanged, this, [this] {
+      if (API::handlerContext().connectionManager.paused())
         closeSession();
     });
-
-  connect(&IO::ConnectionManager::instance(), &IO::ConnectionManager::pausedChanged, this, [this] {
-    if (IO::ConnectionManager::instance().paused())
-      closeSession();
-  });
 }
 
 /**

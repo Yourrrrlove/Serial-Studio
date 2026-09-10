@@ -25,8 +25,8 @@
 #include <QString>
 #include <unordered_map>
 
+#include "Core/DataModel/Frame.h"
 #include "DataModel/DataTable.h"
-#include "DataModel/Frame.h"
 #include "DataModel/FrameBuilder/TransformCompiler.h"
 
 namespace DataModel {

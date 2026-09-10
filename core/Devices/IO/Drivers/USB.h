@@ -42,8 +42,8 @@
 #include <QString>
 #include <QStringList>
 
+#include "Core/IO/HAL_Driver.h"
 #include "IO/Drivers/USB/UsbTransferPump.h"
-#include "IO/HAL_Driver.h"
 
 namespace IO {
 namespace Drivers {

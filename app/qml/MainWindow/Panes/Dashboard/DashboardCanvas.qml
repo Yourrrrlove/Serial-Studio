@@ -96,7 +96,7 @@ Item {
     externalWidgetWindows[windowId] = win
     win.externalWidgetRequested.connect(root.openExternalWidgetWindow)
     win.closing.connect(function() {
-      const toolType = SerialStudio.isDashboardTool(win.stableType) ? win.stableType : -1
+      const toolType = SerialStudioHelpers.isDashboardTool(win.stableType) ? win.stableType : -1
       delete root.externalWidgetWindows[windowId]
       win.destroy()
       if (root.persistExternalWindows && !app.quitting) {
@@ -135,7 +135,7 @@ Item {
     let states = []
     for (const id in externalWidgetWindows) {
       const win = externalWidgetWindows[id]
-      if (SerialStudio.isDashboardTool(win.stableType))
+      if (SerialStudioHelpers.isDashboardTool(win.stableType))
         continue
 
       states.push({
@@ -165,7 +165,7 @@ Item {
     persistExternalWindows = false
     const count = Cpp_UI_Dashboard.totalWidgetCount
     for (let i = 0; i < states.length; ++i) {
-      if (SerialStudio.isDashboardTool(states[i]["widgetType"]))
+      if (SerialStudioHelpers.isDashboardTool(states[i]["widgetType"]))
         continue
 
       for (let id = 0; id < count; ++id) {
@@ -560,15 +560,18 @@ Item {
       }
 
       //
-      // Freeze-mode focus follow: focus the widget under the cursor, since
-      // click-to-focus is suppressed while the layout is frozen
+      // Focus follow, as a desktop shell does: a frozen layout suppresses click-to-focus and an
+      // automatic layout without taskbar buttons has nothing else to raise a window with
       //
       HoverHandler {
-        id: freezeFocusHover
+        id: focusFollowHover
 
-        enabled: _wm.frozen && !app.commandPaletteOpen
-        property point hoverPosition: freezeFocusHover.point.position
-        onHoverPositionChanged: if (freezeFocusHover.hovered)
+        readonly property bool shellLike: _wm.autoLayoutEnabled
+                                          && !Cpp_UI_TaskbarSettings.showTaskbarButtons
+
+        enabled: (_wm.frozen || shellLike) && !app.commandPaletteOpen
+        property point hoverPosition: focusFollowHover.point.position
+        onHoverPositionChanged: if (focusFollowHover.hovered)
                                   _wm.focusWindowUnderCursor(hoverPosition)
       }
 

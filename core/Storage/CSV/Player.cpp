@@ -40,16 +40,21 @@
 #include <vector>
 
 #include "AppState.h"
+#include "Core/Bus/MessageBus.h"
+#include "Core/Bus/Messages.h"
+#include "Core/DataModel/ExportSchema.h"
+#include "Core/IO/IPayloadInjector.h"
+#include "Core/Prompt/UserPrompt.h"
+#include "Core/SerialStudio.h"
+#include "Core/Services.h"
 #include "Core/SSAssert.h"
+#include "Core/WorkspaceManager.h"
 #include "CSV/Player/RowSyntax.h"
-#include "DataModel/ExportSchema.h"
 #include "DataModel/FrameBuilder.h"
+#include "DataModel/IReplayPlotSink.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
-#include "IO/ConnectionManager.h"
-#include "Misc/Utilities.h"
-#include "Misc/WorkspaceManager.h"
-#include "SerialStudio.h"
-#include "UI/Dashboard.h"
+#include "Replay/LinkGate.h"
 
 static constexpr double kCsvInvMs       = 1.0 / 1000.0;
 static constexpr int kDefaultIntervalMs = 1000;
@@ -125,6 +130,9 @@ CSV::Player::Player()
   , m_intervalSeconds(0.0)
   , m_anchorMs(0)
   , m_startSeconds(-1.0)
+  , m_bus(nullptr)
+  , m_plotSink(nullptr)
+  , m_payloadInjector(nullptr)
 {
   qApp->installEventFilter(this);
   qRegisterMetaType<CSV::PlayerIndexRequestPtr>();
@@ -318,11 +326,11 @@ void CSV::Player::frontierPause()
  */
 void CSV::Player::openFile()
 {
-  static auto& workspaceManager = Misc::WorkspaceManager::instance();
-  auto* dialog                  = new QFileDialog(qApp->activeWindow(),
-                                                  tr("Select CSV file"),
-                                                  workspaceManager.path("CSV"),
-                                                  tr("CSV files (*.csv)"));
+  auto& workspaceManager = Core::services().workspaceManager;
+  auto* dialog           = new QFileDialog(qApp->activeWindow(),
+                                 tr("Select CSV file"),
+                                 workspaceManager.path("CSV"),
+                                 tr("CSV files (*.csv)"));
 
   dialog->setFileMode(QFileDialog::ExistingFile);
   dialog->setAttribute(Qt::WA_DeleteOnClose);
@@ -387,9 +395,12 @@ void CSV::Player::closeFile()
   m_rows.reset();
   m_sources.clear();
 
-  static auto& frameBuilder = DataModel::FrameBuilder::instance();
+  auto& frameBuilder = DataModel::pipelineModules().frameBuilder;
   frameBuilder.registerQuickPlotHeaders(QStringList());
   frameBuilder.setReplayColumnMap({});
+
+  if (m_bus)
+    m_bus->publishState<Core::Bus::ReplayPlayerStateChanged>(0, isOpen());
 
   Q_EMIT openChanged();
   Q_EMIT timestampChanged();
@@ -405,7 +416,7 @@ void CSV::Player::nextFrame()
   if (framePosition() < frameCount() - 1) {
     ++m_framePos;
 
-    static auto& dashboard = UI::Dashboard::instance();
+    auto& dashboard = plotSink();
     dashboard.clearPlotData();
 
     int framesToLoad = dashboard.points();
@@ -424,7 +435,7 @@ void CSV::Player::previousFrame()
   if (framePosition() > 0) {
     --m_framePos;
 
-    static auto& dashboard = UI::Dashboard::instance();
+    auto& dashboard = plotSink();
     dashboard.clearPlotData();
 
     int framesToLoad = dashboard.points();
@@ -447,43 +458,38 @@ void CSV::Player::openFile(const QString& filePath)
 
   closeFile();
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  if (connectionManager.isConnected()) {
-    auto response =
-      Misc::Utilities::showMessageBox(tr("Device Connection Active"),
-                                      tr("To use this feature, you must disconnect from the "
-                                         "device. Do you want to proceed?"),
-                                      QMessageBox::Warning,
-                                      qAppName(),
-                                      QMessageBox::No | QMessageBox::Yes);
-    if (response == QMessageBox::Yes)
-      connectionManager.disconnectDevice();
-    else
-      return;
-  }
+  if (!Replay::ensureLinkReleased(m_bus,
+                                  tr("Device Connection Active"),
+                                  tr("To use this feature, you must disconnect from the "
+                                     "device. Do you want to proceed?"),
+                                  Core::Prompt::Warning,
+                                  qAppName()))
+    return;
 
   m_csvFile = std::make_unique<QFile>(filePath);
   if (!m_csvFile->open(QIODevice::ReadOnly)) {
-    Misc::Utilities::showMessageBox(
-      tr("Cannot read CSV file"), tr("Check file permissions and location"), QMessageBox::Critical);
+    Core::Prompt::showMessageBox(tr("Cannot read CSV file"),
+                                 tr("Check file permissions and location"),
+                                 Core::Prompt::Critical);
     closeFile();
     return;
   }
 
   m_mappedSize = m_csvFile->size();
   if (m_mappedSize <= 0) {
-    Misc::Utilities::showMessageBox(tr("Insufficient Data in CSV File"),
-                                    tr("The CSV file must contain at least one data row to "
-                                       "proceed. Check the file and try again."),
-                                    QMessageBox::Critical);
+    Core::Prompt::showMessageBox(tr("Insufficient Data in CSV File"),
+                                 tr("The CSV file must contain at least one data row to "
+                                    "proceed. Check the file and try again."),
+                                 Core::Prompt::Critical);
     closeFile();
     return;
   }
 
   m_mapped = reinterpret_cast<const char*>(m_csvFile->map(0, m_mappedSize));
   if (!m_mapped) {
-    Misc::Utilities::showMessageBox(
-      tr("Cannot read CSV file"), tr("Check file permissions and location"), QMessageBox::Critical);
+    Core::Prompt::showMessageBox(tr("Cannot read CSV file"),
+                                 tr("Check file permissions and location"),
+                                 Core::Prompt::Critical);
     closeFile();
     return;
   }
@@ -496,6 +502,9 @@ void CSV::Player::openFile(const QString& filePath)
   sendHeaderFrame();
   m_framePos = 0;
   startIndexing();
+
+  if (m_bus)
+    m_bus->publishState<Core::Bus::ReplayPlayerStateChanged>(0, isOpen());
 
   Q_EMIT openChanged();
   Q_EMIT playerStateChanged();
@@ -555,10 +564,10 @@ bool CSV::Player::runQuickPass()
   }
 
   if (!have_header || first_data_row.isEmpty()) {
-    Misc::Utilities::showMessageBox(tr("Insufficient Data in CSV File"),
-                                    tr("The CSV file must contain at least one data row to "
-                                       "proceed. Check the file and try again."),
-                                    QMessageBox::Critical);
+    Core::Prompt::showMessageBox(tr("Insufficient Data in CSV File"),
+                                 tr("The CSV file must contain at least one data row to "
+                                    "proceed. Check the file and try again."),
+                                 Core::Prompt::Critical);
     return false;
   }
 
@@ -687,17 +696,17 @@ void CSV::Player::onIndexFinished(bool ok, quint64 generation)
   Q_EMIT timestampChanged();
 
   if (ok && m_rowOffsets.size() >= kMaxIndexedRows)
-    Misc::Utilities::showMessageBox(
+    Core::Prompt::showMessageBox(
       tr("CSV Row Limit Reached"),
       tr("Playback is limited to %L1 rows; the rest of the file was not indexed.")
         .arg(kMaxIndexedRows),
-      QMessageBox::Warning);
+      Core::Prompt::Warning);
 
   if (ok && frameCount() <= 0) {
-    Misc::Utilities::showMessageBox(tr("Insufficient Data in CSV File"),
-                                    tr("The CSV file must contain at least one data row to "
-                                       "proceed. Check the file and try again."),
-                                    QMessageBox::Critical);
+    Core::Prompt::showMessageBox(tr("Insufficient Data in CSV File"),
+                                 tr("The CSV file must contain at least one data row to "
+                                    "proceed. Check the file and try again."),
+                                 Core::Prompt::Critical);
     closeFile();
   }
 }
@@ -743,7 +752,7 @@ int CSV::Player::seekWindowStartRow(int target)
   SS_ASSERT(target >= 0, return 0);
   SS_ASSERT(target < frameCount(), return qMax(0, frameCount() - 1));
 
-  static auto& dashboard = UI::Dashboard::instance();
+  auto& dashboard = plotSink();
   return DataModel::ReplayPlaybackEngine::seekWindowStartRow(
     target, dashboard.points(), dashboard.plotTimeRange(), [this](int row) {
       return rowSecondsSinceStart(row);
@@ -769,9 +778,9 @@ void CSV::Player::performSeekTick()
     return;
   }
 
-  static auto& dashboard = UI::Dashboard::instance();
-  const int target       = m_framePos;
-  const int start        = seekWindowStartRow(target);
+  auto& dashboard  = plotSink();
+  const int target = m_framePos;
+  const int start  = seekWindowStartRow(target);
 
   QVector<double> times;
   QHash<qint64, QVector<double>> series;
@@ -795,7 +804,7 @@ void CSV::Player::performSeekSettle()
   SS_ASSERT(m_framePos >= 0, return);
   SS_ASSERT(m_framePos < frameCount(), m_framePos = frameCount() - 1);
 
-  static auto& dashboard = UI::Dashboard::instance();
+  auto& dashboard = plotSink();
   dashboard.clearPlotData();
 
   const int window = qMin(dashboard.points(), m_framePos + 1);
@@ -838,8 +847,8 @@ void CSV::Player::buildSeekWindow(int startRow,
       times[k] = qMax(times[k], times[k - 1]);
   }
 
-  static auto& dashboard = UI::Dashboard::instance();
-  const auto pairs       = dashboard.replaySeekSeries();
+  auto& dashboard  = plotSink();
+  const auto pairs = dashboard.replaySeekSeries();
 
   struct SeriesFill {
     int column;
@@ -850,7 +859,7 @@ void CSV::Player::buildSeekWindow(int startRow,
 
   QVarLengthArray<SeriesFill, 32> fills;
   for (const auto& pair : pairs) {
-    const qint64 key = UI::Dashboard::replaySeekKey(pair.first, pair.second);
+    const qint64 key = DataModel::replaySeekKey(pair.first, pair.second);
     const int column = m_seekColumnByKey.value(key, -1);
     if (column < 0)
       continue;
@@ -1031,7 +1040,7 @@ void CSV::Player::updateData()
     backfillSparseSources();
 
     if (stride > 2 && !m_seekColumnByKey.isEmpty() && m_engine.catchUpFillDue()) {
-      static auto& dashboard = UI::Dashboard::instance();
+      auto& dashboard = plotSink();
       QVector<double> times;
       QHash<qint64, QVector<double>> series;
       buildSeekWindow(seekWindowStartRow(m_framePos), m_framePos, times, series);
@@ -1114,7 +1123,7 @@ void CSV::Player::sendHeaderFrame()
   if (m_headerCells.isEmpty() || (!interval && m_headerCells.size() <= 1))
     return;
 
-  static auto& appState = AppState::instance();
+  auto& appState = DataModel::pipelineModules().appState;
   if (appState.operationMode() == SerialStudio::ProjectFile) {
     buildReplayLayout();
     if (m_sources.multiSource())
@@ -1130,14 +1139,14 @@ void CSV::Player::sendHeaderFrame()
   if (appState.operationMode() != SerialStudio::ProjectFile) {
     m_seekColumnByKey.clear();
     for (int i = 0; i < headers.size(); ++i) {
-      m_seekColumnByKey.insert(
-        UI::Dashboard::replaySeekKey(0, DataModel::dataset_unique_id(0, 0, i)), i);
-      m_seekColumnByKey.insert(
-        UI::Dashboard::replaySeekKey(0, DataModel::dataset_unique_id(0, 1, i)), i);
+      m_seekColumnByKey.insert(DataModel::replaySeekKey(0, DataModel::dataset_unique_id(0, 0, i)),
+                               i);
+      m_seekColumnByKey.insert(DataModel::replaySeekKey(0, DataModel::dataset_unique_id(0, 1, i)),
+                               i);
     }
   }
 
-  static auto& frameBuilder = DataModel::FrameBuilder::instance();
+  auto& frameBuilder = DataModel::pipelineModules().frameBuilder;
   frameBuilder.registerQuickPlotHeaders(headers);
 }
 
@@ -1185,9 +1194,9 @@ double CSV::Player::promptTimestampUnitScale()
 bool CSV::Player::promptUserForDateTimeOrInterval(QByteArrayView firstDataRow)
 {
   if (m_headerCells.isEmpty()) {
-    Misc::Utilities::showMessageBox(tr("Invalid CSV"),
-                                    tr("The CSV file does not contain any data or headers."),
-                                    QMessageBox::Critical);
+    Core::Prompt::showMessageBox(tr("Invalid CSV"),
+                                 tr("The CSV file does not contain any data or headers."),
+                                 Core::Prompt::Critical);
     return false;
   }
 
@@ -1242,8 +1251,8 @@ bool CSV::Player::promptUserForDateTimeOrInterval(QByteArrayView firstDataRow)
     if (ok) {
       const int columnIndex = m_headerCells.indexOf(column);
       if (columnIndex == -1) {
-        Misc::Utilities::showMessageBox(
-          tr("Invalid Selection"), tr("The selected column is not valid."), QMessageBox::Critical);
+        Core::Prompt::showMessageBox(
+          tr("Invalid Selection"), tr("The selected column is not valid."), Core::Prompt::Critical);
         return false;
       }
 
@@ -1297,25 +1306,25 @@ void CSV::Player::buildReplayLayout()
   m_seekColumnByKey.clear();
 
   DataModel::Frame frame;
-  static auto& projectModel = DataModel::ProjectModel::instance();
-  frame.groups              = projectModel.groups();
-  frame.sources             = projectModel.sources();
-  const auto schema         = DataModel::buildExportSchema(frame);
-  const int colCount        = static_cast<int>(schema.columns.size());
+  auto& projectModel = DataModel::pipelineModules().projectModel;
+  frame.groups       = projectModel.groups();
+  frame.sources      = projectModel.sources();
+  const auto schema  = DataModel::buildExportSchema(frame);
+  const int colCount = static_cast<int>(schema.columns.size());
 
   std::vector<CSV::ReplayColumnRef> columns;
   columns.reserve(schema.columns.size());
   for (int i = 0; i < colCount; ++i) {
     const auto& col = schema.columns[static_cast<size_t>(i)];
     columns.push_back({col.uniqueId, col.sourceId});
-    m_seekColumnByKey.insert(UI::Dashboard::replaySeekKey(col.sourceId, col.uniqueId), i);
+    m_seekColumnByKey.insert(DataModel::replaySeekKey(col.sourceId, col.uniqueId), i);
   }
 
   auto replay = m_sources.build(columns, static_cast<int>(m_headerCells.size()), [this](int i) {
     return m_rows.dataColumnToFileColumn(i);
   });
 
-  static auto& frameBuilder = DataModel::FrameBuilder::instance();
+  auto& frameBuilder = DataModel::pipelineModules().frameBuilder;
   frameBuilder.setReplayColumnMap(std::move(replay));
 }
 
@@ -1341,10 +1350,10 @@ void CSV::Player::injectSourceRow(int row, int sourceId)
   if (it == columnsBySource.constEnd())
     return;
 
-  static auto& frameBuilder = DataModel::FrameBuilder::instance();
-  const auto timestamp      = rowSteadyTimestamp(row);
-  const auto* spans         = m_rows.dataSpans();
-  const auto& orderedCols   = it.value();
+  auto& frameBuilder      = DataModel::pipelineModules().frameBuilder;
+  const auto timestamp    = rowSteadyTimestamp(row);
+  const auto* spans       = m_rows.dataSpans();
+  const auto& orderedCols = it.value();
   QVarLengthArray<QByteArrayView, 64> cells;
   cells.reserve(orderedCols.size());
   for (int col : orderedCols)
@@ -1427,7 +1436,7 @@ void CSV::Player::injectRow(int row)
 
   const QScopedValueRollback<bool> reentry_guard(m_injecting, true);
 
-  static auto& appState = AppState::instance();
+  auto& appState = DataModel::pipelineModules().appState;
   if (appState.operationMode() != SerialStudio::ProjectFile) {
     injectFrame(m_rows.quickPlotPayload(rawRow(row)));
     return;
@@ -1437,9 +1446,9 @@ void CSV::Player::injectRow(int row)
   if (count <= 0) [[unlikely]]
     return;
 
-  static auto& frameBuilder = DataModel::FrameBuilder::instance();
-  const auto timestamp      = rowSteadyTimestamp(row);
-  const auto* spans         = m_rows.dataSpans();
+  auto& frameBuilder   = DataModel::pipelineModules().frameBuilder;
+  const auto timestamp = rowSteadyTimestamp(row);
+  const auto* spans    = m_rows.dataSpans();
 
   if (!m_sources.multiSource()) {
     frameBuilder.replayChannelSpans(0, spans, count, timestamp);
@@ -1472,7 +1481,7 @@ void CSV::Player::injectFrame(const QByteArray& frame)
     return;
 
   if (!m_sources.multiSource()) {
-    static auto& connectionManager = IO::ConnectionManager::instance();
+    auto& connectionManager = payloadInjector();
     connectionManager.processPayload(frame);
     return;
   }
@@ -1508,7 +1517,7 @@ void CSV::Player::injectFrame(const QByteArray& frame)
   if (sourcePayloads.isEmpty())
     return;
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
+  auto& connectionManager = payloadInjector();
   connectionManager.processMultiSourcePayload(frame, sourcePayloads);
 }
 

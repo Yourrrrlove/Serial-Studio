@@ -22,11 +22,13 @@
 
 #include "UI/Widgets/ImageView.h"
 
+#include <QColor>
 #include <QImage>
 
+#include "API/HandlerContext.h"
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
 #include "IO/ConnectionManager.h"
-#include "SerialStudio.h"
 #include "UI/Dashboard.h"
 #include "UI/ImageProvider.h"
 #include "UI/Widgets/ImageExport.h"
@@ -178,10 +180,10 @@ Widgets::ImageFrameReader::StepResult Widgets::ImageFrameReader::extractWebpFram
         && m_accumulator[11] == 'P'))
     return StepResult::Unhandled;
 
-  const auto* raw          = reinterpret_cast<const quint8*>(m_accumulator.constData());
-  const quint32 chunkSize  = static_cast<quint32>(raw[4]) | (static_cast<quint32>(raw[5]) << 8)
-                           | (static_cast<quint32>(raw[6]) << 16)
-                           | (static_cast<quint32>(raw[7]) << 24);
+  const auto* raw         = reinterpret_cast<const quint8*>(m_accumulator.constData());
+  const quint32 chunkSize = static_cast<quint32>(raw[4]) | (static_cast<quint32>(raw[5]) << 8)
+                          | (static_cast<quint32>(raw[6]) << 16)
+                          | (static_cast<quint32>(raw[7]) << 24);
   const qsizetype frameLen = 8 + static_cast<qsizetype>(chunkSize);
 
   if (chunkSize > kMaxImageSize) {
@@ -329,7 +331,7 @@ void Widgets::ImageFrameReader::processManual()
  */
 Widgets::ImageView::ImageView(int index, QQuickItem* parent)
   : QQuickItem(parent)
-  , m_connectionManager(IO::ConnectionManager::instance())
+  , m_connectionManager(API::handlerContext().connectionManager)
   , m_dashboard(UI::Dashboard::instance())
   , m_index(index)
   , m_groupId(-1)

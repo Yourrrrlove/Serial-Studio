@@ -272,6 +272,8 @@ This mode provides full control: define frame delimiters, map data fields to dat
 
 ## Common first-time issues
 
+The [Problem Center](Problem-Center.md) (**Ctrl+K**, then `Problem Center`) diagnoses most of these for you: **Connection Diagnostics** checks port permissions, drivers, and Bluetooth state, and the link checkers say whether bytes, frames, or values are the stage where data stops.
+
 ### Serial port not showing up in the dropdown
 
 - **Windows:** Open Device Manager and check under "Ports (COM & LPT)". You may need a USB-to-serial driver: [CH340](http://www.wch-ic.com/downloads/CH341SER_EXE.html), [FTDI](https://ftdichip.com/drivers/vcp-drivers/), or [CP210x](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers).

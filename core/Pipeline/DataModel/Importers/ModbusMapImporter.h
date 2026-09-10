@@ -28,7 +28,7 @@
 #include <QStringList>
 #include <QVector>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
 #include "DataModel/Importers/ModbusRegisterMap.h"
 
 namespace DataModel {

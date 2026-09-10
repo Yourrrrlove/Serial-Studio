@@ -27,7 +27,7 @@
 #include <QStringList>
 #include <QTest>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
 #include "DataModel/Importers/DBCImporter.h"
 #include "SessionContext.h"
 

@@ -27,9 +27,9 @@
 #include <QByteArray>
 #include <vector>
 
+#include "Core/DataModel/DataBlock.h"
+#include "Core/DataModel/ExportSchema.h"
 #include "Core/SSAssert.h"
-#include "DataModel/DataBlock.h"
-#include "DataModel/ExportSchema.h"
 
 namespace CSV {
 

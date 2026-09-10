@@ -29,7 +29,7 @@
 #  include <QTextStream>
 #  include <QThread>
 
-#  include "SerialStudio.h"
+#  include "Core/SerialStudio.h"
 #  include "Sessions/BlockReader.h"
 #  include "Sessions/DatabaseManager.h"
 #  include "Sessions/Export.h"

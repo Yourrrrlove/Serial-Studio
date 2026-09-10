@@ -69,8 +69,8 @@ Widgets.MiniWindow {
   property int entityUniqueId: -1
   property int entityWidgetType: -1
   property string freezeTitleMode: ""
-  readonly property bool paintsOwnTitle: entityWidgetType >= 0
-                                         && SerialStudio.dashboardWidgetPaintsTitle(entityWidgetType)
+  readonly property bool paintsOwnTitle:
+    entityWidgetType >= 0 && SerialStudioHelpers.dashboardWidgetPaintsTitle(entityWidgetType)
   readonly property string effectiveFreezeTitle: freezeTitleMode !== ""
                                                  ? freezeTitleMode
                                                  : (paintsOwnTitle ? "painted" : "bar")
@@ -343,7 +343,7 @@ Widgets.MiniWindow {
             return art
         }
 
-        return SerialStudio.dashboardWidgetIcon(dashboardWidget.widgetType)
+        return SerialStudioHelpers.dashboardWidgetIcon(dashboardWidget.widgetType)
       }
 
       //
@@ -591,7 +591,7 @@ Widgets.MiniWindow {
   //
   property bool sourceDisconnected: false
   function _refreshSourceConnection() {
-    sourceDisconnected = !SerialStudio.isAnyPlayerOpen()
+    sourceDisconnected = !SerialStudioHelpers.isAnyPlayerOpen()
                          && !Cpp_Benchmark_Runner.running
                          && !Cpp_API_Mirror.attached
                          && !Cpp_IO_Manager.isDeviceConnected(root.deviceIndex)

@@ -11,6 +11,7 @@ import QtCore
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import QtQuick.Controls.impl
 
 import "../Widgets" as Widgets
 
@@ -669,11 +670,12 @@ Widgets.SmartDialog {
                   implicitHeight: 10
                   Layout.alignment: Qt.AlignVCenter
 
-                  Image {
+                  IconImage {
                     anchors.centerIn: parent
                     sourceSize: Qt.size(8, 8)
                     visible: model.hasChildren
                     rotation: model.expanded ? 0 : 270
+                    color: Cpp_ThemeManager.colors["text"]
                     source: Cpp_Misc_IconRegistry.icon("editor", "indicator", 16)
                   }
 

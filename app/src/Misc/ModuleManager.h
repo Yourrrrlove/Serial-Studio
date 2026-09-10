@@ -60,7 +60,10 @@ signals:
 
 public:
   ModuleManager();
+  static void bootstrapCoreServices();
   static void instantiateCoreModules();
+  static void bindInterfaces();
+  static void registerApiHandlers();
   static void setupHeadlessSessionConnections();
   static void teardownHeadlessSessionModules();
   static void stopFrameConsumerWorkers();

@@ -23,16 +23,16 @@
 
 #include <algorithm>
 #include <QInputDialog>
-#include <QMessageBox>
 
-#include "AppInfo.h"
+#include "Core/AppInfo.h"
+#include "Core/Bus/MessageBus.h"
+#include "Core/Bus/Messages.h"
+#include "Core/Prompt/UserPrompt.h"
 #include "DataModel/Project/ProjectHistory.h"
 #include "DataModel/Project/ProjectNaming.h"
 #include "DataModel/ProjectModel.h"
 #include "DataModel/Scripting/FrameParser.h"
 #include "DataModel/Scripting/NativeTemplates/NativeTemplate.h"
-#include "IO/ConnectionManager.h"
-#include "Misc/Utilities.h"
 
 //--------------------------------------------------------------------------------------------------
 // Construction & defaults
@@ -70,11 +70,11 @@ void DataModel::ProjectSources::addSource()
 #ifndef BUILD_COMMERCIAL
   if (!m_model.m_sources.empty()) {
     if (!m_model.m_suppressMessageBoxes)
-      Misc::Utilities::showMessageBox(
+      Core::Prompt::showMessageBox(
         ProjectModel::tr("Multiple data sources require a Pro license"),
         ProjectModel::tr("Serial Studio Pro allows connecting to multiple devices simultaneously. "
                          "Please upgrade to unlock this feature."),
-        QMessageBox::Information);
+        Core::Prompt::Information);
 
     return;
   }
@@ -116,14 +116,14 @@ void DataModel::ProjectSources::deleteSource(int sourceId, bool confirm)
     return;
 
   if (confirm && !m_model.m_suppressMessageBoxes) {
-    const auto ret = Misc::Utilities::showMessageBox(
+    const auto ret = Core::Prompt::showMessageBox(
       ProjectModel::tr("Do you want to delete data source \"%1\"?").arg(sources[sourceId].title),
       ProjectModel::tr("Groups using this source will move to the default source. "
                        "This action cannot be undone."),
-      QMessageBox::Question,
+      Core::Prompt::Question,
       APP_NAME,
-      QMessageBox::Yes | QMessageBox::No);
-    if (ret != QMessageBox::Yes)
+      Core::Prompt::Yes | Core::Prompt::No);
+    if (ret != Core::Prompt::Yes)
       return;
   }
 
@@ -293,43 +293,39 @@ void DataModel::ProjectSources::promptRenameSource(int sourceId)
 //--------------------------------------------------------------------------------------------------
 
 /**
- * @brief Snapshots the current driver settings for source @p sourceId into
- *        Source::connectionSettings. Password-typed properties are skipped: the project file is
- *        shared and version-controlled, so secrets stay in the driver's own credential vault.
+ * @brief Asks the device layer to snapshot the UI driver's settings for source @p sourceId
+ *        (spec 0077); the answer lands in applyCapturedSettings() inside this call, because the
+ *        device layer serves the request directly on this thread.
  */
 void DataModel::ProjectSources::captureSourceSettings(int sourceId)
+{
+  const auto& sources = m_model.m_sources;
+  if (sourceId < 0 || sourceId >= static_cast<int>(sources.size()))
+    return;
+
+  m_model.m_bus.publish<Core::Bus::SourceSettingsCaptureRequested>(sourceId,
+                                                                   sources[sourceId].busType);
+}
+
+/**
+ * @brief Stores the settings the device layer captured for source @p sourceId (password-typed
+ *        properties already skipped: the project file is shared and version-controlled, so secrets
+ *        stay in the driver's own credential vault).
+ */
+void DataModel::ProjectSources::applyCapturedSettings(int sourceId, const QJsonObject& settings)
 {
   auto& sources = m_model.m_sources;
   if (sourceId < 0 || sourceId >= static_cast<int>(sources.size()))
     return;
 
-  const auto busType     = static_cast<SerialStudio::BusType>(sources[sourceId].busType);
-  static auto& ioManager = IO::ConnectionManager::instance();
-  IO::HAL_Driver* driver = ioManager.uiDriverForBusType(busType);
-  if (!driver)
-    return;
-
   const ProjectUndoScope undo_scope{m_model, ProjectModel::tr("Edit Device")};
-  QJsonObject settings;
-  for (const auto& prop : driver->driverProperties()) {
-    if (prop.type == IO::DriverProperty::Password)
-      continue;
-
-    settings.insert(prop.key, QJsonValue::fromVariant(prop.value));
-  }
-
-  const auto deviceId = driver->deviceIdentifier();
-  if (!deviceId.isEmpty())
-    settings.insert(QStringLiteral("deviceId"), deviceId);
-
   sources[sourceId].connectionSettings = settings;
   m_model.setModified(true);
 }
 
 /**
- * @brief Applies the source's saved connectionSettings to its live driver. Reads the document and
- *        writes only the driver, so it opens no ProjectUndoScope: capturing a whole-document
- *        snapshot per call cost a serialization the history could never commit.
+ * @brief Asks the device layer to apply the source's saved connectionSettings to its UI driver.
+ *        Reads the document and writes only the driver, so it opens no ProjectUndoScope.
  */
 void DataModel::ProjectSources::restoreSourceSettings(int sourceId)
 {
@@ -337,16 +333,10 @@ void DataModel::ProjectSources::restoreSourceSettings(int sourceId)
   if (sourceId < 0 || sourceId >= static_cast<int>(sources.size()))
     return;
 
-  const auto& source = sources[sourceId];
-  if (source.connectionSettings.isEmpty())
+  if (sources[sourceId].connectionSettings.isEmpty())
     return;
 
-  static auto& ioManager = IO::ConnectionManager::instance();
-  IO::HAL_Driver* driver = ioManager.driverForEditing(sourceId);
-  if (!driver)
-    return;
-
-  driver->applyConnectionSettings(source.connectionSettings);
+  m_model.m_bus.publish<Core::Bus::SourceSettingsRestoreRequested>(sourceId);
 }
 
 /**
@@ -381,6 +371,22 @@ void DataModel::ProjectSources::setSource0BusType(int busType)
   sources[0].busType = busType;
   m_model.setModified(true);
   Q_EMIT m_model.sourceConnectionChanged(0);
+}
+
+/**
+ * @brief Serves the Setup pane's mirror request (spec 0077): the bus type always, the settings
+ *        when the request carries them, and the debounced autosave when asked and the project is
+ *        a file on disk.
+ */
+void DataModel::ProjectSources::applySource0Settings(
+  const Core::Bus::Source0ConnectionSettingsChanged& change)
+{
+  setSource0BusType(change.busType);
+  if (change.applySettings)
+    setSource0ConnectionSettings(change.settings);
+
+  if (change.autosave && !m_model.m_filePath.isEmpty())
+    m_model.m_persistence.scheduleAutoSave();
 }
 
 //--------------------------------------------------------------------------------------------------

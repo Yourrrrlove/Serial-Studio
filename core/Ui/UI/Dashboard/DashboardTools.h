@@ -26,7 +26,7 @@
 #include <QVariantList>
 #include <QVector>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
 
 class QTimer;
 class QSettings;

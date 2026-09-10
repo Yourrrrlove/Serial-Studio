@@ -29,12 +29,17 @@
 #include <QTimer>
 #include <QVector>
 
+#include "Core/Bus/Subscription.h"
+#include "Core/DataModel/DataBlock.h"
+#include "Core/DataModel/ExportSchema.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/DataModel/FrameConsumer.h"
 #include "CSV/SparseRowMerger.h"
-#include "DataModel/DataBlock.h"
-#include "DataModel/ExportSchema.h"
 #include "DataModel/ExportStructure.h"
-#include "DataModel/Frame.h"
-#include "DataModel/FrameConsumer.h"
+
+namespace Core::Bus {
+class MessageBus;
+}  // namespace Core::Bus
 
 namespace CSV {
 class Export;
@@ -120,9 +125,11 @@ private:
 
 public:
   [[nodiscard]] static Export& instance();
+  void attachMessageBus(Core::Bus::MessageBus& bus);
 
   [[nodiscard]] bool isOpen() const;
   [[nodiscard]] bool exportEnabled() const;
+  [[nodiscard]] bool sinkActive() const noexcept override;
   [[nodiscard]] int exportInterval() const;
 
 public slots:
@@ -132,7 +139,7 @@ public slots:
   void setExportInterval(const int interval);
   void setSettingsPersistent(const bool persistent);
 
-  void ingestBlock(const DataModel::DataBlockPtr& block);
+  void ingestBlock(const DataModel::DataBlockPtr& block) override;
 
 protected:
   DataModel::FrameConsumerWorkerBase* createWorker() override;
@@ -145,5 +152,7 @@ private:
   std::atomic<bool> m_isOpen;
   bool m_persistSettings;
   int m_exportInterval;
+  Core::Bus::MessageBus* m_bus;
+  Core::Bus::Subscription m_operationModeWatch;
 };
 }  // namespace CSV

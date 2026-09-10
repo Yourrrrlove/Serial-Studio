@@ -24,100 +24,63 @@
 #include <QApplication>
 #include <QThread>
 
-#include "API/Server.h"
-#include "AppState.h"
-#include "Console/Handler.h"
+#include "Core/Bus/MessageBus.h"
+#include "Core/Bus/Messages.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/DiagnosticsTypes.h"
+#include "Core/IO/StreamConfig.h"
+#include "Core/License.h"
+#include "Core/Prompt/UserPrompt.h"
+#include "Core/Services.h"
 #include "Core/SSAssert.h"
-#include "CSV/Export.h"
-#include "DataModel/Frame.h"
-#include "DataModel/FrameBuilder.h"
-#include "DataModel/ProjectModel.h"
-#include "DataModel/Scripting/ControlScript.h"
+#include "Core/Translator.h"
 #include "IO/Drivers/BluetoothLE.h"
 #include "IO/Drivers/UART.h"
 #include "IO/FileTransmission.h"
-#include "MDF4/Export.h"
-#include "Misc/ConnectionDiagnostics.h"
-#include "Misc/Translator.h"
-#include "Misc/Utilities.h"
-#include "SessionContext.h"
 
 #ifdef BUILD_COMMERCIAL
+#  include "Core/Licensing/CommercialToken.h"
 #  include "IO/Drivers/Audio.h"
 #  include "IO/Drivers/HID.h"
 #  include "IO/Drivers/Modbus.h"
 #  include "IO/Drivers/USB.h"
-#  include "Licensing/CommercialToken.h"
-#  include "Licensing/LemonSqueezy.h"
-#  include "Licensing/Trial.h"
-#  include "MQTT/Publisher.h"
-#  include "Sessions/Export.h"
-#  include "UI/Widgets/AudioExport.h"
 #endif
 
-#ifdef ENABLE_GRPC
-#  include "API/GRPC/GRPCServer.h"
-#endif
+IO::ConnectionManager* IO::ConnectionManager::s_instance = nullptr;
 
 //--------------------------------------------------------------------------------------------------
 // Constructor, destructor & singleton access
 //--------------------------------------------------------------------------------------------------
 
 /**
- * @brief Constructs the ConnectionManager singleton. AppState, ProjectModel and FrameBuilder are
- *        captured here rather than in setupExternalConnections(): the pinned order builds all
- *        three ahead of this object, and the spec-0044 headless bootstrap runs the pinned order
- *        WITHOUT any wiring pass, yet still asks this object for a FrameConfig.
+ * @brief Constructs the ConnectionManager singleton. The ingest binder (the pipeline host, built
+ *        ahead of it in the pinned order) is captured here, and the mode, framing and project
+ *        structure are seeded from the retained bus state published before this object: the
+ *        spec-0044 headless bootstrap runs the pinned order without any wiring pass.
  */
-IO::ConnectionManager::ConnectionManager()
-  : m_paused(false)
+IO::ConnectionManager::ConnectionManager(Core::Bus::MessageBus& bus, IIngestBinder& binder)
+  : m_bus(bus)
+  , m_binder(binder)
+  , m_paused(false)
   , m_writeEnabled(true)
   , m_rebuildingDevices(false)
   , m_busType(SerialStudio::BusType::UART)
-  , m_appState(AppState::instance())
-  , m_frameBuilder(DataModel::FrameBuilder::instance())
-  , m_projectModel(DataModel::ProjectModel::instance())
-  , m_apiServer(nullptr)
-  , m_console(nullptr)
+  , m_operationMode(SerialStudio::QuickPlot)
+  , m_busBridge(m_bus, m_operationMode, m_frameConfig, m_project)
   , m_fileTransmission(nullptr)
-#ifdef BUILD_COMMERCIAL
-  , m_mqttPublisher(nullptr)
-  , m_sessionExport(nullptr)
-#endif
-#ifdef ENABLE_GRPC
-  , m_grpcServer(nullptr)
-#endif
-  , m_io(m_appState,
-         m_frameBuilder,
-         m_replyCapture,
-         m_devices,
-         m_paused,
-         m_console,
-         m_apiServer,
-         m_fileTransmission
-#ifdef BUILD_COMMERCIAL
-         ,
-         m_sessionExport,
-         m_mqttPublisher
-#endif
-#ifdef ENABLE_GRPC
-         ,
-         m_grpcServer
-#endif
-         )
-  , m_query(m_devices, m_projectModel)
-  , m_driverFactory(m_uiDrivers)
-  , m_streamConfigs(m_appState, m_projectModel)
-  , m_streamPool(m_frameBuilder, m_appState, m_streamConfigs)
-  , m_uiSync(m_uiDrivers, m_appState, m_projectModel)
+  , m_io(m_operationMode, m_binder, m_replyCapture, m_devices, m_paused, m_fileTransmission)
+  , m_query(m_devices, m_project)
+  , m_driverFactory(m_uiDrivers, m_bus)
+  , m_streamConfigs(m_operationMode, m_frameConfig, m_project)
+  , m_uiSync(m_uiDrivers, m_operationMode, m_project, m_bus)
 {
+  m_busBridge.seedFromRetainedState();
+  m_uiDrivers.attachMessageBus(m_bus);
   connect(this, &ConnectionManager::busTypeChanged, this, &ConnectionManager::configurationChanged);
 
-  m_uiDriverSaveTimer.setSingleShot(true);
-  m_uiDriverSaveTimer.setInterval(750);
-  connect(&m_uiDriverSaveTimer, &QTimer::timeout, this, [this] { m_uiSync.autosaveSource0(); });
-
   connect(qApp, &QApplication::aboutToQuit, this, &ConnectionManager::disconnectAllDevices);
+  m_busBridge.publishConnectionState(
+    0, isConnected(), m_paused.load(), anyDeviceConnecting(), static_cast<int>(m_busType));
 }
 
 /**
@@ -130,13 +93,13 @@ IO::ConnectionManager::~ConnectionManager()
 }
 
 /**
- * @brief Returns this session's connection manager. The object is owned by the SessionContext and
- *        built by the composition root, so a reach before adoption is a named fatal instead of
- *        an out-of-order lazy construction (spec 0039 M2, wave D2).
+ * @brief Returns this session's connection manager, bound by the session context right after
+ * adoption; a reach before that is a named fatal (spec 0039 M2, spec 0077 T66).
  */
 IO::ConnectionManager& IO::ConnectionManager::instance()
 {
-  return SessionContext::current().connectionManager();
+  SS_ASSERT(s_instance != nullptr, qFatal("ConnectionManager::instance() before adoption"));
+  return *s_instance;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -172,7 +135,7 @@ bool IO::ConnectionManager::readWrite() const
  */
 bool IO::ConnectionManager::isConnected() const
 {
-  if (m_appState.operationMode() == SerialStudio::ProjectFile)
+  if (m_operationMode == SerialStudio::ProjectFile)
     return m_query.anyOpen();
 
   return m_query.primaryOpen();
@@ -204,12 +167,22 @@ QString IO::ConnectionManager::linkState() const
 }
 
 /**
- * @brief Sums the per-device frame-reader counters for the 1 Hz diagnostics sample. No caching and
- *        no signal: this is pulled once per second and must never be called on the frame path.
+ * @brief The per-device frame-reader counters summed by the pipeline that owns the readers, for
+ *        the 1 Hz diagnostics sample. No caching and no signal: this is pulled once per second and
+ *        must never be called on the frame path.
  */
 IO::LinkStats IO::ConnectionManager::linkStats() const
 {
-  return m_query.linkStats();
+  return m_binder.linkStats();
+}
+
+/**
+ * @brief Adopts the raw-byte observers the composition root resolved (spec 0077); bound once,
+ *        before the first device opens.
+ */
+void IO::ConnectionManager::bindRawTaps(std::span<IRawByteTap* const> taps)
+{
+  m_io.bindRawTaps(taps);
 }
 
 /**
@@ -217,7 +190,7 @@ IO::LinkStats IO::ConnectionManager::linkStats() const
  */
 bool IO::ConnectionManager::configurationOk() const
 {
-  if (m_appState.operationMode() == SerialStudio::ProjectFile)
+  if (m_operationMode == SerialStudio::ProjectFile)
     return projectConfigurationOk();
 
   auto* uiDriver = activeUiDriver();
@@ -572,11 +545,9 @@ bool IO::ConnectionManager::anyDeviceConnecting() const
 void IO::ConnectionManager::connectDevice()
 {
 #ifdef BUILD_COMMERCIAL
-  static auto& trial = Licensing::Trial::instance();
-  if ((trial.trialExpired() && !Licensing::CommercialToken::current().isValid())
-      || !SS_LICENSE_GUARD()) {
+  if ((Core::License::trialExpired() && !Core::License::activated()) || !SS_LICENSE_GUARD()) {
     disconnectDevice();
-    Misc::Utilities::showMessageBox(
+    Core::Prompt::showMessageBox(
       tr("Your trial period has ended."),
       tr("To continue using Serial Studio, please activate your license."));
     return;
@@ -586,17 +557,15 @@ void IO::ConnectionManager::connectDevice()
   if (!isConnected())
     rebuildStreamWorkers();
 
-  if (m_appState.operationMode() == SerialStudio::ProjectFile) {
-    static auto& controlScript = DataModel::ControlScript::instance();
-    controlScript.runOnConnect();
-  }
+  if (m_operationMode == SerialStudio::ProjectFile)
+    m_bus.publish<Core::Bus::ConnectionAboutToOpen>(0);
 
   m_fanOut.beginRequest();
   m_fanOut.beginWaitCursor();
 
   connectDevice(0);
 
-  if (m_appState.operationMode() == SerialStudio::ProjectFile)
+  if (m_operationMode == SerialStudio::ProjectFile)
     connectAllDevices();
 
   m_fanOut.endFanOut();
@@ -629,6 +598,9 @@ void IO::ConnectionManager::notifyConnectedStateChanged()
 
   if (m_fanOut.noteConnected(isConnected(), connectedDeviceCount()))
     Q_EMIT connectedChanged();
+
+  m_busBridge.publishConnectionState(
+    0, isConnected(), m_paused.load(), anyDeviceConnecting(), static_cast<int>(m_busType));
 }
 
 /**
@@ -674,11 +646,11 @@ void IO::ConnectionManager::disconnectDevice()
 
   disconnectDevice(0);
 
-  if (m_appState.operationMode() == SerialStudio::ProjectFile)
+  if (m_operationMode == SerialStudio::ProjectFile)
     for (const int id : deviceIdSnapshot(true))
       disconnectDevice(id);
 
-  m_frameBuilder.registerQuickPlotHeaders(QStringList());
+  m_binder.resetQuickPlotHeaders();
 
   concludeConnectRequest();
   m_fanOut.endWaitCursor();
@@ -727,21 +699,12 @@ void IO::ConnectionManager::wireUiDriver(IO::HAL_Driver* driver)
 
 /**
  * @brief Sets up external signal/slot connections after all singletons are initialized. The
- *        modules built AFTER this one in the pinned order are captured first, before setBusType()
- *        can create the primary device whose taps read them.
+ *        file-transfer facade, built AFTER this one in the pinned order, is captured first, before
+ *        setBusType() can create the primary device whose byte path reads it.
  */
 void IO::ConnectionManager::setupExternalConnections()
 {
-  m_console          = &Console::Handler::instance();
-  m_apiServer        = &API::Server::instance();
   m_fileTransmission = &IO::FileTransmission::instance();
-#ifdef BUILD_COMMERCIAL
-  m_mqttPublisher = &MQTT::Publisher::instance();
-  m_sessionExport = &Sessions::Export::instance();
-#endif
-#ifdef ENABLE_GRPC
-  m_grpcServer = &API::GRPC::GRPCServer::instance();
-#endif
 
   auto savedBusType = m_settings.value("IOManager/busType", 0).toInt();
   if (savedBusType < 0 || savedBusType >= availableBuses().count())
@@ -754,45 +717,21 @@ void IO::ConnectionManager::setupExternalConnections()
 
   m_uiDrivers.setupExternalConnections();
 
-  connect(&Misc::Translator::instance(),
+  connect(&Core::services().translator,
           &Misc::Translator::languageChanged,
           this,
           &IO::ConnectionManager::busListChanged);
 
-  connect(&m_projectModel,
-          &DataModel::ProjectModel::sourceStructureChanged,
-          this,
-          &IO::ConnectionManager::rebuildDevices,
-          Qt::DirectConnection);
-
-  connect(&m_projectModel,
-          &DataModel::ProjectModel::sourceChanged,
-          this,
-          &IO::ConnectionManager::onProjectSourceChanged,
-          Qt::DirectConnection);
-
   wireStreamLifecycle();
 
-  connect(
-    &m_appState,
-    &AppState::frameConfigChanged,
-    this,
-    [this](const IO::FrameConfig&) { resetFrameReader(); },
-    Qt::QueuedConnection);
-
-  connect(&m_appState,
-          &AppState::operationModeChanged,
-          this,
-          &IO::ConnectionManager::rebuildDevices,
-          Qt::QueuedConnection);
-
-#ifdef BUILD_COMMERCIAL
-  connect(&Licensing::LemonSqueezy::instance(),
-          &Licensing::LemonSqueezy::activatedChanged,
-          this,
-          &IO::ConnectionManager::rebuildDevices,
-          Qt::QueuedConnection);
-#endif
+  m_busBridge.wire(*this,
+                   {[this] { rebuildDevices(); },
+                    [this] { resetFrameReader(); },
+                    [this](int sourceId) { onProjectSourceChanged(sourceId); },
+                    [this] {
+                      rebuildStreamWorkers();
+                    }});
+  m_uiSync.wire(*this, [this](int sourceId) { return driver(sourceId); });
 
   for (auto* driver : m_uiDrivers.all())
     wireUiDriver(driver);
@@ -814,6 +753,8 @@ void IO::ConnectionManager::setupExternalConnections()
     m_uiDrivers.audio()->setDiscoveryPaused(paused);
   });
 #endif
+
+  m_uiSync.publishActiveUiDriverSettings(m_busType, activeUiDriver());
 }
 
 /**
@@ -962,7 +903,7 @@ void IO::ConnectionManager::disconnectDevice(HAL_Driver* driver)
   disconnectDevice(deviceId);
 
   if (!isConnected()) {
-    m_frameBuilder.registerQuickPlotHeaders(QStringList());
+    m_binder.resetQuickPlotHeaders();
     Q_EMIT driverChanged();
   }
 }
@@ -977,9 +918,11 @@ void IO::ConnectionManager::setPaused(bool paused)
     return;
 
   m_paused = effective;
-  m_streamPool.setPaused(effective);
+  m_binder.setStreamPaused(effective);
 
   Q_EMIT pausedChanged();
+  m_busBridge.publishConnectionState(
+    0, isConnected(), m_paused.load(), anyDeviceConnecting(), static_cast<int>(m_busType));
 }
 
 /**
@@ -1041,13 +984,11 @@ void IO::ConnectionManager::setBusType(SerialStudio::BusType type)
   SS_ASSERT(static_cast<int>(type) >= 0, return);
   SS_ASSERT_LOG(thread() == QThread::currentThread());
 
-  auto& model = m_projectModel;
-
   if (m_busType == type && m_devices.find(0) != m_devices.end()) {
-    const auto opMode = m_appState.operationMode();
-    if (opMode == SerialStudio::ProjectFile && model.sources().size() == 1
-        && model.sources()[0].busType != static_cast<int>(type))
-      model.setSource0BusType(static_cast<int>(type));
+    const auto opMode = m_operationMode;
+    if (opMode == SerialStudio::ProjectFile && m_project->sources.size() == 1
+        && m_project->sources[0].busType != static_cast<int>(type))
+      m_uiSync.publishSource0BusType(type);
     return;
   }
 
@@ -1056,7 +997,7 @@ void IO::ConnectionManager::setBusType(SerialStudio::BusType type)
   m_busType = type;
   m_settings.setValue("IOManager/busType", static_cast<int>(type));
 
-  if (m_appState.operationMode() != SerialStudio::ProjectFile)
+  if (m_operationMode != SerialStudio::ProjectFile)
     m_settings.setValue("IOManager/userBusType", static_cast<int>(type));
 
   auto driver = m_driverFactory.create(type);
@@ -1099,8 +1040,8 @@ void IO::ConnectionManager::setBusType(SerialStudio::BusType type)
                 &IO::ConnectionManager::connectedChanged);
     }
 
-    auto dm =
-      std::make_unique<DeviceManager>(0, std::move(driver), m_streamConfigs.frameConfig(0), this);
+    auto dm = std::make_unique<DeviceManager>(
+      0, std::move(driver), m_streamConfigs.frameConfig(0), m_binder, this);
     wireDevice(dm.get());
 
     auto existing = m_devices.find(0);
@@ -1122,14 +1063,13 @@ void IO::ConnectionManager::setBusType(SerialStudio::BusType type)
   Q_EMIT driverChanged();
   Q_EMIT busTypeChanged();
 
-  const auto opMode = m_appState.operationMode();
-  if (opMode == SerialStudio::ProjectFile && model.sources().size() == 1) {
-    model.setSource0BusType(static_cast<int>(type));
-    (void)m_uiSync.captureToSource0(type, activeUiDriver(), nullptr);
-
-    if (!model.jsonFilePath().isEmpty())
-      (void)model.saveJsonFile(false);
+  const auto opMode = m_operationMode;
+  if (opMode == SerialStudio::ProjectFile && m_project->sources.size() == 1) {
+    m_uiSync.publishSource0BusType(type);
+    (void)m_uiSync.captureToSource0(type, activeUiDriver(), nullptr, true);
   }
+
+  m_uiSync.publishActiveUiDriverSettings(type, activeUiDriver());
 }
 
 /**
@@ -1153,7 +1093,7 @@ void IO::ConnectionManager::dropUnavailablePrimaryDevice(SerialStudio::BusType t
     QMetaObject::invokeMethod(
       this,
       [] {
-        Misc::Utilities::showMessageBox(
+        Core::Prompt::showMessageBox(
           tr("This connection type requires an active license or trial."),
           tr("Activate Serial Studio Pro or start a trial to use this device type."));
       },
@@ -1187,8 +1127,11 @@ void IO::ConnectionManager::syncUiDriverFromSource0()
     Q_EMIT busTypeChanged();
   };
 
-  if (m_uiSync.syncFromSource0(m_busType, applyBusType))
-    Q_EMIT driverChanged();
+  if (!m_uiSync.syncFromSource0(m_busType, applyBusType))
+    return;
+
+  Q_EMIT driverChanged();
+  m_uiSync.publishActiveUiDriverSettings(m_busType, activeUiDriver());
 }
 
 /**
@@ -1216,10 +1159,10 @@ void IO::ConnectionManager::wireDevice(DeviceManager* dm)
 }
 
 /**
- * @brief Settles the pending connect request when a device finishes opening, and hands the
- *        outcome to the connection diagnostics: a failure diagnoses that bus only, a success
- *        clears what the previous failure reported. Every open reports its outcome here exactly
- *        once, and the connected state is published idempotently afterwards.
+ * @brief Settles the pending connect request when a device finishes opening, and publishes the
+ *        outcome as DeviceOpenAttempted for the connection diagnostics: a failure diagnoses that
+ *        bus only, a success clears what the previous failure reported. Every open reports its
+ *        outcome here exactly once, and the connected state is published idempotently afterwards.
  */
 void IO::ConnectionManager::onDeviceOpenFinished(int deviceId, bool ok, const QString& reason)
 {
@@ -1227,13 +1170,8 @@ void IO::ConnectionManager::onDeviceOpenFinished(int deviceId, bool ok, const QS
   SS_ASSERT_LOG(ok || !reason.isEmpty());
 
   Misc::Diagnostics::Bus bus = Misc::Diagnostics::Bus::Serial;
-  if (DriverFactory::diagnosticsBus(driver(deviceId), bus)) {
-    static auto& diagnostics = Misc::ConnectionDiagnostics::instance();
-    if (ok)
-      diagnostics.onOpenSucceeded(bus);
-    else
-      diagnostics.onOpenFailed(bus, reason);
-  }
+  if (DriverFactory::diagnosticsBus(driver(deviceId), bus))
+    m_bus.publish<Core::Bus::DeviceOpenAttempted>(static_cast<int>(bus), ok, reason);
 
   concludeConnectRequest();
   notifyConnectedStateChanged();
@@ -1250,13 +1188,13 @@ void IO::ConnectionManager::refreshConnectedState()
 }
 
 /**
- * @brief Captures current UI-config driver settings back to source[0], arming the debounced
- *        autosave when the project is a file on disk.
+ * @brief Captures current UI-config driver settings back to source[0] (the project autosaves when
+ *        it is a file on disk) and refreshes the retained active-driver settings.
  */
 void IO::ConnectionManager::onUiDriverConfigurationChanged()
 {
-  if (m_uiSync.captureToSource0(m_busType, activeUiDriver(), sender()))
-    m_uiDriverSaveTimer.start();
+  (void)m_uiSync.captureToSource0(m_busType, activeUiDriver(), sender(), true);
+  m_uiSync.publishActiveUiDriverSettings(m_busType, activeUiDriver(), sender());
 }
 
 /**
@@ -1277,7 +1215,7 @@ void IO::ConnectionManager::buildDeviceForSource(const DataModel::Source& src,
 
   auto* rawDriver = driver.get();
   auto dm         = std::make_unique<DeviceManager>(
-    src.sourceId, std::move(driver), m_streamConfigs.frameConfig(src.sourceId), this);
+    src.sourceId, std::move(driver), m_streamConfigs.frameConfig(src.sourceId), m_binder, this);
 
   connect(rawDriver,
           &IO::HAL_Driver::configurationChanged,
@@ -1302,90 +1240,48 @@ void IO::ConnectionManager::buildDeviceForSource(const DataModel::Source& src,
 }
 
 /**
- * @brief Wires the stream-lane lifecycle inputs: worker rebuilds on lane/mode edits, template
- *        publish on the connect edge, export-flag refresh on sink enable changes (spec 0051).
+ * @brief Wires the template publish on the connect edge (spec 0051). The worker rebuilds on
+ *        lane/mode edits arrive through the project snapshot the bus bridge dispatches, and the
+ *        export-flag refresh is no longer wired here: every sink announces its own activity edge
+ *        to the frame builder (spec 0077).
  */
 void IO::ConnectionManager::wireStreamLifecycle()
 {
-  SS_ASSERT(m_apiServer != nullptr, return);
-
-  connect(&m_projectModel,
-          &DataModel::ProjectModel::sourceStreamLaneChanged,
-          this,
-          &IO::ConnectionManager::rebuildStreamWorkers,
-          Qt::QueuedConnection);
-
-  connect(&m_projectModel,
-          &DataModel::ProjectModel::luaFastModeChanged,
-          this,
-          &IO::ConnectionManager::rebuildStreamWorkers,
-          Qt::QueuedConnection);
-
   connect(this, &IO::ConnectionManager::connectedChanged, this, [this] {
-    if (isConnected() && !m_streamPool.workers().empty())
-      m_streamPool.publishTemplates();
+    if (isConnected())
+      m_binder.publishStreamTemplates();
   });
-
-  static auto& csvExport = CSV::Export::instance();
-  connect(&csvExport,
-          &CSV::Export::enabledChanged,
-          this,
-          &IO::ConnectionManager::refreshStreamExportFlags);
-
-  connect(m_apiServer,
-          &API::Server::enabledChanged,
-          this,
-          &IO::ConnectionManager::refreshStreamExportFlags);
-  connect(m_apiServer,
-          &API::Server::streamSubscribersChanged,
-          this,
-          &IO::ConnectionManager::refreshStreamExportFlags);
-#ifdef BUILD_COMMERCIAL
-  SS_ASSERT(m_sessionExport != nullptr, return);
-
-  static auto& mdf4Export = MDF4::Export::instance();
-  connect(&mdf4Export,
-          &MDF4::Export::enabledChanged,
-          this,
-          &IO::ConnectionManager::refreshStreamExportFlags);
-
-  static auto& audioExport = Widgets::AudioExport::instance();
-  connect(&audioExport,
-          &Widgets::AudioExport::activeSessionsChanged,
-          this,
-          &IO::ConnectionManager::refreshStreamExportFlags);
-
-  connect(m_sessionExport,
-          &Sessions::Export::enabledChanged,
-          this,
-          &IO::ConnectionManager::refreshStreamExportFlags);
-#endif
 }
 
 /**
- * @brief Rebuilds the per-source stream workers from the live device map. The pool owns the
- *        workers and their queued FrameBuilder wiring; this snapshot is the only thing it needs
- *        from the device map, and it is taken here so the pool never reaches into it.
+ * @brief Rebuilds the per-source stream workers: derives each live device's lane and stream
+ *        configuration here, where the project is known, and hands the binder only the sources
+ *        whose lane is on and binds a channel. The driver's lane flag is set only once a worker
+ *        will exist: a lane with no channel-bound datasets would otherwise leave that source dark.
  */
 void IO::ConnectionManager::rebuildStreamWorkers()
 {
-  std::vector<StreamWorkerPool::Source> sources;
+  std::vector<StreamAttachment> sources;
   sources.reserve(m_devices.size());
-  for (const auto& [deviceId, dm] : m_devices)
-    if (dm && dm->driver())
-      sources.push_back({deviceId, dm->driver()});
+  for (const auto& [deviceId, dm] : m_devices) {
+    HAL_Driver* halDriver = dm ? dm->driver() : nullptr;
+    if (!halDriver)
+      continue;
 
-  m_streamPool.rebuild(sources, m_paused, isConnected());
-}
+    const bool laneOn = IO::streamLaneOn(halDriver, m_streamConfigs.streamLane(deviceId));
+    auto config       = laneOn ? m_streamConfigs.streamConfig(deviceId, halDriver) : StreamConfig{};
+    const bool active = laneOn && !config.datasets.empty();
 
-/**
- * @brief Re-derives the FrameBuilder's cached any-async-sink flag when a typed sink's enable
- *        state moves; it must fire for every sink, or a recording produces a valid-looking file
- *        containing nothing.
- */
-void IO::ConnectionManager::refreshStreamExportFlags()
-{
-  m_streamPool.refreshExportFlags();
+#ifdef BUILD_COMMERCIAL
+    if (auto* audioDriver = qobject_cast<IO::Drivers::Audio*>(halDriver))
+      audioDriver->setStreamLaneActive(active);
+#endif
+
+    if (active)
+      sources.push_back({deviceId, halDriver, std::move(config)});
+  }
+
+  m_binder.rebuildStreams(sources, m_paused, isConnected());
 }
 
 /**
@@ -1394,17 +1290,7 @@ void IO::ConnectionManager::refreshStreamExportFlags()
  */
 void IO::ConnectionManager::stopStreamWorkers()
 {
-  m_streamPool.stop();
-}
-
-/**
- * @brief Returns the live stream workers (GUI thread only; Dashboard drains their display
- *        rings on the display tick).
- */
-const std::vector<std::unique_ptr<IO::StreamWorker>>& IO::ConnectionManager::streamWorkers()
-  const noexcept
-{
-  return m_streamPool.workers();
+  m_binder.detachStreams();
 }
 
 /**
@@ -1424,13 +1310,14 @@ void IO::ConnectionManager::rebuildDevices()
 
   m_rebuildingDevices = true;
 
-  const auto opMode       = m_appState.operationMode();
+  const auto opMode       = m_operationMode;
   const bool wasConnected = isConnected();
+  const auto project      = m_project;
 
   bool willRebuildDevice0 = false;
   bool didChangeBusType   = false;
   if (opMode == SerialStudio::ProjectFile) {
-    const auto& srcs = m_projectModel.sources();
+    const auto& srcs = project->sources;
     for (const auto& src : srcs) {
       if (src.sourceId != 0)
         continue;
@@ -1472,7 +1359,7 @@ void IO::ConnectionManager::rebuildDevices()
   }
 
   if (opMode == SerialStudio::ProjectFile) {
-    const auto& sources = m_projectModel.sources();
+    const auto& sources = project->sources;
     for (const auto& src : sources)
       buildDeviceForSource(src, willRebuildDevice0);
   }
@@ -1519,7 +1406,7 @@ void IO::ConnectionManager::rebuildDevices()
  */
 void IO::ConnectionManager::onProjectSourceChanged(int sourceId)
 {
-  if (sourceId <= 0 || m_appState.operationMode() != SerialStudio::ProjectFile)
+  if (sourceId <= 0 || m_operationMode != SerialStudio::ProjectFile)
     return;
 
   auto it = m_devices.find(sourceId);
@@ -1577,13 +1464,4 @@ int IO::ConnectionManager::deviceIdForDriver(const HAL_Driver* driver) const
 std::vector<int> IO::ConnectionManager::deviceIdSnapshot(bool projectSourcesOnly) const
 {
   return m_query.deviceIdSnapshot(projectSourcesOnly);
-}
-
-/**
- * @brief Builds a FrameConfig for the given @p deviceId from current settings. Public because the
- *        spec-0044 headless verifier rebuilds the production readers from it.
- */
-IO::FrameConfig IO::ConnectionManager::buildFrameConfig(int deviceId) const
-{
-  return m_streamConfigs.frameConfig(deviceId);
 }

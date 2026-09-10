@@ -82,7 +82,7 @@ QtObject {
       if (entry === null || !entry.visible)
         continue
 
-      if (f.length > 0 && !SerialStudio.searchMatches(f, entry.name))
+      if (f.length > 0 && !SerialStudioHelpers.searchMatches(f, entry.name))
         continue
 
       out.push(entry)

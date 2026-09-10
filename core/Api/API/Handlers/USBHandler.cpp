@@ -14,6 +14,7 @@
 #include <QJsonArray>
 
 #include "API/CommandRegistry.h"
+#include "API/HandlerContext.h"
 #include "API/SchemaBuilder.h"
 #include "IO/ConnectionManager.h"
 
@@ -103,9 +104,9 @@ API::CommandResponse API::Handlers::USBHandler::setDeviceIndex(const QString& id
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: deviceIndex"));
   }
 
-  const int device_index         = params.value(QStringLiteral("deviceIndex")).toInt();
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  const auto& devices            = connectionManager.usb()->deviceList();
+  const int device_index  = params.value(QStringLiteral("deviceIndex")).toInt();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  const auto& devices     = connectionManager.usb()->deviceList();
 
   if (device_index < 0 || device_index >= devices.count()) {
     return CommandResponse::makeError(
@@ -144,7 +145,7 @@ API::CommandResponse API::Handlers::USBHandler::setTransferMode(const QString& i
         .arg(mode));
   }
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
+  auto& connectionManager = API::handlerContext().connectionManager;
   connectionManager.usb()->setTransferMode(mode);
 
   QJsonObject result;
@@ -163,9 +164,9 @@ API::CommandResponse API::Handlers::USBHandler::setInEndpointIndex(const QString
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: endpointIndex"));
   }
 
-  const int ep_index             = params.value(QStringLiteral("endpointIndex")).toInt();
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  const auto& endpoints          = connectionManager.usb()->inEndpointList();
+  const int ep_index      = params.value(QStringLiteral("endpointIndex")).toInt();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  const auto& endpoints   = connectionManager.usb()->inEndpointList();
 
   if (ep_index < 0 || ep_index >= endpoints.count()) {
     return CommandResponse::makeError(
@@ -195,9 +196,9 @@ API::CommandResponse API::Handlers::USBHandler::setOutEndpointIndex(const QStrin
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: endpointIndex"));
   }
 
-  const int ep_index             = params.value(QStringLiteral("endpointIndex")).toInt();
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  const auto& endpoints          = connectionManager.usb()->outEndpointList();
+  const int ep_index      = params.value(QStringLiteral("endpointIndex")).toInt();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  const auto& endpoints   = connectionManager.usb()->outEndpointList();
 
   if (ep_index < 0 || ep_index >= endpoints.count()) {
     return CommandResponse::makeError(
@@ -235,7 +236,7 @@ API::CommandResponse API::Handlers::USBHandler::setIsoPacketSize(const QString& 
       QStringLiteral("Invalid size: %1. Valid range: 1-49152").arg(size));
   }
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
+  auto& connectionManager = API::handlerContext().connectionManager;
   connectionManager.usb()->setIsoPacketSize(size);
 
   QJsonObject result;
@@ -255,8 +256,8 @@ API::CommandResponse API::Handlers::USBHandler::getDeviceList(const QString& id,
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  const auto& devices            = connectionManager.usb()->deviceList();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  const auto& devices     = connectionManager.usb()->deviceList();
 
   QJsonArray devices_array;
   for (const auto& device : devices)
@@ -276,8 +277,8 @@ API::CommandResponse API::Handlers::USBHandler::getConfiguration(const QString& 
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* usb                      = connectionManager.usb();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  auto* usb               = connectionManager.usb();
 
   QJsonArray in_endpoints;
   for (const auto& ep : usb->inEndpointList())

@@ -43,6 +43,8 @@ Item {
   // Create scrollable grid view with LED states
   //
   Flickable {
+    id: ledFlick
+
     contentWidth: width
     anchors.fill: parent
     anchors.topMargin: 8
@@ -52,6 +54,9 @@ Item {
 
     ScrollBar.vertical: ScrollBar {
       id: scroll
+
+      policy: ledFlick.contentHeight > ledFlick.height ? ScrollBar.AlwaysOn
+                                                       : ScrollBar.AlwaysOff
     }
 
     GridLayout {
@@ -130,6 +135,8 @@ Item {
             }
 
             Label {
+              id: ledTitle
+
               elide: Qt.ElideRight
               Layout.fillWidth: true
               text: root.model.titles[index]
@@ -140,6 +147,15 @@ Item {
                      Cpp_Misc_CommonFonts.widgetFont(cell.uiScale))
 
               Behavior on color {ColorAnimation{}}
+
+              HoverHandler {
+                id: ledTitleHover
+
+                enabled: ledTitle.truncated
+              }
+              ToolTip.delay: 600
+              ToolTip.text: ledTitle.text
+              ToolTip.visible: ledTitleHover.hovered && ledTitle.truncated
             }
 
             //
@@ -147,6 +163,8 @@ Item {
             // narrow cells elide the text instead of overflowing the cell
             //
             Label {
+              id: ledStatus
+
               elide: Qt.ElideRight
               Layout.fillWidth: true
               visible: text.length > 0
@@ -159,6 +177,25 @@ Item {
                      Cpp_Misc_CommonFonts.widgetFont(cell.uiScale))
 
               Behavior on color {ColorAnimation{}}
+
+              HoverHandler {
+                id: ledStatusHover
+
+                enabled: ledStatus.truncated
+              }
+              ToolTip.delay: 600
+              ToolTip.text: ledStatus.text
+              ToolTip.visible: ledStatusHover.hovered && ledStatus.truncated
+            }
+
+            //
+            // Pop-out buttons for the other widgets showing this dataset
+            //
+            DatasetWidgetButtons {
+              windowRoot: root.windowRoot
+              widgets: root.model.widgets[index]
+              Layout.alignment: Qt.AlignVCenter
+              buttonSize: Math.max(22, Math.round(24 * cell.uiScale))
             }
           }
 

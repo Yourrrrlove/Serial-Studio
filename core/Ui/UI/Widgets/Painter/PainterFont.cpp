@@ -16,8 +16,8 @@
 #  include <QRegularExpression>
 #  include <QStringList>
 
+#  include "Core/SerialStudio.h"
 #  include "Misc/CommonFonts.h"
-#  include "SerialStudio.h"
 
 /**
  * @brief Resolves a CSS-style font family to a real installed family.

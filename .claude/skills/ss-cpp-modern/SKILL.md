@@ -55,7 +55,8 @@ the story, and a story you can't state in one sentence is a design smell
 - `std::unique_ptr<T>` — sole ownership; the default. `const std::unique_ptr<T>` for a member
   that is created once and lives for the owner's lifetime (scoped, non-reseatable).
 - `std::shared_ptr<T>` — genuine shared ownership only (e.g. a frame handed to several async
-  sinks). On the dashboard hotpath, blocks come from `FrameBuilder::claimBlockSlot()` (slot
+  sinks). On the dashboard hotpath, blocks come from the pooled slots (`DataModel::BlockStager` on the frame lane,
+  `StreamProcessor::claimBlockSlot()` on the stream lane; slot
   pool), not fresh `make_shared` — see [[ss-hotpath]] SS-HOT-3.
 - `std::weak_ptr<T>` — break a shared cycle / observe without owning.
 - A QObject with a parent — parent-owned; no smart pointer needed (and don't add one).

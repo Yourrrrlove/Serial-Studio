@@ -366,3 +366,41 @@ def test_the_dos_marker_is_registered():
     """CI deselects '-m not dos'; an unregistered marker under --strict-markers is an error."""
     ini = (REPO / "tests" / "pytest.ini").read_text(encoding="utf-8")
     assert re.search(r"^\s+dos:", ini, re.M)
+
+
+# --------------------------------------------------------------------------------------------
+# Spec 0077: the layering gates in CI
+# --------------------------------------------------------------------------------------------
+
+CORE_LIBRARIES = (
+    "SerialStudioCore",
+    "SerialStudioProtocols",
+    "SerialStudioPipeline",
+    "SerialStudioDevices",
+    "SerialStudioStorage",
+    "SerialStudioApi",
+    "SerialStudioUi",
+)
+
+
+def test_the_core_libraries_build_alone_in_dependency_order(ci):
+    """AC2: one job configures without the application and builds the seven archives in order."""
+    assert "build-core-libraries" in ci
+    runs = [str(step.get("run", "")) for step in _steps(ci["build-core-libraries"])]
+    configure = [run for run in runs if "cmake -G Ninja -B build/core-libs" in run]
+    assert configure and "-DBUILD_GPL3=ON" in configure[0]
+    targets = []
+    for run in runs:
+        match = re.search(r"--target (SerialStudio\w+)", run)
+        if match:
+            targets.append(match.group(1))
+    assert tuple(targets) == CORE_LIBRARIES
+
+
+def test_the_library_job_does_not_gate_publication(ci):
+    assert "build-core-libraries" not in ci["upload"]["needs"]
+
+
+def test_the_lint_job_runs_the_bus_census(ci):
+    runs = " ".join(str(step.get("run", "")) for step in _steps(ci["lint"]))
+    assert "--bus-census --check" in runs

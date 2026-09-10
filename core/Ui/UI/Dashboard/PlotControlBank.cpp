@@ -22,7 +22,7 @@
 #include "UI/Dashboard/PlotControlBank.h"
 
 #ifdef BUILD_COMMERCIAL
-#  include "Licensing/CommercialToken.h"
+#  include "Core/Licensing/CommercialToken.h"
 #endif
 
 //--------------------------------------------------------------------------------------------------

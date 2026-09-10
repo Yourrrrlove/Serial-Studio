@@ -32,7 +32,7 @@
 #include <QVariant>
 #include <QVector>
 
-#include "UI/LayoutPatterns.h"
+#include "Core/LayoutPatterns.h"
 #include "UI/WindowManager/SnapOverlay.h"
 #include "UI/WindowManager/WindowGeometry.h"
 #include "UI/WindowManager/WindowLayoutStore.h"

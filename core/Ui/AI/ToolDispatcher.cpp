@@ -14,6 +14,7 @@
 #include "AI/Tools/ToolCatalog.h"
 #include "AI/Tools/ToolDispatch.h"
 #include "API/CommandRegistry.h"
+#include "API/HandlerContext.h"
 
 //--------------------------------------------------------------------------------------------------
 // Construction
@@ -101,9 +102,9 @@ QJsonObject AI::ToolDispatcher::executeCommand(const QString& name, const QJsonO
  */
 static QJsonObject runSafeCommand(const QString& name)
 {
-  const auto callId        = QUuid::createUuid().toString(QUuid::WithoutBraces);
-  static auto& apiRegistry = API::CommandRegistry::instance();
-  const auto response      = apiRegistry.execute(name, callId, {});
+  const auto callId   = QUuid::createUuid().toString(QUuid::WithoutBraces);
+  auto& apiRegistry   = API::handlerContext().registry;
+  const auto response = apiRegistry.execute(name, callId, {});
   if (!response.success)
     return {};
 
@@ -134,7 +135,7 @@ QJsonObject AI::ToolDispatcher::getSnapshot() const
 
   QJsonObject snapshot;
   QJsonArray skipped;
-  static auto& apiRegistry = API::CommandRegistry::instance();
+  auto& apiRegistry = API::handlerContext().registry;
   for (const auto& name : kStatusCommands) {
     if (!apiRegistry.hasCommand(name)) {
       skipped.append(name);
@@ -167,7 +168,7 @@ QJsonObject AI::ToolDispatcher::getProjectState() const
   };
 
   QJsonObject state;
-  static auto& apiRegistry = API::CommandRegistry::instance();
+  auto& apiRegistry = API::handlerContext().registry;
   for (const auto& name : kSafeListCommands) {
     if (!apiRegistry.hasCommand(name))
       continue;

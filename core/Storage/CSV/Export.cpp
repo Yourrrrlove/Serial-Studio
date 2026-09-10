@@ -36,14 +36,15 @@
 #include <QDir>
 #include <QVarLengthArray>
 
-#include "AppState.h"
+#include "Core/Bus/MessageBus.h"
+#include "Core/Bus/Messages.h"
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
 #include "CSV/Player.h"
 #include "DataModel/FrameBuilder.h"
-#include "IO/ConnectionManager.h"
+#include "DataModel/PipelineModules.h"
 #include "MDF4/Player.h"
-#include "Misc/WorkspaceManager.h"
-#include "SerialStudio.h"
+#include "Replay/PlayerState.h"
 
 //--------------------------------------------------------------------------------------------------
 // Constants
@@ -408,7 +409,9 @@ CSV::Export::Export()
   , m_isOpen(false)
   , m_persistSettings(true)
   , m_exportInterval(0)
+  , m_bus(nullptr)
 {
+  connect(this, &CSV::Export::enabledChanged, this, &DataModel::IBlockSink::sinkActivityChanged);
   initializeWorker();
   connect(m_worker,
           &ExportWorker::resourceOpenChanged,
@@ -463,6 +466,14 @@ bool CSV::Export::exportEnabled() const
 }
 
 /**
+ * @brief The publisher's verdict for this sink: a CSV recording consumes blocks while enabled.
+ */
+bool CSV::Export::sinkActive() const noexcept
+{
+  return exportEnabled();
+}
+
+/**
  * @brief Returns the snapshot interval in milliseconds (0 = one row per frame).
  */
 int CSV::Export::exportInterval() const
@@ -494,12 +505,21 @@ void CSV::Export::onWorkerOpenChanged()
 }
 
 /**
+ * @brief Adopts the root-owned message bus this module publishes on and subscribes to.
+ */
+void CSV::Export::attachMessageBus(Core::Bus::MessageBus& bus)
+{
+  SS_ASSERT(m_bus == nullptr, return);
+  m_bus = &bus;
+}
+
+/**
  * @brief Wires IO and app-state signals that control export behaviour.
  */
 void CSV::Export::setupExternalConnections()
 {
   connect(
-    &DataModel::FrameBuilder::instance(),
+    &DataModel::pipelineModules().frameBuilder,
     &DataModel::FrameBuilder::structurePublished,
     this,
     [this](int, const DataModel::Frame& frame) {
@@ -509,7 +529,7 @@ void CSV::Export::setupExternalConnections()
       QMetaObject::invokeMethod(
         worker, [worker, frame] { worker->applyPublishedStructure(frame); }, Qt::QueuedConnection);
     });
-  connect(&DataModel::FrameBuilder::instance(),
+  connect(&DataModel::pipelineModules().frameBuilder,
           &DataModel::FrameBuilder::sessionStructureReady,
           this,
           [this](const DataModel::Frame& frame) {
@@ -524,7 +544,7 @@ void CSV::Export::setupExternalConnections()
   // what keeps the last display tick (A2): the builder flushes its open blocks into this sink's
   // queue before emitting, and close() drains that queue before closing the file.
   // code-verify on
-  connect(&DataModel::FrameBuilder::instance(),
+  connect(&DataModel::pipelineModules().frameBuilder,
           &DataModel::FrameBuilder::sessionBoundary,
           this,
           [this](bool connected, bool paused) {
@@ -532,10 +552,11 @@ void CSV::Export::setupExternalConnections()
               closeFile();
           });
 
-  connect(&AppState::instance(), &AppState::operationModeChanged, this, [this] {
-    if (AppState::instance().operationMode() == SerialStudio::ConsoleOnly && exportEnabled())
-      setExportEnabled(false);
-  });
+  m_operationModeWatch = m_bus->subscribe<Core::Bus::OperationModeChanged>(
+    this, [this](const std::shared_ptr<const Core::Bus::OperationModeChanged>& message) {
+      if (message->mode == SerialStudio::ConsoleOnly && exportEnabled())
+        setExportEnabled(false);
+    });
 }
 
 /**
@@ -570,8 +591,9 @@ void CSV::Export::setExportInterval(const int interval)
  */
 void CSV::Export::setExportEnabled(const bool enabled)
 {
-  static auto& appState = AppState::instance();
-  const bool allow      = enabled && appState.operationMode() != SerialStudio::ConsoleOnly;
+  const auto mode        = m_bus ? m_bus->latest<Core::Bus::OperationModeChanged>() : nullptr;
+  const bool consoleOnly = mode && mode->mode == SerialStudio::ConsoleOnly;
+  const bool allow       = enabled && !consoleOnly;
 
   if (!allow && isOpen())
     closeFile();

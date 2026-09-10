@@ -31,7 +31,7 @@
 #  include <mimalloc.h>
 #endif
 
-#include "AppInfo.h"
+#include "Core/AppInfo.h"
 #include "IO/ConnectionManager.h"
 #include "Misc/CLI.h"
 #include "Misc/CrashTracker.h"
@@ -183,6 +183,7 @@ static int runApplication(int argc, char** argv, bool headless, const QString& s
 {
   Misc::CrashTracker::instance().setCheckpoint(QStringLiteral("qapplication-construct"));
   QApplication app(argc, argv);
+  Misc::ModuleManager::bootstrapCoreServices();
 
   Platform::FileOpenEventFilter fileOpenFilter;
   app.installEventFilter(&fileOpenFilter);

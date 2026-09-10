@@ -31,6 +31,7 @@
 #include "UI/Widgets/PlotLogScale.h"
 
 #ifdef BUILD_COMMERCIAL
+#  include "Core/License.h"
 #  include "UI/Widgets/AudioExport.h"
 #endif
 
@@ -489,7 +490,7 @@ void Widgets::FFTPlot::setAudioRecordingEnabled(const bool enabled)
     return;
 
   if (enabled) {
-    if (!SerialStudio::activated())
+    if (!Core::License::activated())
       return;
 
     const auto& dataset = GET_DATASET(SerialStudio::DashboardFFT, m_index);

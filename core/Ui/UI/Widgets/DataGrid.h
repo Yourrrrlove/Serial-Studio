@@ -27,7 +27,7 @@
 #include <QVector>
 #include <vector>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
 #include "UI/Dashboard.h"
 
 namespace Widgets {
@@ -120,7 +120,6 @@ private:
   };
 
   [[nodiscard]] QString formatValue(const DataModel::Dataset& dataset) const;
-  [[nodiscard]] QVariantList datasetWidgets(const DataModel::Dataset& dataset) const;
   void rebuildRows();
 
 private:

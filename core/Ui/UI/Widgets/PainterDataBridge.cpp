@@ -13,7 +13,7 @@
 
 #  include "UI/Widgets/PainterDataBridge.h"
 
-#  include "DataModel/Frame.h"
+#  include "Core/DataModel/Frame.h"
 
 //--------------------------------------------------------------------------------------------------
 // Construction

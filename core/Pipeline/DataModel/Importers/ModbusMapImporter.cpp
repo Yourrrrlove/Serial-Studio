@@ -28,18 +28,22 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QJsonArray>
+#include <QJsonDocument>
+#include <QList>
 #include <QSet>
 #include <QStandardPaths>
 
-#include "DataModel/Frame.h"
+#include "Core/Bus/MessageBus.h"
+#include "Core/Bus/Messages.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/Prompt/UserPrompt.h"
+#include "Core/SerialStudio.h"
+#include "Core/Services.h"
+#include "Core/SSAssert.h"
 #include "DataModel/Importers/AxisTicks.h"
 #include "DataModel/Importers/ImporterCommon.h"
 #include "DataModel/Importers/ModbusRegisterMap.h"
 #include "DataModel/ProjectModel.h"
-#include "IO/ConnectionManager.h"
-#include "IO/Drivers/Modbus.h"
-#include "Misc/Utilities.h"
-#include "SerialStudio.h"
 
 //--------------------------------------------------------------------------------------------------
 // Constructor & singleton access
@@ -97,11 +101,11 @@ QString DataModel::ModbusMapImporter::registerInfo(int index) const
 
   const auto& r = m_registers[index];
   QString info  = QStringLiteral("%1: %2 @ %3 (%4, %5)")
-                    .arg(index + 1)
-                    .arg(r.name)
-                    .arg(r.address)
-                    .arg(registerTypeName(r.registerType))
-                    .arg(r.dataType);
+                   .arg(index + 1)
+                   .arg(r.name)
+                   .arg(r.address)
+                   .arg(registerTypeName(r.registerType))
+                   .arg(r.dataType);
 
   if (!r.units.isEmpty())
     info += QStringLiteral(" [%1]").arg(r.units);
@@ -161,10 +165,10 @@ void DataModel::ModbusMapImporter::showPreview(const QString& filePath)
       || ModbusMap::parseXml(filePath, m_registers);
 
   if (!ok || m_registers.isEmpty()) {
-    Misc::Utilities::showMessageBox(
+    Core::Prompt::showMessageBox(
       tr("No registers found"),
       tr("The file could not be parsed or contains no register definitions."),
-      QMessageBox::Warning,
+      Core::Prompt::Warning,
       tr("Modbus Import"));
     return;
   }
@@ -210,11 +214,11 @@ void DataModel::ModbusMapImporter::confirmImport()
       if (!accepted)
         return;
 
-      Misc::Utilities::showMessageBox(
+      Core::Prompt::showMessageBox(
         tr("Successfully imported %1 registers in %2 groups.")
           .arg(QString::number(registerCount), QString::number(blockCount)),
         tr("The project editor is now open for customization."),
-        QMessageBox::Information,
+        Core::Prompt::Information,
         tr("Modbus Import Complete"));
     },
     Qt::SingleShotConnection);
@@ -712,18 +716,24 @@ local BLOCKS = {
 }
 
 /**
- * @brief Loads the computed register blocks into the Modbus UI driver.
+ * @brief Publishes the computed register blocks for the Modbus UI driver to adopt (spec 0077): one
+ *        object per block with its type, start address and register count.
  */
 void DataModel::ModbusMapImporter::loadRegisterGroups(const QVector<RegisterBlock>& blocks) const
 {
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* modbus                   = connectionManager.modbus();
-  if (!modbus)
-    return;
+  auto* bus = &Core::services().bus;
+  SS_ASSERT(bus != nullptr, return);
 
-  modbus->clearRegisterGroups();
-  for (const auto& block : blocks)
-    modbus->addRegisterGroup(block.registerType, block.startAddress, block.count);
+  QJsonArray groups;
+  for (const auto& block : blocks) {
+    QJsonObject group;
+    group.insert(QStringLiteral("type"), static_cast<int>(block.registerType));
+    group.insert(QStringLiteral("start"), static_cast<int>(block.startAddress));
+    group.insert(QStringLiteral("count"), static_cast<int>(block.count));
+    groups.append(group);
+  }
+
+  bus->publish<Core::Bus::ModbusRegisterGroupsLoaded>(QJsonDocument(groups));
 }
 
 //--------------------------------------------------------------------------------------------------

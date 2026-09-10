@@ -25,11 +25,16 @@
 #include <QDir>
 #include <QTimer>
 
-#include "AppState.h"
+#include "Core/Bus/MessageBus.h"
+#include "Core/Bus/Messages.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/Prompt/UserPrompt.h"
+#include "Core/SerialStudio.h"
+#include "Core/Services.h"
 #include "Core/SSAssert.h"
+#include "DataModel/PipelineModules.h"
 #include "IO/PipelineHost.h"
-#include "Misc/Utilities.h"
-#include "SerialStudio.h"
+#include "Replay/PlayerState.h"
 
 #ifdef BUILD_COMMERCIAL
 #  include <mdf/ichannel.h>
@@ -38,14 +43,12 @@
 #  include <mdf/iheader.h>
 #  include <mdf/mdffactory.h>
 #  include <mdf/mdfwriter.h>
+#  include <QMap>
 
+#  include "Core/Licensing/CommercialToken.h"
 #  include "CSV/Player.h"
 #  include "DataModel/FrameBuilder.h"
-#  include "IO/ConnectionManager.h"
-#  include "Licensing/CommercialToken.h"
-#  include "Licensing/LemonSqueezy.h"
 #  include "MDF4/Player.h"
-#  include "Misc/WorkspaceManager.h"
 #endif
 
 //--------------------------------------------------------------------------------------------------
@@ -201,7 +204,7 @@ void MDF4::ExportWorker::processItems(const std::vector<DataModel::DataBlockPtr>
     return;
 
   if (!isResourceOpen()) {
-    static auto& pipeline = IO::PipelineHost::instance();
+    auto& pipeline = DataModel::pipelineModules().pipelineHost;
     if (!pipeline.pipelineConnected())
       return;
 
@@ -514,10 +517,12 @@ MDF4::Export::Export()
   , m_isOpen(false)
   , m_exportEnabled(false)
   , m_persistSettings(true)
+  , m_bus(nullptr)
 #else
-  : m_isOpen(false), m_exportEnabled(false), m_persistSettings(true)
+  : m_isOpen(false), m_exportEnabled(false), m_persistSettings(true), m_bus(nullptr)
 #endif
 {
+  connect(this, &MDF4::Export::enabledChanged, this, &DataModel::IBlockSink::sinkActivityChanged);
 #ifdef BUILD_COMMERCIAL
   initializeWorker();
   connect(m_worker,
@@ -526,12 +531,11 @@ MDF4::Export::Export()
           &Export::onWorkerOpenChanged,
           Qt::QueuedConnection);
 
-  static auto& lemonSqueezy = Licensing::LemonSqueezy::instance();
-  connect(&lemonSqueezy, &Licensing::LemonSqueezy::activatedChanged, this, [=, this] {
-    if (exportEnabled()
-        && (!Licensing::CommercialToken::current().isValid() || !SS_LICENSE_GUARD()))
-      setExportEnabled(false);
-  });
+  m_licenseWatch = Core::services().bus.subscribe<Core::Bus::LicenseStateChanged>(
+    this, [this](const std::shared_ptr<const Core::Bus::LicenseStateChanged>& license) {
+      if (exportEnabled() && (!license->activated || !SS_LICENSE_GUARD()))
+        setExportEnabled(false);
+    });
 #endif
 
   setExportEnabled(m_settings.value("MDF4Export", false).toBool());
@@ -586,6 +590,14 @@ bool MDF4::Export::exportEnabled() const
 }
 
 /**
+ * @brief The publisher's verdict for this sink: an MDF4 recording consumes blocks while enabled.
+ */
+bool MDF4::Export::sinkActive() const noexcept
+{
+  return exportEnabled();
+}
+
+/**
  * @brief Write all remaining data & close the output file.
  */
 void MDF4::Export::closeFile()
@@ -613,13 +625,22 @@ void MDF4::Export::refreshTemplateFrame()
 #endif
 
 /**
+ * @brief Adopts the root-owned message bus this module publishes on and subscribes to.
+ */
+void MDF4::Export::attachMessageBus(Core::Bus::MessageBus& bus)
+{
+  SS_ASSERT(m_bus == nullptr, return);
+  m_bus = &bus;
+}
+
+/**
  * @brief Configures signal/slot connections with the modules this exporter depends on.
  */
 void MDF4::Export::setupExternalConnections()
 {
 #ifdef BUILD_COMMERCIAL
   connect(
-    &DataModel::FrameBuilder::instance(),
+    &DataModel::pipelineModules().frameBuilder,
     &DataModel::FrameBuilder::structurePublished,
     this,
     [this](int, const DataModel::Frame& frame) {
@@ -629,7 +650,7 @@ void MDF4::Export::setupExternalConnections()
       QMetaObject::invokeMethod(
         worker, [worker, frame] { worker->applyPublishedStructure(frame); }, Qt::QueuedConnection);
     });
-  connect(&DataModel::FrameBuilder::instance(),
+  connect(&DataModel::pipelineModules().frameBuilder,
           &DataModel::FrameBuilder::sessionStructureReady,
           this,
           [this](const DataModel::Frame& frame) {
@@ -642,7 +663,7 @@ void MDF4::Export::setupExternalConnections()
   // queue before emitting, and close() drains that queue before closing the file. closeResources()
   // clears the worker's template, so a boundary that leaves the link live re-pushes it.
   // code-verify on
-  connect(&DataModel::FrameBuilder::instance(),
+  connect(&DataModel::pipelineModules().frameBuilder,
           &DataModel::FrameBuilder::sessionBoundary,
           this,
           [this](bool connected, bool paused) {
@@ -654,10 +675,11 @@ void MDF4::Export::setupExternalConnections()
             refreshTemplateFrame();
           });
 
-  connect(&AppState::instance(), &AppState::operationModeChanged, this, [this] {
-    if (AppState::instance().operationMode() == SerialStudio::ConsoleOnly && exportEnabled())
-      setExportEnabled(false);
-  });
+  m_operationModeWatch = m_bus->subscribe<Core::Bus::OperationModeChanged>(
+    this, [this](const std::shared_ptr<const Core::Bus::OperationModeChanged>& message) {
+      if (message->mode == SerialStudio::ConsoleOnly && exportEnabled())
+        setExportEnabled(false);
+    });
 #endif
 }
 
@@ -675,9 +697,10 @@ void MDF4::Export::setSettingsPersistent(const bool persistent)
 void MDF4::Export::setExportEnabled(const bool enabled)
 {
 #ifdef BUILD_COMMERCIAL
-  static auto& appState = AppState::instance();
-  const auto& tk        = Licensing::CommercialToken::current();
-  const bool allow      = enabled && appState.operationMode() != SerialStudio::ConsoleOnly;
+  const auto mode        = m_bus ? m_bus->latest<Core::Bus::OperationModeChanged>() : nullptr;
+  const bool consoleOnly = mode && mode->mode == SerialStudio::ConsoleOnly;
+  const auto& tk         = Licensing::CommercialToken::current();
+  const bool allow       = enabled && !consoleOnly;
 
   if (tk.isValid() && SS_LICENSE_GUARD()) {
     if (!allow && isOpen())
@@ -708,7 +731,7 @@ void MDF4::Export::setExportEnabled(const bool enabled)
 #endif
 
   if (enabled)
-    Misc::Utilities::showMessageBox(
+    Core::Prompt::showMessageBox(
       tr("MDF4 Export is a Pro feature."),
       tr("Activate Serial Studio Pro or start the free trial to enable MDF4 export."));
 }

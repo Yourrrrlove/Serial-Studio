@@ -59,9 +59,8 @@
  * vector; frames and blocks keep the pooled SPSC path of spec 0055, and the bus carries command,
  * state and notification rate only.
  *
- * The composition root constructs the bus and hands it to setInstance(); the bus never constructs
- * itself. The singleton census is expected to grow here as the follow-up specs of 0076 replace
- * module reaches with topics, which is the metric of that migration rather than new debt.
+ * The composition root constructs the bus and hands it to every module constructor and to
+ * Core::Services; the bus never constructs itself and has no global accessor (spec 0077 T73).
  */
 
 namespace Core::Bus {
@@ -101,9 +100,6 @@ public:
   MessageBus& operator=(MessageBus&&)      = delete;
   MessageBus& operator=(const MessageBus&) = delete;
   ~MessageBus() override;
-
-  [[nodiscard]] static MessageBus* instance();
-  static void setInstance(MessageBus* bus);
 
   /**
    * @brief Builds one immutable message of topic @c T and hands it to every live subscriber.

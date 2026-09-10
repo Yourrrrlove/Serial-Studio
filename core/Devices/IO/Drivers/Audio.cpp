@@ -26,13 +26,15 @@
 #include <chrono>
 #include <QtEndian>
 
+#include "Core/Bus/MessageBus.h"
+#include "Core/Bus/Messages.h"
+#include "Core/Services.h"
 #include "Core/SSAssert.h"
+#include "Core/TimerEvents.h"
+#include "Core/Translator.h"
 #include "IO/ConnectionManager.h"
 #include "IO/Drivers/Audio/AudioDeviceCatalog.h"
 #include "IO/Drivers/Audio/AudioPcm.h"
-#include "Misc/TimerEvents.h"
-#include "Misc/Translator.h"
-#include "Misc/Utilities.h"
 
 using namespace IO::Drivers::AudioPcm;
 
@@ -107,10 +109,10 @@ IO::Drivers::Audio::Audio()
   configureInput();
   configureOutput();
 
-  static auto& timerEvents = Misc::TimerEvents::instance();
+  auto& timerEvents = Core::services().timerEvents;
   connect(&timerEvents, &Misc::TimerEvents::timeout1Hz, this, &Audio::refreshAudioDevices);
 
-  static auto& translator = Misc::Translator::instance();
+  auto& translator = Core::services().translator;
   connect(
     &translator, &Misc::Translator::languageChanged, this, &IO::Drivers::Audio::generateLists);
 }
@@ -337,6 +339,7 @@ bool IO::Drivers::Audio::open(const QIODevice::OpenMode mode)
   m_rtCaptureChannels.store(m_config.capture.channels, std::memory_order_relaxed);
   m_rtPlaybackFormat.store(m_config.playback.format, std::memory_order_relaxed);
   m_rtPlaybackChannels.store(m_config.playback.channels, std::memory_order_release);
+  publishCaptureFormat();
 
   m_playbackRing.reset();
   seedInputPool(kInputSlotSize);
@@ -895,7 +898,23 @@ void IO::Drivers::Audio::configureInput()
   m_config.capture.channels = channels;
 
   syncInputParameters();
+  publishCaptureFormat();
   Q_EMIT configurationChanged();
+}
+
+/**
+ * @brief Retains the capture format, sample rate and normalization flag the QuickPlot builder
+ *        sizes its audio lane from (spec 0077); the format is the miniaudio ma_format ordinal.
+ */
+void IO::Drivers::Audio::publishCaptureFormat()
+{
+  auto* bus = messageBus();
+  if (!bus)
+    return;
+
+  bus->publishState<Core::Bus::AudioCaptureFormat>(static_cast<int>(m_config.capture.format),
+                                                   static_cast<int>(m_config.sampleRate),
+                                                   m_normalization);
 }
 
 /**
@@ -1028,9 +1047,9 @@ void IO::Drivers::Audio::renderCsv(const QByteArray& raw,
           break;
         }
         case ma_format_s24: {
-          const quint8* b     = reinterpret_cast<const quint8*>(ptr);
-          const qint32 s24    = static_cast<qint32>(b[0]) | (static_cast<qint32>(b[1]) << 8)
-                              | (static_cast<qint32>(b[2]) << 16);
+          const quint8* b  = reinterpret_cast<const quint8*>(ptr);
+          const qint32 s24 = static_cast<qint32>(b[0]) | (static_cast<qint32>(b[1]) << 8)
+                           | (static_cast<qint32>(b[2]) << 16);
           const qint32 sample = (s24 & 0x800000) ? (s24 | static_cast<qint32>(0xFF000000)) : s24;
           m_csvStream << sample;
           break;

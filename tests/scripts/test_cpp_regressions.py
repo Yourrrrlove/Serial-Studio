@@ -84,7 +84,7 @@ def test_project_model_save_returns_real_result():
 
 
 def test_hal_write_api_uses_signed_sizes():
-    hal = _read("core/Devices/IO/HAL_Driver.h")
+    hal = _read("core/Core/IO/HAL_Driver.h")
     assert re.search(
         r"\[\[nodiscard\]\] virtual qint64 write\(const QByteArray& data\)\s*=\s*0;",
         hal,
@@ -245,8 +245,8 @@ def test_usb_close_joins_threads_with_quit_then_wait():
 
 
 def test_frame_parser_uses_qcoreapplication_event_forwarding():
-    text = _read("core/Pipeline/DataModel/Editors/JsCodeEditor.cpp")
-    bridge = _read("core/Pipeline/DataModel/Editors/EmbeddedCodeEditor.cpp")
+    text = _read("core/Ui/ProjectEditor/Editors/JsCodeEditor.cpp")
+    bridge = _read("core/Ui/ProjectEditor/Editors/EmbeddedCodeEditor.cpp")
 
     assert "QCoreApplication::sendEvent(&m_widget, event);" in bridge
     assert "DW_EXEC_EVENT" not in text
@@ -254,11 +254,13 @@ def test_frame_parser_uses_qcoreapplication_event_forwarding():
 
 
 def test_project_editor_bounds_checks_combo_indices():
-    text = _read("core/Pipeline/DataModel/ProjectEditor.cpp")
-    for tu in sorted(
-        (ROOT / "core/Pipeline/DataModel/Project").glob("ProjectEditor*.cpp")
-    ):
+    text = ""
+    for tu in sorted((ROOT / "core/Ui/ProjectEditor").rglob("*.cpp")):
         text += tu.read_text(encoding="utf-8")
+
+    # The editor's sub-objects (spec 0077) reach the facade's state through `m_editor.`; the
+    # guards are what this test pins, not which class holds the member.
+    text = text.replace("m_editor.", "")
 
     for expected in [
         "if (widgetIdx < 0 || widgetIdx >= keys.size())",
@@ -286,21 +288,21 @@ def test_project_editor_bounds_checks_combo_indices():
 
 def test_license_guard_macro_defined_in_commercial_token_header():
     """CommercialToken.h must define SS_LICENSE_GUARD and include the generated header."""
-    text = _read("app/src/Licensing/CommercialToken.h")
+    text = _read("core/Core/Licensing/CommercialToken.h")
 
     assert '#  include "LicenseGuards.generated.h"' in text
     assert "#  define SS_LICENSE_GUARD()" in text
     assert "Licensing::Guards::runGuard(__LINE__)" in text
 
 
-def test_license_guard_present_in_serial_studio_activated():
-    """SerialStudio::activated() must include SS_LICENSE_GUARD()."""
-    text = _read("app/src/SerialStudio.cpp")
+def test_license_guard_present_in_license_flag_publisher():
+    """The root's publishLicenseState() (the Core::License writer) must include SS_LICENSE_GUARD()."""
+    text = _read("app/src/Misc/ModuleManager.cpp")
 
     assert re.search(
-        r"return.*isValid\(\)\s*&&\s*SS_LICENSE_GUARD\(\)",
+        r"Core::License::set\(token\.isValid\(\)\s*&&\s*SS_LICENSE_GUARD\(\)",
         text,
-    ), "SS_LICENSE_GUARD() missing from SerialStudio::activated()"
+    ), "SS_LICENSE_GUARD() missing from publishLicenseState()"
 
 
 def test_license_guard_present_in_mqtt_connect():
@@ -315,13 +317,20 @@ def test_license_guard_present_in_mqtt_connect():
 
 
 def test_license_guard_present_in_mqtt_hotpath():
-    """MQTT::Publisher::licenseValid() must check SS_LICENSE_GUARD()."""
-    text = _read("core/Devices/MQTT/Publisher.cpp")
+    """MQTT::Publisher::licenseValid() reads the root-derived Core::License flag (spec 0077).
+
+    The guard itself is pinned where the flag is derived (publishLicenseState in the root); the
+    publisher, now in Storage, must read that flag and never re-derive the token.
+    """
+    text = _read("core/Storage/MQTT/Publisher.cpp")
 
     assert re.search(
-        r"token\.isValid\(\)\s*\n?\s*&&\s*SS_LICENSE_GUARD\(\)",
+        r"bool MQTT::Publisher::licenseValid\(\) const\s*\{\s*return Core::License::activated\(\);",
         text,
-    ), "SS_LICENSE_GUARD() missing from MQTT publisher license check"
+    ), "MQTT publisher license check must read Core::License::activated()"
+    assert (
+        "CommercialToken" not in text
+    ), "the publisher must not re-derive the licence token"
 
 
 def test_license_guard_present_in_mdf4_export():
@@ -442,7 +451,7 @@ def test_session_report_series_preserve_raw_points_under_budget():
 
 def test_timestamp_pipeline_starts_in_driver_and_shares_parsed_frames():
     """Driver timestamps should flow through FrameReader into one shared parsed frame object."""
-    hal = _read("core/Devices/IO/HAL_Driver.h")
+    hal = _read("core/Core/IO/HAL_Driver.h")
     reader_h = _read("core/Pipeline/IO/FrameReader.h")
     reader_cpp = _read("core/Pipeline/IO/FrameReader.cpp")
     builder_h = _read("core/Pipeline/DataModel/FrameBuilder.h")
@@ -718,7 +727,7 @@ def test_crash_tracker_documents_local_only_telemetry():
 
 
 def test_workspace_migration_copies_with_atomic_marker():
-    text = _read("core/Ui/Misc/WorkspaceManager.cpp")
+    text = _read("core/Core/WorkspaceManager.cpp")
 
     # No destructive rename of the legacy folder.
     assert (
@@ -964,7 +973,7 @@ def test_tool_dispatcher_routes_pipeline_inputs():
 def test_assistant_script_apply_strips_pipeline_keys():
     """assistant.script.apply must strip the dryRun-only pipeline keys before
     forwarding to setCode; otherwise setCode rejects them with InvalidParam."""
-    text = _read("core/Api/API/Handlers/AssistantHandler.cpp")
+    text = _read("core/Ui/ApiHandlers/AssistantHandler.cpp")
 
     # The fallback is keyed off inputBytes(Hex), not the old sampleFrame(s) check.
     assert (
@@ -1001,7 +1010,7 @@ def test_tester_runs_pipeline_and_writes_back_to_source():
     pipeline runners and must write delimiter / decoder / detection / checksum edits
     back to ProjectModel so the live driver reconfigures.
     """
-    text = _read("core/Pipeline/DataModel/Editors/FrameParserModel.cpp")
+    text = _read("core/Ui/ProjectEditor/Editors/FrameParserModel.cpp")
 
     assert '#include "DataModel/Scripting/FrameParserPipeline.h"' in text
 

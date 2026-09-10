@@ -11,7 +11,7 @@
 #include <QChar>
 
 #include "AI/Logging.h"
-#include "Licensing/MachineID.h"
+#include "Core/Crypto/MachineKey.h"
 
 //--------------------------------------------------------------------------------------------------
 // ZeroOnDestroy
@@ -40,8 +40,7 @@ AI::ZeroOnDestroy::~ZeroOnDestroy()
  */
 AI::KeyVault::KeyVault()
 {
-  static auto& machineId = Licensing::MachineID::instance();
-  m_simpleCrypt.setKey(machineId.machineSpecificKey());
+  m_simpleCrypt.setKey(Core::Crypto::machineKey());
   m_simpleCrypt.setIntegrityProtectionMode(Licensing::SimpleCrypt::ProtectionHash);
 }
 

@@ -27,7 +27,7 @@
 #include <QLatin1StringView>
 #include <QVariant>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
 #include "DataModel/Project/PropertyHooks.h"
 
 // clang-format off
@@ -126,7 +126,7 @@ inline constexpr DatasetProperty kDatasetProperties[] = {
    false},
   {"HideOnDashboard", "hideOnDashboard", "hideOnDashboard", "Edit Dataset", "dataset",
    kDatasetView_HideOnDashboard, PropertyType::Bool, PropertyWidget::CheckBox,
-   PersistRule::WhenTrue, true, false, false, false},
+   PersistRule::WhenTrue, true, false, true, false},
   {"Index", "index", "index", "Edit Dataset", "dataset", kDatasetView_Index, PropertyType::Int,
    PropertyWidget::IntField, PersistRule::Always, true, true, true, false},
   {"Units", "units", "units", "Edit Dataset", "dataset", kDatasetView_Units, PropertyType::String,
@@ -142,7 +142,7 @@ inline constexpr DatasetProperty kDatasetProperties[] = {
    PropertyType::Double, PropertyWidget::FloatField, PersistRule::Always, true, true, false,
    false},
   {"Plt", "plt", "graph", "Edit Dataset", "dataset", kDatasetView_Plot, PropertyType::Bool,
-   PropertyWidget::ComboBox, PersistRule::Always, true, false, false, false},
+   PropertyWidget::ComboBox, PersistRule::Always, true, false, true, false},
   {"Log", "log", "log", "Edit Dataset", "dataset", -1, PropertyType::Bool, PropertyWidget::None,
    PersistRule::Always, false, false, false, false},
   {"XAxis", "xAxisId", "xAxisId", "Edit Dataset", "dataset", kDatasetView_xAxis,
@@ -154,9 +154,9 @@ inline constexpr DatasetProperty kDatasetProperties[] = {
    PropertyType::Bool, PropertyWidget::CheckBox, PersistRule::WhenTrue, true, false, false,
    false},
   {"Fft", "fft", "fft", "Edit Dataset", "dataset", kDatasetView_FFT, PropertyType::Bool,
-   PropertyWidget::CheckBox, PersistRule::Always, true, false, false, false},
+   PropertyWidget::CheckBox, PersistRule::Always, true, false, true, false},
   {"Waterfall", "waterfall", "waterfall", "Edit Dataset", "dataset", kDatasetView_Waterfall,
-   PropertyType::Bool, PropertyWidget::CheckBox, PersistRule::WhenTrue, true, false, false, true},
+   PropertyType::Bool, PropertyWidget::CheckBox, PersistRule::WhenTrue, true, false, true, true},
   {"FftBallistics", "fftBallistics", "fftBallistics", "Edit Dataset", "dataset",
    kDatasetView_FFT_Ballistics, PropertyType::Bool, PropertyWidget::CheckBox,
    PersistRule::WhenTrue, true, false, false, false},
@@ -183,8 +183,7 @@ inline constexpr DatasetProperty kDatasetProperties[] = {
    PropertyType::Double, PropertyWidget::FloatField, PersistRule::Always, true, true, false,
    false},
   {"Widget", "widget", "widget", "Edit Dataset", "dataset", kDatasetView_Widget,
-   PropertyType::String, PropertyWidget::ComboBox, PersistRule::Always, true, false, false,
-   false},
+   PropertyType::String, PropertyWidget::ComboBox, PersistRule::Always, true, false, true, false},
   {"DisplayTickCount", "displayTickCount", "displayTickCount", "Edit Dataset", "dataset",
    kDatasetView_DisplayTickCount, PropertyType::Int, PropertyWidget::AutoIntField,
    PersistRule::WhenPositive, true, true, false, false},
@@ -204,13 +203,13 @@ inline constexpr DatasetProperty kDatasetProperties[] = {
    kDatasetView_ExtremeHold, PropertyType::Bool, PropertyWidget::CheckBox, PersistRule::WhenTrue,
    true, false, false, false},
   {"Led", "led", "led", "Edit Dataset", "dataset", kDatasetView_LED, PropertyType::Bool,
-   PropertyWidget::CheckBox, PersistRule::Always, true, false, false, false},
+   PropertyWidget::CheckBox, PersistRule::Always, true, false, true, false},
   {"LedHigh", "ledHigh", "ledHigh", "Edit Dataset", "dataset", kDatasetView_LED_High,
    PropertyType::Double, PropertyWidget::FloatField, PersistRule::Always, true, true, false,
    false},
   {"OverviewDisplay", "overviewDisplay", "overviewDisplay", "Edit Dataset", "dataset",
    kDatasetView_Overview, PropertyType::Bool, PropertyWidget::None, PersistRule::WhenTrue, false,
-   false, false, false},
+   false, true, false},
   {"TransformCode", "transformCode", "transformCode", "Edit Dataset", "dataset",
    kDatasetView_TransformCode, PropertyType::String, PropertyWidget::None,
    PersistRule::WhenNonEmpty, true, true, false, false},

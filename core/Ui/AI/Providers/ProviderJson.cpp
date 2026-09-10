@@ -19,7 +19,7 @@
 #include <QJsonValue>
 #include <QSet>
 
-#include "Misc/JsonValidator.h"
+#include "Core/JsonValidator.h"
 
 //--------------------------------------------------------------------------------------------------
 // Constants

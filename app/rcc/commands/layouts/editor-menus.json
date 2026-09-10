@@ -73,10 +73,10 @@
         {"type": "command", "id": "editor.menu.editControlLoop"},
         {"type": "command", "id": "editor.menu.configureMqtt"},
         {"type": "command", "id": "editor.menu.configureInflux"},
+        {"type": "command", "id": "editor.menu.seedAliases"},
         {"type": "separator"},
         {"type": "command", "id": "editor.expandTree"},
-        {"type": "command", "id": "editor.collapseTree"},
-        {"type": "command", "id": "editor.menu.seedAliases"}
+        {"type": "command", "id": "editor.collapseTree"}
     ] },
     { "name": "source", "items": [
         {"type": "submenu", "title": "Add Group", "icon": "editor/add-group",

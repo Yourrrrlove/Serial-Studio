@@ -15,7 +15,7 @@
 #include "AI/Tools/ToolCompact.h"
 #include "AI/Tools/ToolResolve.h"
 #include "AI/Tools/ToolSupport.h"
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
 
 namespace AI::ToolDetail {
 

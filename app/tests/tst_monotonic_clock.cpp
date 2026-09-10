@@ -24,8 +24,8 @@
 #include <QTemporaryDir>
 #include <QTest>
 
+#include "Core/Crypto/SimpleCrypt.h"
 #include "Licensing/MonotonicClock.h"
-#include "Licensing/SimpleCrypt.h"
 
 // Every case drives the injected seam (nowFloored) against its own INI file, so no case can see
 // another's floor and the developer's real settings are never touched.

@@ -21,18 +21,15 @@
 
 #include "IO/PipelineHost.h"
 
-#include "AppState.h"
+#include "Core/IO/IRawFrameTap.h"
 #include "Core/SSAssert.h"
 #include "DataModel/FrameBuilder.h"
 #include "DataModel/Scripting/FrameParser.h"
-#include "IO/ConnectionManager.h"
 #include "IO/FrameReader.h"
+#include "IO/StreamWorkerPool.h"
 #include "Platform/AppPlatform.h"
-#include "SessionContext.h"
 
-#ifdef BUILD_COMMERCIAL
-#  include "MQTT/Publisher.h"
-#endif
+IO::PipelineHost* IO::PipelineHost::s_instance = nullptr;
 
 //--------------------------------------------------------------------------------------------------
 // Constants
@@ -53,11 +50,13 @@ static std::atomic<bool> s_tearingDown{false};
  *        no other session module (ctor-edge rule, spec 0001): mirrors are seeded later by
  *        setupExternalConnections(), and the thread starts with an empty event loop.
  */
-IO::PipelineHost::PipelineHost()
-  : m_thread(std::make_unique<QThread>())
+IO::PipelineHost::PipelineHost(Core::Bus::MessageBus& bus)
+  : m_bus(bus)
+  , m_thread(std::make_unique<QThread>())
   , m_abandoned(false)
   , m_frameBuilder(nullptr)
   , m_frameParser(nullptr)
+  , m_rawFrameTap(nullptr)
   , m_paused(false)
   , m_connected(false)
   , m_operationMode(static_cast<int>(SerialStudio::ProjectFile))
@@ -67,6 +66,7 @@ IO::PipelineHost::PipelineHost()
   , m_displayDrops(0)
   , m_dashboardRing(kBlockRingSize)
   , m_structureRing(kStructureRingSize)
+  , m_streamPool(std::make_unique<StreamWorkerPool>(m_operationMode))
 {
   m_thread->setObjectName(QStringLiteral("FramePipeline"));
   m_thread->start();
@@ -75,21 +75,27 @@ IO::PipelineHost::PipelineHost()
 /**
  * @brief Joins the processing thread if no earlier teardown path already did (early-exit paths
  *        that never reach ModuleManager::onQuit), so the SessionContext release order can free
- *        FrameBuilder afterwards without a live pipeline thread touching it.
+ *        FrameBuilder afterwards without a live pipeline thread touching it. Readers a device
+ *        never detached die here too, after the thread that owned them.
  */
 IO::PipelineHost::~PipelineHost()
 {
   shutdown();
+
+  for (auto& [deviceId, slot] : m_readers)
+    retireReader(slot);
+
+  m_readers.clear();
 }
 
 /**
- * @brief Returns this session's pipeline host. The object is owned by the SessionContext and built
- *        by the composition root, so a reach before adoption is a named fatal instead of an
- *        out-of-order lazy construction (spec 0039 pattern).
+ * @brief Returns this session's pipeline host, bound by the session context right after adoption;
+ *        a reach before that is a named fatal (spec 0039 M2, spec 0077 T66).
  */
 IO::PipelineHost& IO::PipelineHost::instance()
 {
-  return SessionContext::current().pipelineHost();
+  SS_ASSERT(s_instance != nullptr, qFatal("PipelineHost::instance() before adoption"));
+  return *s_instance;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -150,31 +156,256 @@ int IO::PipelineHost::dashboardRingCapacity() const noexcept
 }
 
 /**
- * @brief Wires the GUI-side transition signals into the atomic mirrors and seeds their initial
- *        values. All writes happen on the GUI thread at transition rate; the frame path only
- *        ever reads the atomics.
+ * @brief Returns the live dense-lane workers (GUI thread only; Dashboard drains their display
+ *        rings on the display tick, the API lists them).
+ */
+const std::vector<std::unique_ptr<IO::StreamWorker>>& IO::PipelineHost::streamWorkers()
+  const noexcept
+{
+  return m_streamPool->workers();
+}
+
+/**
+ * @brief Adopts the frame builder the binder feeds and hands it to the stream pool. Bound by the
+ *        composition root before any wiring pass: the connection manager's own wiring already
+ *        rebuilds the stream workers, which is earlier than this host's setupExternalConnections().
+ */
+void IO::PipelineHost::bindFrameBuilder(DataModel::FrameBuilder& frameBuilder)
+{
+  SS_ASSERT_LOG(m_frameBuilder == nullptr || m_frameBuilder == &frameBuilder);
+  m_frameBuilder = &frameBuilder;
+  m_streamPool->bind(frameBuilder);
+}
+
+/**
+ * @brief Captures the frame parser (the builder was bound by the root) so the thread move and the
+ *        shutdown reach both pipeline-thread peers. The atomic mirrors the frame path reads are
+ *        written through refreshLinkMirror() and refreshOperationModeMirror(), which the frame
+ *        builder's external wiring drives from the bus directly, at transition rate.
  */
 void IO::PipelineHost::setupExternalConnections()
 {
-  auto& appState  = AppState::instance();
-  auto& ioManager = IO::ConnectionManager::instance();
+  bindFrameBuilder(DataModel::FrameBuilder::instance());
+  m_frameParser = &DataModel::FrameParser::instance();
+}
 
-  m_frameBuilder = &DataModel::FrameBuilder::instance();
-  m_frameParser  = &DataModel::FrameParser::instance();
+/**
+ * @brief Stores the link state the frame path consults; GUI thread, transition rate.
+ */
+void IO::PipelineHost::refreshLinkMirror(const bool connected, const bool paused) noexcept
+{
+  m_paused.store(paused, std::memory_order_relaxed);
+  m_connected.store(connected, std::memory_order_relaxed);
+}
 
-  connect(&appState, &AppState::operationModeChanged, this, [this, &appState] {
-    m_operationMode.store(static_cast<int>(appState.operationMode()), std::memory_order_relaxed);
-  });
-  connect(&ioManager, &IO::ConnectionManager::connectedChanged, this, [this, &ioManager] {
-    m_connected.store(ioManager.isConnected(), std::memory_order_relaxed);
-  });
-  connect(&ioManager, &IO::ConnectionManager::pausedChanged, this, [this, &ioManager] {
-    m_paused.store(ioManager.paused(), std::memory_order_relaxed);
-  });
+/**
+ * @brief Stores the operation mode the frame path consults; GUI thread, transition rate.
+ */
+void IO::PipelineHost::refreshOperationModeMirror(const int mode) noexcept
+{
+  SS_ASSERT_LOG(mode >= SerialStudio::ProjectFile && mode <= SerialStudio::QuickPlot);
+  m_operationMode.store(mode, std::memory_order_relaxed);
+}
 
-  m_paused.store(ioManager.paused(), std::memory_order_relaxed);
-  m_connected.store(ioManager.isConnected(), std::memory_order_relaxed);
-  m_operationMode.store(static_cast<int>(appState.operationMode()), std::memory_order_relaxed);
+/**
+ * @brief Binds the one observer of every extracted frame (spec 0077 T52), bound once by the
+ *        composition root before the first device opens; null in a root without one.
+ */
+void IO::PipelineHost::setRawFrameTap(IRawFrameTap* tap) noexcept
+{
+  SS_ASSERT_LOG(m_rawFrameTap.load(std::memory_order_relaxed) == nullptr || tap == nullptr);
+  m_rawFrameTap.store(tap, std::memory_order_relaxed);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Ingest binder: readers
+//--------------------------------------------------------------------------------------------------
+
+/**
+ * @brief Creates a FrameReader for @p deviceId, configures it on this thread while it has no live
+ *        connection, feeds it the driver's chunks (Auto: queued once the reader has moved) and
+ *        adopts it onto the processing thread. An earlier reader for the id is retired first, so
+ *        this is also how a device is reconfigured: recreate, never lock (FrameReader is SPSC).
+ */
+void IO::PipelineHost::attach(int deviceId, HAL_Driver* driver, const FrameConfig& config)
+{
+  SS_ASSERT(deviceId >= 0, return);
+  SS_ASSERT(driver != nullptr, return);
+
+  detach(deviceId);
+
+  auto* reader = new FrameReader();
+  reader->setChecksum(config.checksumAlgorithm);
+  reader->setStartSequences(config.startSequences);
+  reader->setFinishSequences(config.finishSequences);
+  reader->setOperationMode(config.operationMode);
+  reader->setFrameDetectionMode(config.frameDetection);
+
+  ReaderSlot slot;
+  slot.driver = driver;
+  slot.reader = reader;
+  slot.feed   = connect(driver, &HAL_Driver::dataReceived, reader, &FrameReader::processData);
+
+  registerFrameReader(deviceId, reader);
+  m_readers.insert_or_assign(deviceId, std::move(slot));
+}
+
+/**
+ * @brief Recreates @p deviceId's reader with @p config, fed by the driver attach() bound. A device
+ *        that was never attached is an ordinary miss: the connection layer attaches on open.
+ */
+void IO::PipelineHost::reconfigure(int deviceId, const FrameConfig& config)
+{
+  SS_ASSERT(deviceId >= 0, return);
+
+  const auto it = m_readers.find(deviceId);
+  if (it == m_readers.end())
+    return;
+
+  HAL_Driver* driver = it->second.driver;
+  attach(deviceId, driver, config);
+}
+
+/**
+ * @brief Drops @p deviceId's driver feed and retires its reader; idempotent.
+ */
+void IO::PipelineHost::detach(int deviceId)
+{
+  SS_ASSERT(deviceId >= 0, return);
+
+  const auto it = m_readers.find(deviceId);
+  if (it == m_readers.end())
+    return;
+
+  retireReader(it->second);
+  m_readers.erase(it);
+}
+
+/**
+ * @brief Disconnects the feed by handle rather than by a wildcard slot and destroys the reader:
+ *        deleteLater() on the processing loop while it runs, outright once that thread has
+ *        stopped, because a post into a dead loop would never free the reader at all. An abandoned
+ *        thread (R21) may still be draining the reader, so that path leaks it like the modules.
+ */
+void IO::PipelineHost::retireReader(ReaderSlot& slot)
+{
+  QObject::disconnect(slot.feed);
+  slot.feed = QMetaObject::Connection();
+
+  if (slot.reader.isNull())
+    return;
+
+  if (m_abandoned) {
+    slot.reader.clear();
+    return;
+  }
+
+  if (m_thread && m_thread->isRunning()) {
+    slot.reader->deleteLater();
+    slot.reader.clear();
+    return;
+  }
+
+  delete slot.reader.data();
+  slot.reader.clear();
+}
+
+/**
+ * @brief Sums the per-device frame-reader counters for the 1 Hz diagnostics sample. No caching and
+ *        no signal: this is pulled once per second and must never be called on the frame path.
+ */
+IO::LinkStats IO::PipelineHost::linkStats() const
+{
+  LinkStats stats{};
+  for (const auto& [deviceId, slot] : m_readers) {
+    const auto* reader = slot.reader.data();
+    if (!reader)
+      continue;
+
+    stats.bytesIn         += reader->bytesReceived();
+    stats.droppedFrames   += reader->droppedFrameCount();
+    stats.overflowBytes   += reader->overflowBytes();
+    stats.checksumErrors  += reader->checksumErrorCount();
+    stats.framesExtracted += reader->framesExtracted();
+  }
+
+  return stats;
+}
+
+//--------------------------------------------------------------------------------------------------
+// Ingest binder: stream lane & injected payloads
+//--------------------------------------------------------------------------------------------------
+
+/**
+ * @brief Rebuilds the dense-lane workers from the sources whose lane is on (spec 0051); the pool
+ *        keeps every worker's queued hop into the FrameBuilder, so the pipeline thread stays the
+ *        single producer for every sink.
+ */
+void IO::PipelineHost::rebuildStreams(const std::vector<StreamAttachment>& sources,
+                                      bool paused,
+                                      bool connected)
+{
+  m_streamPool->rebuild(sources, paused, connected);
+}
+
+/**
+ * @brief Mirrors the session pause onto every worker.
+ */
+void IO::PipelineHost::setStreamPaused(bool paused)
+{
+  m_streamPool->setPaused(paused);
+}
+
+/**
+ * @brief Publishes the dashboard structure for every stream source on the connect edge.
+ */
+void IO::PipelineHost::publishStreamTemplates()
+{
+  m_streamPool->publishTemplates();
+}
+
+/**
+ * @brief Stops and destroys every stream worker; idempotent, and the first teardown step.
+ */
+void IO::PipelineHost::detachStreams()
+{
+  m_streamPool->stop();
+}
+
+/**
+ * @brief Feeds a pre-built payload into the frame pipeline (file players, the API, a control
+ *        script) through the builder bound in setupExternalConnections(): queued to the processing
+ *        thread at command rate, never per frame; the mode is read here so a project-mode payload
+ *        lands in @p sourceId's parser.
+ */
+void IO::PipelineHost::injectPayload(int sourceId, const CapturedDataPtr& payload)
+{
+  SS_ASSERT(sourceId >= 0, return);
+  SS_ASSERT(payload != nullptr, return);
+
+  if (payload->data.isEmpty())
+    return;
+
+  SS_ASSERT(m_frameBuilder != nullptr, return);
+
+  auto* builder          = m_frameBuilder;
+  const bool projectMode = (operationMode() == SerialStudio::ProjectFile);
+  builder->invokeOnBuilderThread([builder, sourceId, payload, projectMode] {
+    if (projectMode)
+      builder->hotpathRxSourceFrame(sourceId, payload);
+    else
+      builder->hotpathRxFrame(payload);
+  });
+}
+
+/**
+ * @brief Clears the Quick Plot channel headers on disconnect, so the next session names them.
+ */
+void IO::PipelineHost::resetQuickPlotHeaders()
+{
+  SS_ASSERT(m_frameBuilder != nullptr, return);
+
+  m_frameBuilder->registerQuickPlotHeaders(QStringList());
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -264,9 +495,9 @@ void IO::PipelineHost::moveProcessingObjectsTo(QThread* target)
 
 /**
  * @brief Drains a reader's SPSC queue on the processing thread and routes each frame into
- *        FrameBuilder by the mirrored operation mode (relocated from
- *        ConnectionManager::onFrameReady). Paused sessions still drain so the queue never
- *        backs up into the reader's slot pool.
+ *        FrameBuilder by the mirrored operation mode, then to the one raw-frame observer when a
+ *        root bound one (pointer hoisted out of the loop: one test and one indirect call per
+ *        frame). Paused sessions still drain so the queue never backs up into the reader's pool.
  */
 void IO::PipelineHost::routeFrames(int deviceId, FrameReader* reader)
 {
@@ -274,12 +505,10 @@ void IO::PipelineHost::routeFrames(int deviceId, FrameReader* reader)
   SS_ASSERT(deviceId >= 0, return);
 
   static auto& frameBuilder = DataModel::FrameBuilder::instance();
-#ifdef BUILD_COMMERCIAL
-  static auto& mqttPublisher = MQTT::Publisher::instance();
-#endif
 
-  const bool paused = m_paused.load(std::memory_order_relaxed);
-  const auto mode   = operationMode();
+  const bool paused       = m_paused.load(std::memory_order_relaxed);
+  const auto mode         = operationMode();
+  IRawFrameTap* const tap = m_rawFrameTap.load(std::memory_order_relaxed);
 
   auto& queue = reader->queue();
   IO::CapturedDataPtr frame;
@@ -292,9 +521,8 @@ void IO::PipelineHost::routeFrames(int deviceId, FrameReader* reader)
     else
       frameBuilder.hotpathRxFrame(frame);
 
-#ifdef BUILD_COMMERCIAL
-    mqttPublisher.hotpathTxRawFrame(deviceId, frame);
-#endif
+    if (tap)
+      tap->onRawFrame(deviceId, frame);
   }
 }
 
@@ -451,15 +679,17 @@ bool IO::PipelineHost::pipelineAbandoned() const noexcept
 //--------------------------------------------------------------------------------------------------
 
 /**
- * @brief Joins the processing thread with a bounded wait: engines tear down on the thread first,
- *        and a hung Fast-mode script trips warn-and-abandon instead of blocking quit (R21). The
- *        abandon latch carries idempotency, and releases the thread: its OS thread still runs.
+ * @brief Stops the stream workers, then joins the processing thread with a bounded wait: engines
+ *        tear down on the thread first, and a hung Fast-mode script trips warn-and-abandon instead
+ *        of blocking quit (R21). The abandon latch carries idempotency, and releases the thread:
+ *        its OS thread still runs.
  */
 void IO::PipelineHost::shutdown()
 {
   constexpr int kJoinTimeoutMs = 5000;
 
   beginTeardown();
+  m_streamPool->stop();
 
   if (m_abandoned || !m_thread || !m_thread->isRunning())
     return;

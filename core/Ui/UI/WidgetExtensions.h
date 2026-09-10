@@ -33,6 +33,10 @@
 
 #include "Misc/ProblemCenter.h"
 
+namespace Core::Bus {
+class MessageBus;
+}  // namespace Core::Bus
+
 namespace UI {
 
 /**
@@ -142,6 +146,7 @@ private:
 
 public:
   [[nodiscard]] static WidgetExtensions& instance();
+  void attachMessageBus(Core::Bus::MessageBus& bus);
 
   [[nodiscard]] static QString hostApiVersion();
   [[nodiscard]] static QStringList reservedIds();
@@ -182,6 +187,7 @@ private:
   void scanDirectory(const QString& root, bool bundled);
   void loadPackage(const QString& directory, bool bundled);
   void resolveDependencies();
+  void announceCatalog();
 
 private:
   QSettings m_settings;
@@ -190,6 +196,7 @@ private:
   QHash<QString, Descriptor> m_descriptors;
   QHash<QString, QString> m_replacements;
   QList<Misc::ProblemCenter::Finding> m_findings;
+  Core::Bus::MessageBus* m_bus;
 };
 
 }  // namespace UI

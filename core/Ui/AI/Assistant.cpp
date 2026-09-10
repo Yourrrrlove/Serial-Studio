@@ -21,8 +21,9 @@
 #include "AI/Providers/OpenAICompatibleProvider.h"
 #include "AI/Providers/OpenAIProvider.h"
 #include "AI/ToolDispatcher.h"
+#include "Core/Licensing/CommercialToken.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
-#include "Licensing/CommercialToken.h"
 #include "Misc/Utilities.h"
 
 static constexpr int kTitleLimit = 60;
@@ -396,7 +397,7 @@ QString AI::Assistant::memoryIndex() const
   if (!m_memoryEnabled || m_memory.isEmpty())
     return {};
 
-  static auto& project = DataModel::ProjectModel::instance();
+  auto& project = DataModel::pipelineModules().projectModel;
   return m_memory.indexBlock(project.jsonFilePath());
 }
 
@@ -424,8 +425,8 @@ QVariantList AI::Assistant::memoryList() const
  */
 bool AI::Assistant::addMemory(const QString& category, const QString& text)
 {
-  static auto& project = DataModel::ProjectModel::instance();
-  const bool ok        = m_memory.addFact(category, text, project.jsonFilePath());
+  auto& project = DataModel::pipelineModules().projectModel;
+  const bool ok = m_memory.addFact(category, text, project.jsonFilePath());
   if (ok)
     Q_EMIT memoryChanged();
 

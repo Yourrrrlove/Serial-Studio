@@ -33,9 +33,9 @@
 # removed from the executable's HEADERS list, or moc would run twice and the link would fail on
 # duplicate staticMetaObject symbols.
 #
-# This is a partition of the old monolith, not a clean layer: it still reaches sideways into
-# Pipeline, Devices, Storage and Api and upward into app/src. The include roots and the sibling
-# links below spell that debt out; scripts/layer-verify.py ratchets it down per directed edge.
+# A strict layer since spec 0077: it includes only itself and Core, Pipeline, Devices, Storage and Api, and the include
+# roots and links below say exactly that. scripts/layer-verify.py fails on an include, an
+# include root or a link outside that graph.
 #
 #---------------------------------------------------------------------------------------------------
 
@@ -44,13 +44,9 @@ qt_add_library(
 
   Misc/ThemeManager.cpp
   Misc/ThemeCatalog.cpp
-  Misc/LanguageTable.cpp
   Misc/CommonFonts.cpp
   Misc/ContextRegistry.cpp
   Misc/Utilities.cpp
-  Misc/PasswordHash.cpp
-  Misc/Translator.cpp
-  Misc/TimerEvents.cpp
   Misc/ProblemCenter.cpp
   Misc/ConnectionDiagnostics.cpp
   Misc/Diagnostics/DeviceAccess.cpp
@@ -60,7 +56,6 @@ qt_add_library(
   Misc/Problems/ProjectCheckers.cpp
   Misc/Problems/LinkCheckers.cpp
   Misc/Problems/ScriptCheckers.cpp
-  Misc/WorkspaceManager.cpp
   Misc/ExtensionManager.cpp
   Misc/Extensions/PluginRunner.cpp
   Misc/Extensions/ExtensionCatalog.cpp
@@ -69,7 +64,6 @@ qt_add_library(
   Misc/Examples.cpp
   Misc/HelpCenter.cpp
   Misc/IconEngine.cpp
-  Misc/IconRegistry.cpp
   Misc/IconRegistryLegacy.cpp
   UI/CommandRegistry.cpp
   UI/CommandStrings.cpp
@@ -77,14 +71,25 @@ qt_add_library(
   Misc/HighDpiScaling.cpp
   Misc/CrashTracker.cpp
   Misc/BackupManager.cpp
+  ApiHandlers/UiHandlers.cpp
+  ApiHandlers/AssistantHandler.cpp
+  ApiHandlers/ConsoleHandler.cpp
+  ApiHandlers/DashboardHandler.cpp
+  ApiHandlers/DiagnosticsHandler.cpp
+  ApiHandlers/ExtensionHandler.cpp
+  ApiHandlers/ProblemsHandler.cpp
+  ApiHandlers/WindowHandler.cpp
+  ApiHandlers/WorkspacesHandler.cpp
   Platform/FileOpenEventFilter.cpp
   UI/DashboardWidget.cpp
   UI/Dashboard.cpp
+  UI/SerialStudioHelpers.cpp
   UI/Dashboard/DashboardTools.cpp
   UI/Dashboard/DashboardIngest.cpp
   UI/Dashboard/PlotControlBank.cpp
   UI/Dashboard/ReplaySeekEngine.cpp
   UI/Dashboard/DashboardViewState.cpp
+  UI/Dashboard/DashboardWiring.cpp
   UI/Dashboard/WidgetMapBuilder.cpp
   UI/AlarmMonitor.cpp
   UI/Taskbar.cpp
@@ -112,7 +117,6 @@ qt_add_library(
   UI/Widgets/PlotAreaFill.cpp
   UI/Widgets/GpuStroke.cpp
   UI/Widgets/PlotCurve.cpp
-  UI/LayoutPatterns.cpp
   UI/Widgets/Compass.cpp
   UI/Widgets/Bar.cpp
   UI/Widgets/BarPanel.cpp
@@ -120,6 +124,7 @@ qt_add_library(
   UI/Widgets/FFTPlot.cpp
   UI/Widgets/Accelerometer.cpp
   UI/Widgets/DataGrid.cpp
+  UI/Widgets/DatasetWidgetLinks.cpp
   UI/Widgets/Terminal.cpp
   UI/Widgets/Terminal/AnsiPalette.cpp
   UI/Widgets/Terminal/TerminalBuffer.cpp
@@ -132,17 +137,14 @@ qt_add_library(
   UI/Widgets/WebView.cpp
   Console/Annotations.cpp
   Console/Handler.cpp
+  Console/WelcomeText.cpp
   Console/TextFormat.cpp
   Console/Export.cpp
   Misc/Utilities.h
-  Misc/PasswordHash.h
   Misc/CommonFonts.h
   Misc/ContextRegistry.h
-  Misc/JsonValidator.h
   Misc/ThemeManager.h
   Misc/ThemeCatalog.h
-  Misc/LanguageTable.h
-  Misc/TimerEvents.h
   Misc/ProblemCenter.h
   Misc/ConnectionDiagnostics.h
   Misc/Diagnostics/DiagnosticsShared.h
@@ -154,8 +156,6 @@ qt_add_library(
   Misc/Problems/LinkCheckers.h
   Misc/Problems/ScriptCheckers.h
   Misc/Problems/ExtensionCheckers.h
-  Misc/Translator.h
-  Misc/WorkspaceManager.h
   Misc/ExtensionManager.h
   Misc/Extensions/PluginRunner.h
   Misc/Extensions/ExtensionCatalog.h
@@ -164,19 +164,29 @@ qt_add_library(
   Misc/Examples.h
   Misc/HelpCenter.h
   Misc/IconEngine.h
-  Misc/IconRegistry.h
   Misc/IconRegistryLegacy.h
   UI/CommandRegistry.h
   Misc/GraphicsBackend.h
   Misc/HighDpiScaling.h
   Misc/CrashTracker.h
   Misc/BackupManager.h
+  ApiHandlers/UiHandlers.h
+  ApiHandlers/AssistantHandler.h
+  ApiHandlers/ConsoleHandler.h
+  ApiHandlers/DashboardHandler.h
+  ApiHandlers/DiagnosticsHandler.h
+  ApiHandlers/ExtensionHandler.h
+  ApiHandlers/ProblemsHandler.h
+  ApiHandlers/WindowHandler.h
+  ApiHandlers/WorkspacesHandler.h
   UI/Dashboard.h
+  UI/SerialStudioHelpers.h
   UI/Dashboard/DashboardTools.h
   UI/Dashboard/DashboardIngest.h
   UI/Dashboard/PlotControlBank.h
   UI/Dashboard/ReplaySeekEngine.h
   UI/Dashboard/DashboardViewState.h
+  UI/Dashboard/DashboardWiring.h
   UI/Dashboard/WidgetMapBuilder.h
   UI/DashboardWidget.h
   UI/AlarmMonitor.h
@@ -194,7 +204,6 @@ qt_add_library(
   UI/SnapGuides.h
   UI/WidgetRegistry.h
   UI/WidgetBands.h
-  UI/LayoutPatterns.h
   UI/WidgetExtensions.h
   UI/WidgetManifestParser.h
   UI/Widgets/GPS.h
@@ -209,6 +218,7 @@ qt_add_library(
   UI/Widgets/PlotLogScale.h
   UI/Widgets/PlotAutoScale.h
   UI/Widgets/DataGrid.h
+  UI/Widgets/DatasetWidgetLinks.h
   UI/Widgets/FFTPlot.h
   UI/Widgets/FFTWindow.h
   UI/Widgets/Gyroscope.h
@@ -229,11 +239,86 @@ qt_add_library(
   Platform/NativeWindow.h
   Console/Annotations.h
   Console/Handler.h
+  Console/WelcomeText.h
   Console/TextFormat.h
   Console/Export.h
 )
 
 add_library(SerialStudio::Ui ALIAS SerialStudioUi)
+
+#---------------------------------------------------------------------------------------------------
+# The project editor (spec 0077)
+#---------------------------------------------------------------------------------------------------
+#
+# The QML-facing ProjectEditor facade with its eight by-value sub-objects (Editor*.{h,cpp},
+# spec 0070 shape), the embedded code editors that
+# QCodeEditor backs, the frame-parser model and the transmit test dialog. Generated/DatasetForm.cpp
+# is emitted by scripts/generate-property-registry.py: never hand-edit it.
+#
+#---------------------------------------------------------------------------------------------------
+
+target_sources(
+  SerialStudioUi PRIVATE
+
+  ProjectEditor/ProjectEditor.cpp
+  ProjectEditor/EditorWiring.cpp
+  ProjectEditor/EditorSelection.cpp
+  ProjectEditor/EditorTree.cpp
+  ProjectEditor/EditorForms.cpp
+  ProjectEditor/EditorCommit.cpp
+  ProjectEditor/EditorSummaries.cpp
+  ProjectEditor/EditorMultiSelect.cpp
+  ProjectEditor/EditorMqtt.cpp
+  ProjectEditor/ProjectNavHistory.cpp
+  ProjectEditor/Generated/DatasetForm.cpp
+  ProjectEditor/Editors/JsCodeEditor.cpp
+  ProjectEditor/Editors/EmbeddedCodeEditor.cpp
+  ProjectEditor/Editors/EmbeddedCodeEditorItem.cpp
+  ProjectEditor/Editors/ControlScriptEditor.cpp
+  ProjectEditor/Editors/PublisherScriptEditor.cpp
+  ProjectEditor/Editors/MacroEditor.cpp
+  ProjectEditor/Editors/SerialStudioCompleter.cpp
+  ProjectEditor/Editors/FrameParserModel.cpp
+  ProjectEditor/Editors/ExpressionHighlighter.cpp
+  ProjectEditor/Editors/OutputCodeEditor.cpp
+  ProjectEditor/Editors/DatasetTransformEditor.cpp
+  ProjectEditor/Dialogs/TransmitTestDialog.cpp
+  ProjectEditor/ProjectEditor.h
+  ProjectEditor/EditorWiring.h
+  ProjectEditor/EditorSelection.h
+  ProjectEditor/EditorTree.h
+  ProjectEditor/EditorForms.h
+  ProjectEditor/EditorCommit.h
+  ProjectEditor/EditorSummaries.h
+  ProjectEditor/EditorMultiSelect.h
+  ProjectEditor/EditorMqtt.h
+  ProjectEditor/ProjectEditorIcons.h
+  ProjectEditor/ProjectEditorItemIds.h
+  ProjectEditor/ProjectNavHistory.h
+  ProjectEditor/Editors/JsCodeEditor.h
+  ProjectEditor/Editors/EmbeddedCodeEditor.h
+  ProjectEditor/Editors/EmbeddedCodeEditorItem.h
+  ProjectEditor/Editors/ControlScriptEditor.h
+  ProjectEditor/Editors/PublisherScriptEditor.h
+  ProjectEditor/Editors/MacroEditor.h
+  ProjectEditor/Editors/SerialStudioCompleter.h
+  ProjectEditor/Editors/ExpressionHighlighter.h
+  ProjectEditor/Editors/FrameParserModel.h
+  ProjectEditor/Editors/OutputCodeEditor.h
+  ProjectEditor/Editors/DatasetTransformEditor.h
+  ProjectEditor/Dialogs/TransmitTestDialog.h
+)
+
+if(BUILD_COMMERCIAL)
+  target_sources(
+    SerialStudioUi PRIVATE
+
+    ProjectEditor/Editors/PainterCodeEditor.h
+    ProjectEditor/Editors/PainterCodeEditor.cpp
+    ApiHandlers/NotificationsHandler.h
+    ApiHandlers/NotificationsHandler.cpp
+  )
+endif()
 
 #---------------------------------------------------------------------------------------------------
 # Pro widgets, the shortcut generator and the AI assistant
@@ -451,32 +536,25 @@ elseif(UNIX)
 endif()
 
 #---------------------------------------------------------------------------------------------------
-# Include roots -- the transitional debt
+# Include roots -- the layer graph
 #---------------------------------------------------------------------------------------------------
 #
-# Every partition directory is an include root and so is app/src, which is what keeps every
-# #include line in the moved tree byte-identical. It is deliberate debt, not a layering statement:
-# scripts/layer-verify.py counts the upward and sideways includes per directed edge against a
-# checked-in baseline and fails on growth, and each follow-up spec drives one edge to zero.
+# This partition keeps its own relative include root plus the roots of the layers below it that
+# it may include (spec 0077). Nothing from app/src and nothing sideways: scripts/layer-verify.py
+# fails on an include outside the graph and on a root or a link this list does not justify. The
+# commercial token's generated guards header arrives through SerialStudio::Core.
 #
 #---------------------------------------------------------------------------------------------------
 
 target_include_directories(
   SerialStudioUi PUBLIC
 
+  ${CMAKE_SOURCE_DIR}/core/Ui
   ${CMAKE_SOURCE_DIR}/core/Pipeline
   ${CMAKE_SOURCE_DIR}/core/Devices
   ${CMAKE_SOURCE_DIR}/core/Storage
   ${CMAKE_SOURCE_DIR}/core/Api
-  ${CMAKE_SOURCE_DIR}/core/Ui
-  ${CMAKE_SOURCE_DIR}/app/src
 )
-
-# The Pro widgets, the shortcut generator and the assistant gate their entry points on
-# Licensing/CommercialToken.h, which the generated guards header backs.
-if(BUILD_COMMERCIAL AND LICENSE_GUARDS_INCLUDE_DIR)
-  target_include_directories(SerialStudioUi PRIVATE ${LICENSE_GUARDS_INCLUDE_DIR})
-endif()
 
 # kissfft is the real-FFT plan behind FFTPlot and the waterfall spectrogram.
 target_link_libraries(
@@ -485,7 +563,10 @@ target_link_libraries(
   ${QT_LIBS}
 
   SerialStudio::Core
-  SerialStudio::Protocols
+  SerialStudio::Pipeline
+  SerialStudio::Devices
+  SerialStudio::Storage
+  SerialStudio::Api
 
   kissfft
   luajit

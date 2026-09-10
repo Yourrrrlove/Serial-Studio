@@ -11,9 +11,13 @@
 
 #include "API/Handlers/MDF4PlayerHandler.h"
 
+#include <QJsonArray>
+#include <QJsonObject>
+
 #include "API/CommandRegistry.h"
+#include "API/HandlerContext.h"
+#include "Core/SerialStudio.h"
 #include "MDF4/Player.h"
-#include "SerialStudio.h"
 
 //--------------------------------------------------------------------------------------------------
 // Command registration
@@ -135,7 +139,7 @@ API::CommandResponse API::Handlers::MDF4PlayerHandler::open(const QString& id,
       id, ErrorCode::InvalidParam, QStringLiteral("filePath cannot be empty"));
   }
 
-  static auto& player = MDF4::Player::instance();
+  auto& player = API::handlerContext().mdf4Player;
   player.openFile(file_path);
 
   QJsonObject result;
@@ -152,7 +156,7 @@ API::CommandResponse API::Handlers::MDF4PlayerHandler::close(const QString& id,
 {
   Q_UNUSED(params)
 
-  static auto& player = MDF4::Player::instance();
+  auto& player = API::handlerContext().mdf4Player;
   player.closeFile();
 
   QJsonObject result;
@@ -171,7 +175,7 @@ API::CommandResponse API::Handlers::MDF4PlayerHandler::setPaused(const QString& 
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: paused"));
   }
 
-  static auto& player = MDF4::Player::instance();
+  auto& player = API::handlerContext().mdf4Player;
 
   const bool paused = params.value(QStringLiteral("paused")).toBool();
   if (paused)
@@ -193,7 +197,7 @@ API::CommandResponse API::Handlers::MDF4PlayerHandler::step(const QString& id,
   const int delta =
     params.contains(QStringLiteral("delta")) ? params.value(QStringLiteral("delta")).toInt() : 1;
 
-  static auto& player = MDF4::Player::instance();
+  auto& player = API::handlerContext().mdf4Player;
   if (delta == 0) {
     QJsonObject result;
     result[QStringLiteral("framePosition")] = player.framePosition();
@@ -238,7 +242,7 @@ API::CommandResponse API::Handlers::MDF4PlayerHandler::setProgress(const QString
       id, ErrorCode::InvalidParam, QStringLiteral("progress must be between 0.0 and 1.0"));
   }
 
-  static auto& player = MDF4::Player::instance();
+  auto& player = API::handlerContext().mdf4Player;
   player.setProgress(progress);
 
   QJsonObject result;
@@ -259,7 +263,7 @@ API::CommandResponse API::Handlers::MDF4PlayerHandler::getStatus(const QString& 
 {
   Q_UNUSED(params)
 
-  static auto& player = MDF4::Player::instance();
+  auto& player = API::handlerContext().mdf4Player;
 
   QJsonObject result;
   result[QStringLiteral("isOpen")]        = player.isOpen();

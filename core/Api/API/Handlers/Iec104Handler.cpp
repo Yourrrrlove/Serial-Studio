@@ -15,6 +15,7 @@
 #include <QJsonArray>
 
 #include "API/CommandRegistry.h"
+#include "API/HandlerContext.h"
 #include "API/SchemaBuilder.h"
 #include "IO/ConnectionManager.h"
 #include "IO/Drivers/Iec104.h"
@@ -30,13 +31,13 @@
   key.type        = QStringLiteral("string");
   key.description = QStringLiteral("Property key");
   key.enumValues  = QJsonArray{QStringLiteral("host"),
-                               QStringLiteral("port"),
-                               QStringLiteral("commonAddress"),
-                               QStringLiteral("windowK"),
-                               QStringLiteral("windowW"),
-                               QStringLiteral("timeoutT1"),
-                               QStringLiteral("timeoutT2"),
-                               QStringLiteral("timeoutT3")};
+                              QStringLiteral("port"),
+                              QStringLiteral("commonAddress"),
+                              QStringLiteral("windowK"),
+                              QStringLiteral("windowW"),
+                              QStringLiteral("timeoutT1"),
+                              QStringLiteral("timeoutT2"),
+                              QStringLiteral("timeoutT3")};
 
   API::SchemaProp value;
   value.name        = QStringLiteral("value");
@@ -101,7 +102,7 @@ API::CommandResponse API::Handlers::Iec104Handler::getStatus(const QString& id,
 {
   Q_UNUSED(params)
 
-  static auto& manager = IO::ConnectionManager::instance();
+  auto& manager = API::handlerContext().connectionManager;
   return CommandResponse::makeSuccess(id, manager.iec104()->statusJson());
 }
 
@@ -113,8 +114,8 @@ API::CommandResponse API::Handlers::Iec104Handler::getConfig(const QString& id,
 {
   Q_UNUSED(params)
 
-  static auto& manager = IO::ConnectionManager::instance();
-  auto* driver         = manager.iec104();
+  auto& manager = API::handlerContext().connectionManager;
+  auto* driver  = manager.iec104();
 
   QJsonObject result;
   result[QStringLiteral("host")]          = driver->host();
@@ -137,8 +138,8 @@ API::CommandResponse API::Handlers::Iec104Handler::getPoints(const QString& id,
 {
   Q_UNUSED(params)
 
-  static auto& manager = IO::ConnectionManager::instance();
-  auto* driver         = manager.iec104();
+  auto& manager = API::handlerContext().connectionManager;
+  auto* driver  = manager.iec104();
 
   QJsonObject result;
   result[QStringLiteral("points")]     = driver->pointsJson();
@@ -170,8 +171,8 @@ API::CommandResponse API::Handlers::Iec104Handler::setProperty(const QString& id
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: value"));
   }
 
-  static auto& manager = IO::ConnectionManager::instance();
-  auto* driver         = manager.iec104();
+  auto& manager = API::handlerContext().connectionManager;
+  auto* driver  = manager.iec104();
 
   const auto props = driver->driverProperties();
   const auto match = std::find_if(
@@ -216,8 +217,8 @@ API::CommandResponse API::Handlers::Iec104Handler::clearPoints(const QString& id
 {
   Q_UNUSED(params)
 
-  static auto& manager = IO::ConnectionManager::instance();
-  auto* driver         = manager.iec104();
+  auto& manager = API::handlerContext().connectionManager;
+  auto* driver  = manager.iec104();
   driver->clearPoints();
 
   QJsonObject result;
@@ -233,8 +234,8 @@ API::CommandResponse API::Handlers::Iec104Handler::generateProject(const QString
 {
   Q_UNUSED(params)
 
-  static auto& manager = IO::ConnectionManager::instance();
-  auto* driver         = manager.iec104();
+  auto& manager = API::handlerContext().connectionManager;
+  auto* driver  = manager.iec104();
   if (!driver->loadGeneratedProject()) {
     return CommandResponse::makeError(
       id, ErrorCode::OperationFailed, QStringLiteral("The project could not be generated"));

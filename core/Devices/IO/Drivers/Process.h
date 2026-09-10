@@ -32,7 +32,7 @@
 #include <QStringList>
 #include <QThread>
 
-#include "IO/HAL_Driver.h"
+#include "Core/IO/HAL_Driver.h"
 
 namespace IO {
 namespace Drivers {

@@ -24,18 +24,19 @@
 #include <algorithm>
 #include <QApplication>
 #include <QCryptographicHash>
+#include <QDebug>
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFileSystemWatcher>
 #include <QJsonArray>
 #include <QJsonDocument>
-#include <QMessageBox>
 #include <QSaveFile>
 #include <QTimer>
 
-#include "AppInfo.h"
 #include "AppState.h"
+#include "Core/AppInfo.h"
+#include "Core/Prompt/UserPrompt.h"
 #include "Core/SSAssert.h"
 #include "DataModel/FrameBuilder.h"
 #include "DataModel/NotificationCenter.h"
@@ -45,7 +46,6 @@
 #include "DataModel/Project/ProjectTables.h"
 #include "DataModel/Project/ProjectWorkspaces.h"
 #include "DataModel/ProjectModel.h"
-#include "Misc/Utilities.h"
 
 namespace DataModel {
 
@@ -277,17 +277,17 @@ bool DataModel::ProjectPersistence::askSave()
     return true;
   }
 
-  auto ret = Misc::Utilities::showMessageBox(
+  auto ret = Core::Prompt::showMessageBox(
     ProjectModel::tr("Do you want to save your changes?"),
     ProjectModel::tr("You have unsaved modifications in this project!"),
-    QMessageBox::Question,
+    Core::Prompt::Question,
     APP_NAME,
-    QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+    Core::Prompt::Save | Core::Prompt::Discard | Core::Prompt::Cancel);
 
-  if (ret == QMessageBox::Cancel)
+  if (ret == Core::Prompt::Cancel)
     return false;
 
-  if (ret == QMessageBox::Discard) {
+  if (ret == Core::Prompt::Discard) {
     if (m_model.jsonFilePath().isEmpty())
       m_model.newJsonFile();
     else {
@@ -410,8 +410,8 @@ bool DataModel::ProjectPersistence::finalizeProjectSave()
 
   if (!writeProjectFile(m_model.m_filePath)) {
     if (!m_model.m_suppressMessageBoxes)
-      Misc::Utilities::showMessageBox(
-        ProjectModel::tr("File save error"), m_model.m_filePath, QMessageBox::Critical);
+      Core::Prompt::showMessageBox(
+        ProjectModel::tr("File save error"), m_model.m_filePath, Core::Prompt::Critical);
 
     return false;
   }
@@ -686,14 +686,14 @@ void DataModel::ProjectPersistence::promptDiskFileReload()
       ? ProjectModel::tr("The project file was modified by another program.\n\n"
                          "Reload it and discard your unsaved changes?")
       : ProjectModel::tr("The project file was modified by another program.\n\nReload it?");
-  const auto ret = Misc::Utilities::showMessageBox(ProjectModel::tr("Project file changed on disk"),
-                                                   question,
-                                                   QMessageBox::Question,
-                                                   APP_NAME,
-                                                   QMessageBox::Yes | QMessageBox::No);
+  const auto ret = Core::Prompt::showMessageBox(ProjectModel::tr("Project file changed on disk"),
+                                                question,
+                                                Core::Prompt::Question,
+                                                APP_NAME,
+                                                Core::Prompt::Yes | Core::Prompt::No);
   m_diskPromptActive = false;
 
-  if (ret != QMessageBox::Yes) {
+  if (ret != Core::Prompt::Yes) {
     m_model.m_modified = true;
     Q_EMIT m_model.modifiedChanged();
     return;

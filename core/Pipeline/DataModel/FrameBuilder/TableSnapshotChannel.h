@@ -27,8 +27,8 @@
 #include <QObject>
 #include <vector>
 
+#include "Core/ThirdParty/readerwriterqueue.h"
 #include "DataModel/DataTable.h"
-#include "ThirdParty/readerwriterqueue.h"
 
 namespace DataModel {
 

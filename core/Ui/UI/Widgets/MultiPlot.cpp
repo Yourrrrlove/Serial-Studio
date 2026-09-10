@@ -28,6 +28,8 @@
 #include "DSP.h"
 #include "Misc/ThemeManager.h"
 #include "UI/Dashboard.h"
+#include "UI/SerialStudioHelpers.h"
+#include "UI/Widgets/DatasetWidgetLinks.h"
 #include "UI/Widgets/PlotAutoScale.h"
 #include "UI/Widgets/PlotLogScale.h"
 
@@ -89,6 +91,7 @@ Widgets::MultiPlot::MultiPlot(const int index, QQuickItem* parent)
     m_stringCurves.append(isString);
     m_visibleCurves.append(!isString);
     m_labels.append(dataset.title);
+    m_widgets.append(QVariant(datasetWidgetLinks(m_dashboard, dataset)));
     if (!isString) {
       m_minY = qMin(m_minY, qMin(dataset.pltMin, dataset.pltMax));
       m_maxY = qMax(m_maxY, qMax(dataset.pltMin, dataset.pltMax));
@@ -262,6 +265,15 @@ const QStringList& Widgets::MultiPlot::colors() const noexcept
 const QStringList& Widgets::MultiPlot::labels() const noexcept
 {
   return m_labels;
+}
+
+/**
+ * @brief Returns, per curve, the {windowId, icon, title} list of the other dashboard widgets
+ *        that show that curve's dataset, for the legend's pop-out buttons.
+ */
+const QVariantList& Widgets::MultiPlot::widgets() const noexcept
+{
+  return m_widgets;
 }
 
 /**
@@ -888,7 +900,7 @@ void Widgets::MultiPlot::onThemeChanged()
     m_colors.resize(group.datasets.size());
     for (size_t i = 0; i < group.datasets.size(); ++i) {
       const auto& dataset = group.datasets[i];
-      const auto color    = SerialStudio::getDatasetColor(dataset);
+      const auto color    = UI::SerialStudioHelpers::getDatasetColor(dataset);
       m_colors[i]         = color.name();
     }
 

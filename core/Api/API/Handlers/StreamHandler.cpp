@@ -25,8 +25,10 @@
 
 #include "API/CommandRegistry.h"
 #include "API/SchemaBuilder.h"
-#include "DataModel/Frame.h"
-#include "IO/ConnectionManager.h"
+#include "Core/DataModel/Frame.h"
+#include "DataModel/PipelineModules.h"
+#include "IO/PipelineHost.h"
+#include "IO/StreamWorker.h"
 
 //--------------------------------------------------------------------------------------------------
 // Command registration
@@ -70,10 +72,10 @@ API::CommandResponse API::Handlers::StreamHandler::getInfo(const QString& id,
 {
   Q_UNUSED(params)
 
-  static auto& manager = IO::ConnectionManager::instance();
+  auto& pipeline = DataModel::pipelineModules().pipelineHost;
 
   QJsonObject result;
-  result.insert(QStringLiteral("sourceCount"), static_cast<int>(manager.streamWorkers().size()));
+  result.insert(QStringLiteral("sourceCount"), static_cast<int>(pipeline.streamWorkers().size()));
   result.insert(QStringLiteral("encoding"), QStringLiteral("base64:float32le"));
   result.insert(QStringLiteral("queueDepth"), 8);
   result.insert(QStringLiteral("subscribeCommand"), QStringLiteral("stream.subscribe"));
@@ -96,10 +98,10 @@ API::CommandResponse API::Handlers::StreamHandler::getSources(const QString& id,
 {
   Q_UNUSED(params)
 
-  static auto& manager = IO::ConnectionManager::instance();
+  auto& pipeline = DataModel::pipelineModules().pipelineHost;
 
   QJsonArray sources;
-  for (const auto& worker : manager.streamWorkers()) {
+  for (const auto& worker : pipeline.streamWorkers()) {
     if (!worker)
       continue;
 

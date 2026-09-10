@@ -31,11 +31,11 @@
 #include <QTimer>
 #include <QVector>
 
+#include "Core/IO/HAL_Driver.h"
+#include "Core/ThirdParty/readerwriterqueue.h"
 #include "IO/Drivers/Audio/AudioDeviceCatalog.h"
 #include "IO/Drivers/Audio/PlaybackRing.h"
-#include "IO/HAL_Driver.h"
 #include "ThirdParty/miniaudio.h"
-#include "ThirdParty/readerwriterqueue.h"
 
 namespace IO {
 namespace Drivers {
@@ -174,6 +174,7 @@ public slots:
 
 private slots:
   void generateLists();
+  void publishCaptureFormat();
   void configureInput();
   void configureOutput();
   void onBackendStopped();

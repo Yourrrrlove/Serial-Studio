@@ -24,7 +24,11 @@
 #include <QJsonObject>
 #include <QString>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
+
+namespace Core::Bus {
+struct Source0ConnectionSettingsChanged;
+}  // namespace Core::Bus
 
 namespace DataModel {
 
@@ -58,6 +62,8 @@ public:
   void restoreSourceSettings(int sourceId);
   void setSource0ConnectionSettings(const QJsonObject& settings);
   void setSource0BusType(int busType);
+  void applySource0Settings(const Core::Bus::Source0ConnectionSettingsChanged& change);
+  void applyCapturedSettings(int sourceId, const QJsonObject& settings);
 
   void setFrameParserCode(const QString& code);
   void setFrameParserLanguage(int language);

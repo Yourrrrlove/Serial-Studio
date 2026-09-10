@@ -30,7 +30,7 @@
 #include <QVariant>
 #include <QVector>
 
-#include "IO/Drivers/OpcUaWire.h"
+#include "Protocols/OpcUa/OpcUaWire.h"
 
 class QTimer;
 

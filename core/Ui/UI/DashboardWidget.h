@@ -21,10 +21,11 @@
 
 #pragma once
 
+#include <QColor>
 #include <QQuickItem>
 #include <QVariantMap>
 
-#include "SerialStudio.h"
+#include "Core/SerialStudio.h"
 
 namespace Misc {
 class ThemeManager;

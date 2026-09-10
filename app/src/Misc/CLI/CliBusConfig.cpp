@@ -24,12 +24,12 @@
 #include <QDebug>
 #include <QStringList>
 
+#include "Core/SerialStudio.h"
 #include "IO/ConnectionManager.h"
 #include "IO/Drivers/Network.h"
 #include "IO/Drivers/UART.h"
 #include "Misc/CLI.h"
 #include "Misc/CLI/CliIndustrialConfig.h"
-#include "SerialStudio.h"
 
 namespace Misc {
 namespace CliBusConfig {

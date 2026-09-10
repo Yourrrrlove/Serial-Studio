@@ -39,9 +39,9 @@ extern "C" {
 #include <QUuid>
 #include <stdexcept>
 
-#include "API/CommandHandler.h"
-#include "API/CommandProtocol.h"
-#include "API/CommandRegistry.h"
+#include "Core/Api/CommandProtocol.h"
+#include "Core/Api/ICommandExecutor.h"
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
 #include "DataModel/FrameBuilder.h"
 #include "DataModel/NotificationCenter.h"
@@ -50,7 +50,6 @@ extern "C" {
 #include "DataModel/Scripting/LuaCompatJIT.h"
 #include "DataModel/Scripting/ScriptResult.h"
 #include "IO/PipelineHost.h"
-#include "SerialStudio.h"
 
 using namespace DataModel::ScriptResult;
 
@@ -60,6 +59,56 @@ using namespace DataModel::ScriptResult;
 
 // Recursion guard: mirrors JsonValidator's 128 cap so a self-referencing table can't blow up
 constexpr int kMaxJsonDepth = 64;
+
+//--------------------------------------------------------------------------------------------------
+// Command executor binding (spec 0077 T61)
+//--------------------------------------------------------------------------------------------------
+
+static API::ICommandExecutor* s_commandExecutor = nullptr;
+
+/**
+ * @brief Binds the command executor every script apiCall() dispatches through; the composition
+ *        root calls this once before any script engine is created.
+ */
+void DataModel::setCommandExecutor(API::ICommandExecutor* executor) noexcept
+{
+  s_commandExecutor = executor;
+}
+
+/**
+ * @brief Returns the bound command executor, or nullptr before the root binds one.
+ */
+API::ICommandExecutor* DataModel::commandExecutor() noexcept
+{
+  return s_commandExecutor;
+}
+
+/**
+ * @brief Returns the bound command executor; reaching a script API before the root has bound
+ *        one is a composition defect, so the release fallback is a static empty executor that
+ *        answers every call with an error rather than a null dereference.
+ */
+API::ICommandExecutor& DataModel::requireCommandExecutor()
+{
+  struct NullExecutor final : API::ICommandExecutor {
+    [[nodiscard]] API::CommandResponse execute(const API::CommandRequest& request) override
+    {
+      return API::CommandResponse::makeError(
+        request.id,
+        API::ErrorCode::ExecutionError,
+        QStringLiteral("apiCall: no command executor is bound"));
+    }
+
+    [[nodiscard]] bool hasCommand(const QString&) const override { return false; }
+
+    [[nodiscard]] QStringList commandNames() const override { return {}; }
+  };
+
+  static NullExecutor nullExecutor;
+
+  SS_ASSERT(s_commandExecutor != nullptr, return nullExecutor);
+  return *s_commandExecutor;
+}
 
 //--------------------------------------------------------------------------------------------------
 // Lua <-> QJsonValue conversion
@@ -268,9 +317,9 @@ static API::CommandResponse dispatchApiCall(const QString& method, const QJsonOb
   request.command = method;
   request.params  = params;
 
-  static auto& commandHandler = API::CommandHandler::instance();
+  auto& executor = DataModel::requireCommandExecutor();
   if (QThread::currentThread() == qApp->thread())
-    return commandHandler.processCommand(request);
+    return executor.execute(request);
 
   static auto& pipelineHost = IO::PipelineHost::instance();
   const bool onPipeline     = (QThread::currentThread() == pipelineHost.pipelineThread());
@@ -281,7 +330,7 @@ static API::CommandResponse dispatchApiCall(const QString& method, const QJsonOb
 
   QMetaObject::invokeMethod(
     qApp,
-    [&response, &request] { response = commandHandler.processCommand(request); },
+    [&response, &request, &executor] { response = executor.execute(request); },
     Qt::BlockingQueuedConnection);
 
   if (onPipeline)
@@ -327,8 +376,7 @@ QVariantMap DataModel::ScriptApiCallBridge::call(const QJSValue& methodVal,
   if (method.isEmpty())
     return makeError(QStringLiteral("apiCall: method must not be empty"));
 
-  static auto& registry = API::CommandRegistry::instance();
-  if (!registry.hasCommand(method)) {
+  if (!DataModel::requireCommandExecutor().hasCommand(method)) {
     const auto unknown = dispatchApiCall(method, QJsonObject());
     out.insert(QStringLiteral("ok"), false);
     out.insert(QStringLiteral("error"), unknown.errorMessage);
@@ -376,11 +424,10 @@ QVariantMap DataModel::ScriptApiCallBridge::call(const QJSValue& methodVal,
 QVariantList DataModel::ScriptApiCallBridge::listCommands()
 {
   QVariantList result;
-  static auto& registry = API::CommandRegistry::instance();
-  const auto& commands  = registry.commands();
-  result.reserve(commands.size());
-  for (auto it = commands.constBegin(); it != commands.constEnd(); ++it)
-    result.append(it.key());
+  const auto names = DataModel::requireCommandExecutor().commandNames();
+  result.reserve(names.size());
+  for (const auto& name : names)
+    result.append(name);
 
   return result;
 }
@@ -438,8 +485,7 @@ static int luaApiCall(lua_State* L)
     return 1;
   }
 
-  static auto& registry = API::CommandRegistry::instance();
-  if (!registry.hasCommand(method)) {
+  if (!DataModel::requireCommandExecutor().hasCommand(method)) {
     pushApiResult(L, dispatchApiCall(method, QJsonObject()));
     return 1;
   }
@@ -475,13 +521,12 @@ static int luaApiCall(lua_State* L)
  */
 static int luaApiCallList(lua_State* L)
 {
-  static auto& registry = API::CommandRegistry::instance();
-  const auto& commands  = registry.commands();
-  lua_createtable(L, commands.size(), 0);
+  const auto names = DataModel::requireCommandExecutor().commandNames();
+  lua_createtable(L, names.size(), 0);
 
   int i = 1;
-  for (auto it = commands.constBegin(); it != commands.constEnd(); ++it) {
-    const QByteArray name = it.key().toUtf8();
+  for (const auto& entry : names) {
+    const QByteArray name = entry.toUtf8();
     lua_pushlstring(L, name.constData(), static_cast<size_t>(name.size()));
     lua_rawseti(L, -2, i++);
   }

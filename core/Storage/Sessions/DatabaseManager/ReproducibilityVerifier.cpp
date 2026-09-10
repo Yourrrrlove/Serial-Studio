@@ -26,6 +26,7 @@
 #  include <QStringList>
 
 #  include "Core/SSAssert.h"
+#  include "DataModel/PipelineModules.h"
 #  include "DataModel/ProjectModel.h"
 
 //--------------------------------------------------------------------------------------------------
@@ -87,8 +88,8 @@ static QVariantMap childFailureReport(const QString& code,
  */
 static bool writeCandidateSnapshot(const QString& path)
 {
-  static auto& project = DataModel::ProjectModel::instance();
-  const auto json      = QJsonDocument(project.serializeToJson()).toJson(QJsonDocument::Compact);
+  auto& project   = DataModel::pipelineModules().projectModel;
+  const auto json = QJsonDocument(project.serializeToJson()).toJson(QJsonDocument::Compact);
 
   QFile file(path);
   if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate) || file.write(json) != json.size()) {

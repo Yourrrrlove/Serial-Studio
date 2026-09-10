@@ -9,6 +9,9 @@
 #  - code-verify.py --fix     -> rules clang-format can't express
 #  - clang-format pass 2      -> reflow after code-verify's edits
 #  - code-verify.py --check   -> regenerate .code-report
+#  - clang-tidy-verify.py     -> opt-in (--clang-tidy): advisory .tidy-report over the changed
+#                                first-party C++; one line and a skip when no clang-tidy or
+#                                compile database exists, never a failure
 #  - code-verify.py --singleton-census --check -> spec-0039 global-state ratchet (blocking)
 #  - code-verify.py --tu-census --check -> translation-unit size ratchet (blocking)
 #  - black                    -> format Python under app/, examples/, tests/, scripts/
@@ -29,7 +32,7 @@
 #
 # Sanitize only: committing and pushing are left to the developer.
 #
-# Usage:  ./scripts/sanitize-commit.py
+# Usage:  ./scripts/sanitize-commit.py [--clang-tidy]
 #
 # License: GNU General Public License v3.0
 # https://www.gnu.org/licenses/gpl-3.0.html
@@ -38,6 +41,7 @@
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import os
@@ -215,7 +219,38 @@ def run_gate_step(label: str, script: Path, *args: str) -> bool:
     return run([sys.executable, str(script), *args]).returncode == 0
 
 
-def main() -> int:
+def run_clang_tidy_advisories(root: Path) -> None:
+    """Opt-in advisory pass over the changed first-party C++. The verify script owns the
+    skip logic (no clang-tidy, no compile database) and always exits 0 without --strict, so
+    this step can only ever print its one summary line."""
+    script = root / "scripts" / "clang-tidy-verify.py"
+    if not script.is_file():
+        return
+
+    print("Running clang-tidy advisories on the changed files...")
+    result = run(
+        [sys.executable, str(script), "--changed", "--quiet"],
+        capture_output=True,
+        text=True,
+    )
+    lines = [line for line in result.stdout.splitlines() if line.strip()]
+    print(lines[-1] if lines else "clang-tidy-verify.py produced no output")
+
+
+def parse_args(argv: list[str] | None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Clean up the working tree before a commit"
+    )
+    parser.add_argument(
+        "--clang-tidy",
+        action="store_true",
+        help="also run clang-tidy-verify.py on the changed files (advisory .tidy-report)",
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
     root = repo_root()
     os.chdir(root)
 
@@ -236,6 +271,9 @@ def main() -> int:
     run_python_step_quiet(
         "Regenerating .code-report", root / "scripts" / "code-verify.py", "--check"
     )
+
+    if args.clang_tidy:
+        run_clang_tidy_advisories(root)
 
     if not run_gate_step(
         "Checking the singleton census",

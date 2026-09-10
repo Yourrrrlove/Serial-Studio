@@ -27,7 +27,7 @@
 #include <QSet>
 #include <QString>
 
-#include "DataModel/DataBlock.h"
+#include "Core/DataModel/DataBlock.h"
 
 namespace API {
 

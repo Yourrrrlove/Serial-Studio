@@ -25,11 +25,13 @@
 #  include <vector>
 
 #  include "API/GRPC/PendingCall.h"
-#  include "DataModel/DataBlock.h"
-#  include "DataModel/Frame.h"
-#  include "IO/HAL_Driver.h"
+#  include "Core/DataModel/DataBlock.h"
+#  include "Core/DataModel/Frame.h"
+#  include "Core/DataModel/IBlockSink.h"
+#  include "Core/IO/HAL_Driver.h"
+#  include "Core/IO/IRawByteTap.h"
+#  include "Core/ThirdParty/readerwriterqueue.h"
 #  include "serialstudio.grpc.pb.h"
-#  include "ThirdParty/readerwriterqueue.h"
 
 #  define API_GRPC_PORT 8888
 
@@ -70,7 +72,9 @@ struct RawPacket {
 /**
  * @brief gRPC server that mirrors the TCP/JSON API on port 8888.
  */
-class GRPCServer : public QObject {
+class GRPCServer
+  : public DataModel::IBlockSink
+  , public IO::IRawByteTap {
   // clang-format off
   Q_OBJECT
   Q_PROPERTY(bool enabled
@@ -104,6 +108,7 @@ public:
   [[nodiscard]] static GRPCServer& instance();
 
   [[nodiscard]] bool enabled() const noexcept;
+  [[nodiscard]] bool sinkActive() const noexcept override;
   [[nodiscard]] bool grpcAvailable() const noexcept;
   [[nodiscard]] int clientCount() const noexcept;
 
@@ -111,9 +116,11 @@ public:
 
 public slots:
   void setEnabled(const bool enabled);
-  void ingestBlock(const DataModel::DataBlockPtr& block);
+  void ingestBlock(const DataModel::DataBlockPtr& block) override;
   void setTemplateFrame(int sourceId, const DataModel::Frame& frame);
   void hotpathTxData(const QByteArray& data);
+  void onDeviceBytes(int deviceId, const IO::CapturedDataPtr& data) override;
+  void onInjectedBytes(const IO::CapturedDataPtr& data) override;
 
   void exportProto();
 

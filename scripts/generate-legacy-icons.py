@@ -19,7 +19,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CSV = ROOT / "doc" / "claude" / "specs" / "0028-icon-registry" / "icon-map.csv"
-OUTPUT = ROOT / "app" / "src" / "Misc" / "IconRegistryLegacy.cpp"
+OUTPUT = ROOT / "core" / "Ui" / "Misc" / "IconRegistryLegacy.cpp"
 
 HEADER = """/*
  * Serial Studio

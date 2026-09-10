@@ -21,8 +21,8 @@
 
 #pragma once
 
+#include "Core/SerialStudio.h"
 #include "DSP.h"
-#include "SerialStudio.h"
 
 namespace Widgets {
 

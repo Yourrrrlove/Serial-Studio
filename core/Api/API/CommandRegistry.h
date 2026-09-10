@@ -27,8 +27,9 @@
 #include <QString>
 #include <QVector>
 
-#include "API/CommandProtocol.h"
+#include "API/ICheckpointStore.h"
 #include "API/PathPolicy.h"
+#include "Core/Api/CommandProtocol.h"
 
 namespace API {
 /**
@@ -49,11 +50,13 @@ struct CommandDefinition {
 };
 
 /**
- * @brief Central registry for all available API commands.
+ * @brief Central registry for all available API commands. The pre-mutation checkpoint goes
+ *        through the bound ICheckpointStore (spec 0077 T63); every root binds one before a
+ *        command can run, so an unbound store is a logged assert and no snapshot.
  */
 class CommandRegistry {
 private:
-  CommandRegistry()                                  = default;
+  CommandRegistry();
   CommandRegistry(CommandRegistry&&)                 = delete;
   CommandRegistry(const CommandRegistry&)            = delete;
   CommandRegistry& operator=(CommandRegistry&&)      = delete;
@@ -61,6 +64,9 @@ private:
 
 public:
   [[nodiscard]] static CommandRegistry& instance();
+
+  void bindCheckpointStore(ICheckpointStore& store) noexcept;
+  [[nodiscard]] ICheckpointStore* checkpointStore() const noexcept;
 
   void registerCommand(const QString& name, const QString& description, CommandFunction handler);
   void registerCommand(const QString& name,
@@ -82,6 +88,7 @@ private:
   static QString classifyErrorCategory(const QString& commandName, const CommandResponse& response);
   static QString dryRunHintForScriptCommand(const QString& commandName);
 
+  ICheckpointStore* m_checkpoints;
   QMap<QString, CommandDefinition> m_commands;
 };
 

@@ -23,14 +23,17 @@
 
 #include <QCoreApplication>
 #include <QHash>
+#include <QList>
 #include <QSet>
 #include <QString>
 
 #include "AppState.h"
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/License.h"
+#include "Core/SerialStudio.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
 #include "Misc/ProblemCenter.h"
-#include "SerialStudio.h"
 
 //--------------------------------------------------------------------------------------------------
 // Constants & local aliases
@@ -64,7 +67,7 @@ static const QString kJumpDataset = QStringLiteral("dataset");
  */
 [[nodiscard]] static DataModel::ProjectModel& projectModel()
 {
-  static auto& model = DataModel::ProjectModel::instance();
+  auto& model = DataModel::pipelineModules().projectModel;
   return model;
 }
 
@@ -118,7 +121,7 @@ static void capFindings(QList<Finding>& out)
  */
 [[nodiscard]] static bool projectAvailable()
 {
-  static auto& state = AppState::instance();
+  auto& state = DataModel::pipelineModules().appState;
 
   if (state.operationMode() != SerialStudio::ProjectFile)
     return false;
@@ -641,7 +644,7 @@ static void checkUnlicensedSources(QList<Finding>& out)
   if (!projectAvailable())
     return;
 
-  if (SerialStudio::activated())
+  if (Core::License::activated())
     return;
 
   auto& project = projectModel();

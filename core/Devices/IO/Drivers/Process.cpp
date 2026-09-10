@@ -30,7 +30,6 @@
 #include <QTimer>
 
 #include "IO/ConnectionManager.h"
-#include "Misc/Utilities.h"
 
 // Grace the terminated child gets before it is killed, off the GUI thread
 static constexpr int kProcessTerminateGraceMs = 1000;
@@ -714,13 +713,13 @@ void IO::Drivers::Process::pipeReadLoopWindows()
 #ifdef Q_OS_WIN
   const QString dosPath = QDir::toNativeSeparators(m_pipePath);
   HANDLE hPipe          = CreateNamedPipeW(reinterpret_cast<LPCWSTR>(dosPath.utf16()),
-                                           PIPE_ACCESS_INBOUND | FILE_FLAG_OVERLAPPED,
-                                           PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
-                                           1,
-                                           0,
-                                           4096,
-                                           0,
-                                           nullptr);
+                                  PIPE_ACCESS_INBOUND | FILE_FLAG_OVERLAPPED,
+                                  PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
+                                  1,
+                                  0,
+                                  4096,
+                                  0,
+                                  nullptr);
 
   if (hPipe == INVALID_HANDLE_VALUE) {
     QMetaObject::invokeMethod(this, "onPipeError", Qt::QueuedConnection);
@@ -929,6 +928,7 @@ QList<IO::DriverProperty> IO::Drivers::Process::driverProperties() const
   exe.label = tr("Executable");
   exe.type  = IO::DriverProperty::Text;
   exe.value = m_executable;
+  exe.showWhen(QStringLiteral("mode"), {static_cast<int>(Mode::Launch)});
   props.append(exe);
 
   IO::DriverProperty args;
@@ -936,6 +936,7 @@ QList<IO::DriverProperty> IO::Drivers::Process::driverProperties() const
   args.label = tr("Arguments");
   args.type  = IO::DriverProperty::Text;
   args.value = m_arguments;
+  args.showWhen(QStringLiteral("mode"), {static_cast<int>(Mode::Launch)});
   props.append(args);
 
   IO::DriverProperty dir;
@@ -943,6 +944,7 @@ QList<IO::DriverProperty> IO::Drivers::Process::driverProperties() const
   dir.label = tr("Working Directory");
   dir.type  = IO::DriverProperty::Text;
   dir.value = m_workingDir;
+  dir.showWhen(QStringLiteral("mode"), {static_cast<int>(Mode::Launch)});
   props.append(dir);
 
   IO::DriverProperty pipe;
@@ -950,6 +952,7 @@ QList<IO::DriverProperty> IO::Drivers::Process::driverProperties() const
   pipe.label = tr("Pipe Path");
   pipe.type  = IO::DriverProperty::Text;
   pipe.value = m_pipePath;
+  pipe.showWhen(QStringLiteral("mode"), {static_cast<int>(Mode::NamedPipe)});
   props.append(pipe);
 
   return props;

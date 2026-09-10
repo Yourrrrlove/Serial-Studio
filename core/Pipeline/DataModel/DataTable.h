@@ -35,10 +35,17 @@
 #include <QVariantList>
 #include <vector>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
 #include "IO/PipelineHost.h"
 
+namespace IO {
+class IMqttPublisher;
+}  // namespace IO
+
 namespace DataModel {
+
+void setMqttPublisher(IO::IMqttPublisher* publisher) noexcept;
+[[nodiscard]] IO::IMqttPublisher* mqttPublisher() noexcept;
 
 /**
  * @brief Returns the reserved name of the internal per-dataset mirror table.

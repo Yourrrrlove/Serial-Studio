@@ -27,27 +27,21 @@
 # discovery and before include_directories(src), so a library translation unit cannot see app/src
 # at all: the isolation is a property of the build order, not of a lint rule.
 #
-# Two regimes live here, and the difference is the point.
+# Dependencies flow downward only (spec 0076 for Core and Protocols, spec 0077 for the rest):
 #
-# Core and Protocols are STRICT. Dependencies flow downward only:
+#   Ui -> Api -> Storage -> Pipeline -> Protocols -> Core -> Qt6::Core
+#              Devices -----^ (a sibling of Pipeline; Api and Ui see both)
 #
-#   Ui / Api / Storage / Devices  ->  Pipeline  ->  Protocols  ->  Core  ->  Qt6::Core
+# Each library links only the layers below it and never includes anything from app/src. Core and
+# Protocols are reached through their directory name ("Core/...", "Protocols/...", root = core/);
+# the five partitions carved out of the old monolith keep their own relative include root and see
+# the roots of the layers they may include, nothing else. Cross-library state travels over
+# Core::Bus::MessageBus (retained topics) or through the interfaces and root-bound module sets
+# the composition root binds; no library constructs or reaches another library's singleton.
 #
-# They link only the layers below, never a sibling, and never include anything from app/src. The
-# directory name is the include namespace: every include into one of them is written as "Core/..."
-# or "Protocols/...", because ${CMAKE_SOURCE_DIR}/core is the PUBLIC include root each exports.
-#
-# Pipeline, Devices, Storage, Api and Ui are TRANSITIONAL (spec 0076 stage 2). They are partitions
-# of the old monolith, moved whole so every #include line in the tree stayed byte-identical: each
-# partition directory is an include root and so is app/src, and the five link each other PUBLIC
-# because the code they hold really is a cycle through singletons today. That is measured debt, not
-# a layering statement -- scripts/layer-verify.py counts the includes on every directed edge
-# against a checked-in baseline and fails on growth, and each follow-up spec drives one edge to
-# zero by replacing its singleton reaches with bus topics, then flips that edge to strict.
-#
-# scripts/layer-verify.py enforces all of this: it fails on an upward include out of a strict
-# layer, on a ratcheted edge that grew, on a source under core/ that no target owns (or that two
-# own), and on a CMake entry that names a missing file.
+# scripts/layer-verify.py enforces all of this: it fails on an include outside a layer's graph, on
+# an include root or a link a CMakeLists.txt here names outside the graph, on a source under core/
+# that no target owns (or that two own), and on a CMake entry that names a missing file.
 #
 #---------------------------------------------------------------------------------------------------
 
@@ -64,6 +58,58 @@ if(WIN32)
   )
 endif()
 
+#---------------------------------------------------------------------------------------------------
+# MiniAudio feature switches, shared by SerialStudio::Devices and SerialStudio::Pipeline
+#---------------------------------------------------------------------------------------------------
+#
+# The MA_* switches decide which members miniaudio's structs carry, so every archive that includes
+# ThirdParty/miniaudio.h must set exactly the same ones or two of them disagree about the size of a
+# ma_device. SerialStudio::Devices owns the vendored header and implementation
+# (core/Devices/ThirdParty/), the .cpp's warning suppressions and the ALSA link; Pipeline still sees
+# the header through QuickPlotBuilder.cpp and is added BEFORE Devices, which is why the function is
+# defined here rather than next to the file it configures.
+#
+# Disabled features (only raw PCM capture is needed for the oscilloscope/FFT features):
+#   MA_NO_DECODING         - Disable audio file decoding (WAV, MP3, FLAC)
+#   MA_NO_ENCODING         - Disable audio file encoding
+#   MA_NO_WAV/FLAC/MP3     - Disable codec support (only need raw PCM)
+#   MA_NO_RESOURCE_MANAGER - Disable resource loading system
+#   MA_NO_NODE_GRAPH       - Disable audio graph processing
+#   MA_NO_ENGINE           - Disable high-level engine API
+#   MA_NO_GENERATION       - Disable waveform generation
+#   MA_NO_CUSTOM           - Disable custom backend support
+#   MA_NO_NULL             - Disable null audio backend
+#
+# Platform backends: Linux links libasound (ALSA, in core/Devices); Windows uses WASAPI and macOS
+# CoreAudio, both built in. SIMD: MA_SUPPORT_SSE2 on x86-64, MA_SUPPORT_NEON on non-Apple ARM64.
+# Dropping the unused features saves ~200KB of binary and a good share of the compile time.
+#
+#---------------------------------------------------------------------------------------------------
+
+function(ss_apply_miniaudio_definitions TARGET)
+  target_compile_definitions(${TARGET} PRIVATE
+    MA_NO_DECODING
+    MA_NO_ENCODING
+    MA_NO_WAV
+    MA_NO_FLAC
+    MA_NO_MP3
+    MA_NO_RESOURCE_MANAGER
+    MA_NO_NODE_GRAPH
+    MA_NO_ENGINE
+    MA_NO_GENERATION
+    MA_NO_CUSTOM
+    MA_NO_NULL
+  )
+
+  if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64)$")
+    target_compile_definitions(${TARGET} PRIVATE MA_SUPPORT_SSE2)
+  endif()
+
+  if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$" AND NOT APPLE)
+    target_compile_definitions(${TARGET} PRIVATE MA_SUPPORT_NEON)
+  endif()
+endfunction()
+
 add_subdirectory(Core)
 add_subdirectory(Protocols)
 
@@ -73,25 +119,3 @@ add_subdirectory(Storage)
 add_subdirectory(Api)
 add_subdirectory(Ui)
 
-#---------------------------------------------------------------------------------------------------
-# The cycle
-#---------------------------------------------------------------------------------------------------
-#
-# Declared once, here, because it needs all five targets to exist. Every partition links the other
-# four PUBLIC: that is the dependency graph the code actually has, and stating it is what makes
-# CMake repeat the archives on the final link line -- GNU ld and lld resolve a static archive in
-# one pass, so a mutual reference between two archives is unresolvable without the repetition.
-# MSVC and ld64 do not care. Nothing here shrinks the graph; layer-verify.py's per-edge baseline is
-# what does, one follow-up spec at a time.
-#
-#---------------------------------------------------------------------------------------------------
-
-set(SS_PARTITION_LAYERS Pipeline Devices Storage Api Ui)
-
-foreach(_ss_layer IN LISTS SS_PARTITION_LAYERS)
-  foreach(_ss_peer IN LISTS SS_PARTITION_LAYERS)
-    if(NOT "${_ss_layer}" STREQUAL "${_ss_peer}")
-      target_link_libraries(SerialStudio${_ss_layer} PUBLIC SerialStudio::${_ss_peer})
-    endif()
-  endforeach()
-endforeach()

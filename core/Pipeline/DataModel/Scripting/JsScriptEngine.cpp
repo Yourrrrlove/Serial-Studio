@@ -21,9 +21,12 @@
 
 #include "DataModel/Scripting/JsScriptEngine.h"
 
-#include <QMessageBox>
+#include <QDebug>
+#include <QList>
 #include <QRegularExpression>
 
+#include "Core/Prompt/UserPrompt.h"
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
 #include "DataModel/FrameBuilder.h"
 #include "DataModel/NotificationCenter.h"
@@ -31,8 +34,6 @@
 #include "DataModel/Scripting/DeviceWriteApi.h"
 #include "DataModel/Scripting/ScriptApiCall.h"
 #include "DataModel/Scripting/ScriptFrameShaping.h"
-#include "Misc/Utilities.h"
-#include "SerialStudio.h"
 
 //--------------------------------------------------------------------------------------------------
 // Multi-frame parsing helper functions
@@ -221,7 +222,7 @@ bool DataModel::JsScriptEngine::noteTimeoutAndCheckDisabled(int sourceId)
   m_disabled = true;
   qWarning() << "[JsScriptEngine] Source" << sourceId << "disabled after" << kMaxConsecutiveTimeouts
              << "consecutive watchdog timeouts.";
-  Misc::Utilities::showMessageBox(
+  Core::Prompt::showMessageBox(
     QObject::tr("Frame Parser Disabled"),
     QObject::tr("The JavaScript frame parser for source %1 timed out %2 frames "
                 "in a row and has been disabled to keep Serial Studio responsive.\n\n"
@@ -230,7 +231,7 @@ bool DataModel::JsScriptEngine::noteTimeoutAndCheckDisabled(int sourceId)
                 "re-enable parsing.")
       .arg(sourceId)
       .arg(kMaxConsecutiveTimeouts),
-    QMessageBox::Critical);
+    Core::Prompt::Critical);
   return true;
 }
 
@@ -445,13 +446,13 @@ bool DataModel::JsScriptEngine::validateScriptSyntax(const QString& script,
   if (m_engine.isInterrupted()) {
     m_engine.setInterrupted(false);
     if (showMessageBoxes) {
-      Misc::Utilities::showMessageBox(
+      Core::Prompt::showMessageBox(
         QObject::tr("JavaScript Timed Out"),
         QObject::tr("The parser code did not finish evaluating within %1 ms and was "
                     "interrupted.\n\nMost likely cause: an infinite loop at the top level "
                     "of the script.")
           .arg(kRuntimeWatchdogMs),
-        QMessageBox::Critical);
+        Core::Prompt::Critical);
     } else {
       qWarning() << "[JsScriptEngine] Source" << sourceId << "evaluation timed out after"
                  << kRuntimeWatchdogMs << "ms -- interrupted";
@@ -463,12 +464,12 @@ bool DataModel::JsScriptEngine::validateScriptSyntax(const QString& script,
     const QString errorMsg = result.property("message").toString();
     const int lineNumber   = result.property("lineNumber").toInt();
     if (showMessageBoxes) {
-      Misc::Utilities::showMessageBox(
+      Core::Prompt::showMessageBox(
         QObject::tr("JavaScript Syntax Error"),
         QObject::tr("The parser code contains a syntax error at line %1:\n\n%2")
           .arg(lineNumber)
           .arg(errorMsg),
-        QMessageBox::Critical);
+        Core::Prompt::Critical);
     } else {
       qWarning() << "[JsScriptEngine] Source" << sourceId << "syntax error at line" << lineNumber
                  << ":" << errorMsg;
@@ -478,11 +479,11 @@ bool DataModel::JsScriptEngine::validateScriptSyntax(const QString& script,
 
   if (!exceptionStackTrace.isEmpty()) {
     if (showMessageBoxes) {
-      Misc::Utilities::showMessageBox(
+      Core::Prompt::showMessageBox(
         QObject::tr("JavaScript Exception Occurred"),
         QObject::tr("The parser code triggered the following exceptions:\n\n%1")
           .arg(exceptionStackTrace.join(QStringLiteral("\n"))),
-        QMessageBox::Critical);
+        Core::Prompt::Critical);
     } else {
       qWarning() << "[JsScriptEngine] Source" << sourceId
                  << "exceptions:" << exceptionStackTrace.join(QStringLiteral(", "));
@@ -504,11 +505,11 @@ QJSValue DataModel::JsScriptEngine::validateParseFunction(int sourceId, bool sho
   auto parseFunction = m_engine.globalObject().property(QStringLiteral("parse"));
   if (parseFunction.isNull() || !parseFunction.isCallable()) {
     if (showMessageBoxes) {
-      Misc::Utilities::showMessageBox(
+      Core::Prompt::showMessageBox(
         QObject::tr("Missing Parse Function"),
         QObject::tr("The 'parse' function is not defined in the script.\n\n"
                     "Please ensure your code includes:\nfunction parse(frame) { ... }"),
-        QMessageBox::Critical);
+        Core::Prompt::Critical);
     } else {
       qWarning() << "[JsScriptEngine] Source" << sourceId << "missing or non-callable parse()";
     }
@@ -556,14 +557,14 @@ bool DataModel::JsScriptEngine::probeParseFunction(const QJSValue& parseFunction
     const QString errorMsg = lastError.property("message").toString();
     const int lineNumber   = lastError.property("lineNumber").toInt();
     if (showMessageBoxes) {
-      Misc::Utilities::showMessageBox(
+      Core::Prompt::showMessageBox(
         QObject::tr("Parse Function Runtime Error"),
         QObject::tr("The parse function contains an error at line %1:\n\n"
                     "%2\n\n"
                     "Please fix the error in the function body.")
           .arg(lineNumber)
           .arg(errorMsg),
-        QMessageBox::Critical);
+        Core::Prompt::Critical);
     } else {
       qWarning() << "[JsScriptEngine] Runtime error at line" << lineNumber << ":" << errorMsg;
     }
@@ -639,16 +640,15 @@ bool DataModel::JsScriptEngine::validateParseSignature(const QString& script, bo
     R"(\bparse\b\s*(?:=\s*)?(?:function)?\s*\(\s*([a-zA-Z_$][\w$]*)\s*,\s*([a-zA-Z_$][\w$]*)\s*\))");
   if (const auto legacy = legacyTwoArgRegex.match(script); legacy.hasMatch()) {
     if (showMessageBoxes) {
-      Misc::Utilities::showMessageBox(
-        QObject::tr("Deprecated Function Signature"),
-        QObject::tr("The 'parse' function uses the old two-parameter "
-                    "format: parse(%1, %2)\n\n"
-                    "This format is no longer supported. Please update "
-                    "to the new single-parameter format:\n"
-                    "function parse(%1) { ... }\n\n"
-                    "The separator parameter is no longer needed.")
-          .arg(legacy.captured(1), legacy.captured(2)),
-        QMessageBox::Warning);
+      Core::Prompt::showMessageBox(QObject::tr("Deprecated Function Signature"),
+                                   QObject::tr("The 'parse' function uses the old two-parameter "
+                                               "format: parse(%1, %2)\n\n"
+                                               "This format is no longer supported. Please update "
+                                               "to the new single-parameter format:\n"
+                                               "function parse(%1) { ... }\n\n"
+                                               "The separator parameter is no longer needed.")
+                                     .arg(legacy.captured(1), legacy.captured(2)),
+                                   Core::Prompt::Warning);
     } else {
       qWarning() << "[JsScriptEngine] Deprecated two-parameter parse function";
     }
@@ -658,12 +658,12 @@ bool DataModel::JsScriptEngine::validateParseSignature(const QString& script, bo
   const auto parseFn = m_engine.globalObject().property(QStringLiteral("parse"));
   if (!parseFn.isCallable()) {
     if (showMessageBoxes) {
-      Misc::Utilities::showMessageBox(QObject::tr("Invalid Function Declaration"),
-                                      QObject::tr("No callable 'parse' export found.\n\n"
-                                                  "Define one of:\n"
-                                                  "  function parse(frame) { ... }\n"
-                                                  "  const parse = (frame) => { ... }"),
-                                      QMessageBox::Critical);
+      Core::Prompt::showMessageBox(QObject::tr("Invalid Function Declaration"),
+                                   QObject::tr("No callable 'parse' export found.\n\n"
+                                               "Define one of:\n"
+                                               "  function parse(frame) { ... }\n"
+                                               "  const parse = (frame) => { ... }"),
+                                   Core::Prompt::Critical);
     } else {
       qWarning() << "[JsScriptEngine] No callable parse function found";
     }
@@ -673,11 +673,11 @@ bool DataModel::JsScriptEngine::validateParseSignature(const QString& script, bo
   const int arity = parseFn.property(QStringLiteral("length")).toInt();
   if (arity < 1) {
     if (showMessageBoxes) {
-      Misc::Utilities::showMessageBox(
+      Core::Prompt::showMessageBox(
         QObject::tr("Invalid Function Parameter"),
         QObject::tr("The 'parse' function must accept at least one parameter (the frame "
                     "payload)."),
-        QMessageBox::Critical);
+        Core::Prompt::Critical);
     } else {
       qWarning() << "[JsScriptEngine] Parse function must take at least one parameter";
     }

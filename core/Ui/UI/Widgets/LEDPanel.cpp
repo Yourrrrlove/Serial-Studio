@@ -25,6 +25,8 @@
 
 #include "Misc/ThemeManager.h"
 #include "UI/Dashboard.h"
+#include "UI/SerialStudioHelpers.h"
+#include "UI/Widgets/DatasetWidgetLinks.h"
 
 //--------------------------------------------------------------------------------------------------
 // Constructor & initialization
@@ -65,6 +67,8 @@ void Widgets::LEDPanel::buildLeds()
   m_titles.resize(n);
   m_colors.resize(n);
   m_labels.resize(n);
+  m_widgets.clear();
+  m_widgets.reserve(n);
 
   for (size_t i = 0; i < group.datasets.size(); ++i) {
     const auto& dataset = group.datasets[i];
@@ -73,6 +77,7 @@ void Widgets::LEDPanel::buildLeds()
     m_states[idx] = false;
     m_blinks[idx] = false;
     m_titles[idx] = dataset.title;
+    m_widgets.append(QVariant(datasetWidgetLinks(m_dashboard, dataset)));
 
     auto& led      = m_leds[i];
     led.hint       = -1;
@@ -156,6 +161,15 @@ const QStringList& Widgets::LEDPanel::labels() const noexcept
 const QStringList& Widgets::LEDPanel::titles() const noexcept
 {
   return m_titles;
+}
+
+/**
+ * @brief Returns, per LED, the {windowId, icon, title} list of the other dashboard widgets that
+ *        show that LED's dataset, for the row's pop-out buttons.
+ */
+const QVariantList& Widgets::LEDPanel::widgets() const noexcept
+{
+  return m_widgets;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -266,7 +280,7 @@ void Widgets::LEDPanel::onThemeChanged()
   const size_t n    = qMin(m_leds.size(), group.datasets.size());
   for (size_t i = 0; i < n; ++i) {
     auto& led        = m_leds[i];
-    const auto color = SerialStudio::getDatasetAccentColor(group.datasets[i]).name();
+    const auto color = UI::SerialStudioHelpers::getDatasetAccentColor(group.datasets[i]).name();
 
     for (auto& band : led.bands)
       band.resolvedColor = resolveBandColor(band, color);

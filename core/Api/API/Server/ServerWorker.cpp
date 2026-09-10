@@ -27,7 +27,7 @@
 #include <QThread>
 #include <utility>
 
-#include "API/CommandProtocol.h"
+#include "Core/Api/CommandProtocol.h"
 #include "Core/SSAssert.h"
 
 //--------------------------------------------------------------------------------------------------

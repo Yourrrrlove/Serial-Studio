@@ -29,13 +29,11 @@
 #include <QRandomGenerator>
 #include <QStandardPaths>
 
-#include "AppState.h"
+#include "Core/DataModel/FrameKeys.h"
+#include "Core/Licensing/CommercialToken.h"
+#include "Core/Prompt/UserPrompt.h"
 #include "Core/SSAssert.h"
-#include "DataModel/FrameKeys.h"
-#include "DataModel/ProjectModel.h"
 #include "IO/ConnectionManager.h"
-#include "Licensing/CommercialToken.h"
-#include "Misc/Utilities.h"
 
 Q_LOGGING_CATEGORY(lcMqttSub, "serialstudio.mqtt.subscriber", QtCriticalMsg)
 
@@ -49,8 +47,7 @@ static constexpr int kMqttDialDeadlineMs = 15000;
  * @brief Constructs the MQTT input driver and restores persisted broker settings.
  */
 IO::Drivers::MQTT::MQTT()
-  : m_appState(AppState::instance())
-  , m_projectModel(DataModel::ProjectModel::instance())
+  : m_generatedProject(this)
   , m_sslEnabled(false)
   , m_cleanSession(true)
   , m_autoKeepAlive(true)
@@ -236,11 +233,11 @@ bool IO::Drivers::MQTT::open(const QIODevice::OpenMode mode)
     QMetaObject::invokeMethod(
       this,
       [] {
-        Misc::Utilities::showMessageBox(
+        Core::Prompt::showMessageBox(
           tr("MQTT Feature Requires a Commercial License"),
           tr("Subscribing to an MQTT broker is only available with a valid Serial Studio license "
              "or an active trial."),
-          QMessageBox::Warning);
+          Core::Prompt::Warning);
       },
       Qt::QueuedConnection);
     return false;

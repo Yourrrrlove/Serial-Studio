@@ -132,3 +132,16 @@ QString DataModel::defaultScriptTemplateCode(const QString& manifestPath,
 
   return readTextResource(templateResourcePath(resourceRoot, defFile, suffix));
 }
+
+/**
+ * @brief Default transmit-function source for a new output widget, read from the output
+ *        template manifest; project creation seeds the widget with it and the editor resets to
+ *        it.
+ */
+QString DataModel::defaultOutputWidgetTemplate()
+{
+  return defaultScriptTemplateCode(QStringLiteral(":/scripts/output/templates.json"),
+                                   QStringLiteral(":/scripts/output"),
+                                   QStringLiteral(".js"),
+                                   "DataModel::OutputCodeEditor");
+}

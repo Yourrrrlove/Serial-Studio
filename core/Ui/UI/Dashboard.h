@@ -26,33 +26,35 @@
 #include <QFont>
 #include <QHash>
 #include <QJsonObject>
+#include <QList>
 #include <QObject>
 #include <QSet>
 #include <QSettings>
+#include <QVector>
 #include <utility>
 
-#include "DataModel/DataBlock.h"
+#include "Core/DataModel/DataBlock.h"
+#include "Core/SerialStudio.h"
+#include "DataModel/IDashboardControl.h"
+#include "DataModel/IDashboardFrames.h"
+#include "DataModel/IReplayPlotSink.h"
 #include "DSP.h"
 #include "IO/StreamWorker.h"
-#include "SerialStudio.h"
 #include "UI/Dashboard/DashboardIngest.h"
 #include "UI/Dashboard/DashboardTools.h"
 #include "UI/Dashboard/DashboardViewState.h"
+#include "UI/Dashboard/DashboardWiring.h"
 #include "UI/Dashboard/PlotControlBank.h"
 #include "UI/Dashboard/ReplaySeekEngine.h"
 #include "UI/Dashboard/WidgetMapBuilder.h"
 #include "UI/WidgetRegistry.h"
 
+namespace Core::Bus {
+class MessageBus;
+}  // namespace Core::Bus
+
 class AppState;
 class SessionContext;
-
-namespace CSV {
-class Player;
-}  // namespace CSV
-
-namespace MDF4 {
-class Player;
-}  // namespace MDF4
 
 namespace IO {
 class PipelineHost;
@@ -64,18 +66,15 @@ class FrameBuilder;
 class ProjectModel;
 }  // namespace DataModel
 
-#ifdef BUILD_COMMERCIAL
-namespace Sessions {
-class Player;
-}  // namespace Sessions
-#endif
-
 namespace UI {
 /**
  * @brief Real-time dashboard manager for displaying data-driven widgets.
  */
 class Dashboard
   : public QObject
+  , public DataModel::IReplayPlotSink
+  , public DataModel::IDashboardControl
+  , public DataModel::IDashboardFrames
   , private IngestHost {
   // clang-format off
   Q_OBJECT
@@ -176,7 +175,12 @@ signals:
 
 private:
   friend class ::SessionContext;
-  explicit Dashboard();
+
+  static void bindInstance(Dashboard* instance) noexcept { s_instance = instance; }
+
+  static Dashboard* s_instance;
+  friend class DashboardWiring;
+  Dashboard(Core::Bus::MessageBus& bus, IO::ConnectionManager& connectionManager);
   Dashboard(Dashboard&&)                 = delete;
   Dashboard(const Dashboard&)            = delete;
   Dashboard& operator=(Dashboard&&)      = delete;
@@ -203,17 +207,17 @@ public:
   [[nodiscard]] static Dashboard& instance();
 
   [[nodiscard]] bool available() const;
-  [[nodiscard]] bool streamAvailable() const;
-  [[nodiscard]] bool frozen() const;
+  [[nodiscard]] bool streamAvailable() const override;
+  [[nodiscard]] bool frozen() const override;
 
   [[nodiscard]] bool thinningActive() const noexcept { return m_thinningActive; }
 
-  [[nodiscard]] double plotTimeRange() const noexcept { return m_plotTimeRange; }
+  [[nodiscard]] double plotTimeRange() const noexcept override { return m_plotTimeRange; }
 
   [[nodiscard]] bool pointsWidgetVisible() const;
   [[nodiscard]] bool containsCommercialFeatures() const noexcept;
 
-  [[nodiscard]] int points() const noexcept { return m_points; }
+  [[nodiscard]] int points() const noexcept override { return m_points; }
 
   [[nodiscard]] int totalWidgetCount() const noexcept { return m_widgetCount; }
 
@@ -232,7 +236,7 @@ public:
 
   [[nodiscard]] QVariantList actions() const { return m_tools.actions(); }
 
-  [[nodiscard]] int actionIndexForId(int actionId) const noexcept
+  [[nodiscard]] int actionIndexForId(int actionId) const noexcept override
   {
     return m_tools.actionIndexForId(actionId);
   }
@@ -310,9 +314,9 @@ public:
   [[nodiscard]] bool useTimeXAxis(const DataModel::Dataset& dataset) const override;
   [[nodiscard]] bool useTimeXAxisGroup(const DataModel::Group& group) const;
 
-  [[nodiscard]] const DataModel::Frame& rawFrame() { return m_lastFrame; }
+  [[nodiscard]] const DataModel::Frame& rawFrame() const override { return m_lastFrame; }
 
-  [[nodiscard]] const DataModel::Frame& processedFrame() { return m_lastFrame; }
+  [[nodiscard]] const DataModel::Frame& processedFrame() const override { return m_lastFrame; }
 
   [[nodiscard]] const DSP::AxisData& fftData(const int index) const;
   [[nodiscard]] const DSP::GpsSeries& gpsSeries(const int index) const;
@@ -341,13 +345,13 @@ public:
     return ReplaySeekEngine::seekKey(sourceId, uniqueId);
   }
 
-  [[nodiscard]] QList<std::pair<int, int>> replaySeekSeries() const
+  [[nodiscard]] QList<std::pair<int, int>> replaySeekSeries() const override
   {
     return m_replaySeek.seekSeries();
   }
 
   void bulkLoadPlotWindow(const QVector<double>& timesSec,
-                          const QHash<qint64, QVector<double>>& series);
+                          const QHash<qint64, QVector<double>>& series) override;
 
   [[nodiscard]] bool plotRunning(const int index) const
   {
@@ -374,9 +378,9 @@ public:
 #endif
 
 public slots:
-  void setPoints(const int points);
+  void setPoints(const int points) override;
   void resetData(const bool notify = true);
-  void clearPlotData();
+  void clearPlotData() override;
   void setShowActionPanel(const bool enabled);
   void setAutoHideToolbar(const bool enabled);
   void setShowAlignmentGuides(const bool enabled);
@@ -386,15 +390,18 @@ public slots:
   void setPlotTimeRange(const double seconds);
   void setSettingsPersistent(const bool persistent);
 
-  void setClockEnabled(const bool enabled) { m_tools.setClockEnabled(enabled); }
+  void setClockEnabled(const bool enabled) override { m_tools.setClockEnabled(enabled); }
 
-  void setTerminalEnabled(const bool enabled) { m_tools.setTerminalEnabled(enabled); }
+  void setTerminalEnabled(const bool enabled) override { m_tools.setTerminalEnabled(enabled); }
 
-  void setStopwatchEnabled(const bool enabled) { m_tools.setStopwatchEnabled(enabled); }
+  void setStopwatchEnabled(const bool enabled) override { m_tools.setStopwatchEnabled(enabled); }
 
-  void setNotificationLogEnabled(const bool enabled) { m_tools.setNotificationLogEnabled(enabled); }
+  void setNotificationLogEnabled(const bool enabled) override
+  {
+    m_tools.setNotificationLogEnabled(enabled);
+  }
 
-  void activateAction(const int index, const bool guiTrigger = false)
+  void activateAction(const int index, const bool guiTrigger = false) override
   {
     m_tools.activateAction(index, guiTrigger);
   }
@@ -458,8 +465,8 @@ public slots:
   void setViewStateJson(const QString& json);
   void clearViewState();
 
-  void applyBlock(const DataModel::DataBlockPtr& block);
-  void applyStructureSnapshot(const DataModel::StructureSnapshotPtr& snapshot);
+  void applyBlock(const DataModel::DataBlockPtr& block) override;
+  void applyStructureSnapshot(const DataModel::StructureSnapshotPtr& snapshot) override;
   void updateStreamAvailable();
   void pollThinningState();
   void refreshDisplayTitles();
@@ -497,6 +504,9 @@ private:
 
 private:
   // Resolved once at construction: Dashboard is built last, so no method body resolves a singleton.
+  Core::Bus::MessageBus& m_bus;
+  IO::ConnectionManager& m_connectionManager;
+  IO::PipelineHost& m_pipelineHost;
   AppState* m_appState;
   WidgetRegistry* m_widgetRegistry;
   DataModel::FrameBuilder* m_frameBuilder;
@@ -514,6 +524,7 @@ private:
   // False while cached Dataset*/ring pointers are stale (post-reset, pre-reconfigure)
   bool m_layoutValid;
   bool m_streamAvailable;
+  quint8 m_openReplayPlayers;
 
   double m_plotTimeRange;
   double m_plotDisplayTimeSec;
@@ -578,6 +589,7 @@ private:
   ReplaySeekEngine m_replaySeek;
   WidgetMapBuilder m_widgetMapBuilder;
   DashboardIngest m_ingest;
+  DashboardWiring m_wiring;
 };
 }  // namespace UI
 

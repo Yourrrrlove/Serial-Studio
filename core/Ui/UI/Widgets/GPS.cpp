@@ -41,7 +41,8 @@
 #include "UI/Dashboard.h"
 
 #ifdef BUILD_COMMERCIAL
-#  include "Licensing/CommercialToken.h"
+#  include "Core/Licensing/CommercialToken.h"
+#  include "UI/SerialStudioHelpers.h"
 #endif
 
 //--------------------------------------------------------------------------------------------------
@@ -135,8 +136,8 @@ Widgets::GPS::GPS(const int index, QQuickItem* parent)
   m_showNasaWeather = m_settings.value("gpsNasaWeather", false).toBool();
   m_plotTrajectory  = m_settings.value("gpsPlotTrajectory", true).toBool();
   m_zoom            = qBound(static_cast<double>(MIN_ZOOM),
-                             SerialStudio::toDouble(m_settings.value("gpsZoomLevel", MIN_ZOOM)),
-                             18.0);
+                  SerialStudio::toDouble(m_settings.value("gpsZoomLevel", MIN_ZOOM)),
+                  18.0);
 
   if (m_showNasaWeather && m_showWeather)
     m_showWeather = false;
@@ -647,11 +648,13 @@ void Widgets::GPS::onThemeChanged()
 {
   QColor custom;
   if (VALIDATE_WIDGET(SerialStudio::DashboardGPS, m_index))
-    custom = SerialStudio::getGroupColorOverride(GET_GROUP(SerialStudio::DashboardGPS, m_index));
+    custom = UI::SerialStudioHelpers::getGroupColorOverride(
+      GET_GROUP(SerialStudio::DashboardGPS, m_index));
 
-  const QColor base = custom.isValid() ? custom : SerialStudio::getDatasetColor(m_index + 1);
-  m_lineTailColor   = base.darker(130);
-  m_lineHeadColor   = custom.isValid() ? base : base.lighter(130);
+  const QColor base =
+    custom.isValid() ? custom : UI::SerialStudioHelpers::getDatasetColor(m_index + 1);
+  m_lineTailColor = base.darker(130);
+  m_lineHeadColor = custom.isValid() ? base : base.lighter(130);
   m_lineTailColor.setAlpha(156);
 }
 

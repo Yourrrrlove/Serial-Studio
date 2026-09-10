@@ -38,21 +38,27 @@ extern "C" {
 #include <QHash>
 #include <QJSEngine>
 #include <QJSValue>
+#include <QList>
 #include <QMap>
 #include <QObject>
 #include <QSet>
 #include <QThread>
 #include <QTimer>
 #include <QVariant>
+#include <span>
 #include <unordered_map>
 #include <vector>
 
+#include "Core/DataModel/DataBlock.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/IO/HAL_Driver.h"
 #include "Core/ParseBudget.h"
-#include "DataModel/DataBlock.h"
+#include "Core/SerialStudio.h"
+#include "Core/ThirdParty/readerwriterqueue.h"
 #include "DataModel/DataTable.h"
-#include "DataModel/Frame.h"
 #include "DataModel/FrameBuilder/BlockPublisher.h"
 #include "DataModel/FrameBuilder/BlockStager.h"
+#include "DataModel/FrameBuilder/ExternalWiring.h"
 #include "DataModel/FrameBuilder/LatestFrameTap.h"
 #include "DataModel/FrameBuilder/QuickPlotBuilder.h"
 #include "DataModel/FrameBuilder/ReplayIngest.h"
@@ -61,50 +67,17 @@ extern "C" {
 #include "DataModel/FrameBuilder/TransformCompiler.h"
 #include "DataModel/FramePoolPolicy.h"
 #include "DataModel/RepublishGate.h"
-#include "IO/HAL_Driver.h"
 #include "IO/PipelineHost.h"
-#include "SerialStudio.h"
-#include "ThirdParty/readerwriterqueue.h"
+
+namespace Core::Bus {
+class MessageBus;
+}  // namespace Core::Bus
 
 class SessionContext;
 
 namespace Misc {
 class TimerEvents;
 }  // namespace Misc
-
-namespace CSV {
-class Export;
-}  // namespace CSV
-
-namespace MDF4 {
-class Export;
-}  // namespace MDF4
-
-namespace API {
-class Server;
-
-namespace GRPC {
-class GRPCServer;
-}  // namespace GRPC
-}  // namespace API
-
-#ifdef BUILD_COMMERCIAL
-namespace Sessions {
-class Export;
-}  // namespace Sessions
-
-namespace MQTT {
-class Publisher;
-}  // namespace MQTT
-
-namespace Widgets {
-class AudioExport;
-}  // namespace Widgets
-
-namespace InfluxDB {
-class Export;
-}  // namespace InfluxDB
-#endif
 
 namespace DataModel {
 
@@ -130,7 +103,18 @@ signals:
 
 private:
   friend class ::SessionContext;
-  explicit FrameBuilder();
+
+  static void bindInstance(FrameBuilder* instance) noexcept { s_instance = instance; }
+
+  static FrameBuilder* s_instance;
+  explicit FrameBuilder(Core::Bus::MessageBus& bus);
+  friend class ExternalWiring;
+
+  [[nodiscard]] bool anyPlayerOpen() const
+  {
+    return m_playerOpenMask[0] || m_playerOpenMask[1] || m_playerOpenMask[2];
+  }
+
   FrameBuilder(FrameBuilder&&)                 = delete;
   FrameBuilder(const FrameBuilder&)            = delete;
   FrameBuilder& operator=(FrameBuilder&&)      = delete;
@@ -213,9 +197,12 @@ public:
     IO::PipelineHost::runOnObjectThread(this, std::forward<Fn>(fn));
   }
 
+  void bindBlockSinks(std::span<DataModel::IBlockSink* const> sinks,
+                      DataModel::IBlockSink* server,
+                      DataModel::IBlockSink* grpc);
+
 public slots:
   void prepareShutdown();
-  void bindBlockSinks();
   void setupExternalConnections();
   void syncFromProjectModel();
 
@@ -259,27 +246,6 @@ private:
   };
 
   /**
-   * @brief Every module whose enable edge feeds the cached m_anyAsyncSink or m_captureLatestFrame
-   *        flag. The composition root resolves them once in setupExternalConnections() and hands
-   *        them here, so the wiring body reaches through no singleton (spec 0001).
-   */
-  struct AsyncSinks {
-    CSV::Export* csv                 = nullptr;
-    MDF4::Export* mdf4               = nullptr;
-    API::Server* server              = nullptr;
-    DataModel::ControlScript* script = nullptr;
-#ifdef BUILD_COMMERCIAL
-    Sessions::Export* sessions  = nullptr;
-    MQTT::Publisher* mqtt       = nullptr;
-    Widgets::AudioExport* audio = nullptr;
-    InfluxDB::Export* influx    = nullptr;
-#endif
-#ifdef ENABLE_GRPC
-    API::GRPC::GRPCServer* grpc = nullptr;
-#endif
-  };
-
-  /**
    * @brief Change-driven dependency state for one transform dataset: the union-over-history set
    *        of store slots its transform has read, and the write clock at its last run. Re-run
    *        only when changedSince(readSlots, lastRunClock) is true. hasRun distinguishes "never
@@ -293,11 +259,13 @@ private:
     bool hasRun          = false;
   };
 
+  Core::Bus::MessageBus& m_bus;
   int m_quickPlotChannels;
   bool m_parseBudgetEnabled;
   bool m_lastConnectedState;
   bool m_lastPausedState;
   bool m_playerOpen;
+  std::array<bool, DataModel::ExternalWiring::kPlayerSlots> m_playerOpenMask;
   bool m_captureDatasetValues;
   bool m_captureFlagsDirty;
   bool m_externalTableApiUsers;
@@ -395,6 +363,7 @@ private:
 
   // Holds a sync that arrived while the pipeline was parked; applied once it is running again
   std::optional<ProjectSnapshot> m_deferredProjectSnapshot;
+  DataModel::ExternalWiring m_wiring;
 
   [[nodiscard]] static ProjectSnapshot collectProjectSnapshot();
   void applyProjectSnapshot(ProjectSnapshot snapshot);
@@ -437,10 +406,7 @@ private:
   void publishSourceTemplateFrame(const DataModel::Source& src);
   [[nodiscard]] bool republishFrames(bool feedExports);
   void wireDisplayTickHooks(Misc::TimerEvents& timers, IO::PipelineHost& pipeline);
-  void wireAsyncSinkHooks(const AsyncSinks& sinks);
-  [[nodiscard]] AsyncSinks resolveAsyncSinks();
-  [[nodiscard]] BlockPublisher::Sinks resolveBlockSinks(const AsyncSinks& sinks,
-                                                        IO::PipelineHost& host);
+  void wireAsyncSinkHooks();
   void refreshDatasetCaptureFlag();
   void refreshLatestFrameCapture();
   void clearLatestFrames();

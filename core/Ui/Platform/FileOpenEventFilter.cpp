@@ -23,9 +23,10 @@
 #include <QFileOpenEvent>
 
 #include "AppState.h"
+#include "Core/SerialStudio.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
 #include "Platform/AppPlatform.h"
-#include "SerialStudio.h"
 
 //--------------------------------------------------------------------------------------------------
 // Kept apart from AppPlatform.cpp so the OS-level helpers there link without AppState and the
@@ -38,8 +39,8 @@
  */
 static void openProjectFile(const QString& path)
 {
-  static auto& appState     = AppState::instance();
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  auto& appState     = DataModel::pipelineModules().appState;
+  auto& projectModel = DataModel::pipelineModules().projectModel;
   appState.setOperationMode(SerialStudio::ProjectFile);
   projectModel.openJsonFile(path);
 }

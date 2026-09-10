@@ -34,9 +34,9 @@
 # removed from the executable's HEADERS list, or moc would run twice and the link would fail on
 # duplicate staticMetaObject symbols.
 #
-# This is a partition of the old monolith, not a clean layer: it still reaches sideways into
-# Pipeline, Storage, Api and Ui and upward into app/src. The include roots and the sibling links
-# below spell that debt out; scripts/layer-verify.py ratchets it down per directed edge.
+# A strict layer since spec 0077: it includes only itself and Core and Protocols, and the include
+# roots and links below say exactly that. scripts/layer-verify.py fails on an include, an
+# include root or a link outside that graph.
 #
 #---------------------------------------------------------------------------------------------------
 
@@ -53,6 +53,7 @@ qt_add_library(
   IO/Drivers/BluetoothLE/BleUuids.cpp
   IO/Drivers/SerialPortIdentity.cpp
   IO/DeviceManager.cpp
+  IO/Drivers/GeneratedProjectRequest.cpp
   IO/ConnectionManager.cpp
   IO/ConnectionManager/DriverUiRegistry.cpp
   IO/ConnectionManager/ConnectFanOut.cpp
@@ -61,8 +62,8 @@ qt_add_library(
   IO/ConnectionManager/DeviceTableQuery.cpp
   IO/ConnectionManager/DriverFactory.cpp
   IO/ConnectionManager/StreamConfigBuilder.cpp
-  IO/ConnectionManager/StreamWorkerPool.cpp
   IO/ConnectionManager/UiDriverSync.cpp
+  IO/ConnectionManager/BusBridge.cpp
   IO/AsyncTcpDial.cpp
   IO/FileTransmission.cpp
   IO/Drivers/UART.h
@@ -70,6 +71,7 @@ qt_add_library(
   IO/Drivers/Network.h
   IO/Drivers/BluetoothLE.h
   IO/DeviceManager.h
+  IO/Drivers/GeneratedProjectRequest.h
   IO/ConnectionManager.h
   IO/ConnectionManager/DriverUiRegistry.h
   IO/ConnectionManager/ConnectFanOut.h
@@ -78,10 +80,9 @@ qt_add_library(
   IO/ConnectionManager/DeviceTableQuery.h
   IO/ConnectionManager/DriverFactory.h
   IO/ConnectionManager/StreamConfigBuilder.h
-  IO/ConnectionManager/StreamWorkerPool.h
   IO/ConnectionManager/UiDriverSync.h
+  IO/ConnectionManager/BusBridge.h
   IO/AsyncTcpDial.h
-  IO/HAL_Driver.h
   IO/FileTransmission.h
   IO/Drivers/BluetoothLE/BleUuids.h
   IO/Drivers/SerialPortIdentity.h
@@ -90,27 +91,18 @@ qt_add_library(
 add_library(SerialStudio::Devices ALIAS SerialStudioDevices)
 
 #---------------------------------------------------------------------------------------------------
-# Pro drivers and the MQTT publisher stack
+# Pro drivers
 #---------------------------------------------------------------------------------------------------
 
 if(BUILD_COMMERCIAL)
   target_sources(
     SerialStudioDevices PRIVATE
 
-    MQTT/CredentialVault.h
-    MQTT/Publisher.h
-    MQTT/PublisherWorker.h
-    MQTT/TlsConfig.h
-    MQTT/BrokerOptions.h
-    MQTT/CsvExpansion.h
-    MQTT/PublisherScript.h
-    MQTT/PublisherScriptEditor.h
-    MQTT/SparkplugPublisher.h
-    MQTT/TlsIdentity.h
     IO/Drivers/Audio.h
     IO/Drivers/Audio/AudioDeviceCatalog.h
     IO/Drivers/Audio/AudioPcm.h
     IO/Drivers/Audio/PlaybackRing.h
+    ThirdParty/miniaudio.h
     IO/Drivers/CANBus.h
     IO/Drivers/CANBus/CanBackends.h
     IO/Drivers/CANBus/GsUsbCanBackend.h
@@ -135,7 +127,6 @@ if(BUILD_COMMERCIAL)
     IO/Drivers/OpcUa/OpcUaProjectBuilder.h
     IO/Drivers/OpcUa/OpcUaSubscriptions.h
     IO/Drivers/OpcUa/OpcUaTag.h
-    IO/Drivers/OpcUaWire.h
     IO/Drivers/OpcUaTypes.h
     IO/Drivers/OpcUaMarshal.h
     IO/Drivers/OpcUaSession.h
@@ -145,19 +136,10 @@ if(BUILD_COMMERCIAL)
     IO/Drivers/S7.h
     IO/Drivers/EthernetIp.h
     IO/Drivers/Iec104.h
-    MQTT/CredentialVault.cpp
-    MQTT/Publisher.cpp
-    MQTT/PublisherScript.cpp
-    MQTT/PublisherScriptEditor.cpp
-    MQTT/PublisherWorker.cpp
-    MQTT/TlsConfig.cpp
-    MQTT/BrokerOptions.cpp
-    MQTT/CsvExpansion.cpp
-    MQTT/SparkplugPublisher.cpp
-    MQTT/TlsIdentity.cpp
     IO/Drivers/Audio.cpp
     IO/Drivers/Audio/AudioDeviceCatalog.cpp
     IO/Drivers/Audio/AudioPcm.cpp
+    ThirdParty/miniaudio.cpp
     IO/Drivers/CANBus.cpp
     IO/Drivers/CANBus/CanBackends.cpp
     IO/Drivers/CANBus/GsUsbCanBackend.cpp
@@ -195,32 +177,21 @@ if(BUILD_COMMERCIAL)
 endif()
 
 #---------------------------------------------------------------------------------------------------
-# Include roots -- the transitional debt
+# Include roots -- the layer graph
 #---------------------------------------------------------------------------------------------------
 #
-# Every partition directory is an include root and so is app/src, which is what keeps every
-# #include line in the moved tree byte-identical. It is deliberate debt, not a layering statement:
-# scripts/layer-verify.py counts the upward and sideways includes per directed edge against a
-# checked-in baseline and fails on growth, and each follow-up spec drives one edge to zero.
+# This partition keeps its own relative include root plus the roots of the layers below it that
+# it may include (spec 0077). Nothing from app/src and nothing sideways: scripts/layer-verify.py
+# fails on an include outside the graph and on a root or a link this list does not justify. The
+# commercial token's generated guards header arrives through SerialStudio::Core.
 #
 #---------------------------------------------------------------------------------------------------
 
 target_include_directories(
   SerialStudioDevices PUBLIC
 
-  ${CMAKE_SOURCE_DIR}/core/Pipeline
   ${CMAKE_SOURCE_DIR}/core/Devices
-  ${CMAKE_SOURCE_DIR}/core/Storage
-  ${CMAKE_SOURCE_DIR}/core/Api
-  ${CMAKE_SOURCE_DIR}/core/Ui
-  ${CMAKE_SOURCE_DIR}/app/src
 )
-
-# The Pro drivers gate their entry points on Licensing/CommercialToken.h, which the generated
-# guards header backs.
-if(BUILD_COMMERCIAL AND LICENSE_GUARDS_INCLUDE_DIR)
-  target_include_directories(SerialStudioDevices PRIVATE ${LICENSE_GUARDS_INCLUDE_DIR})
-endif()
 
 #---------------------------------------------------------------------------------------------------
 # Link set
@@ -261,10 +232,26 @@ if(WIN32)
 endif()
 
 # IO/Drivers/Audio.h and its helpers include ThirdParty/miniaudio.h, whose struct layouts depend on
-# the MA_* feature switches: the archive and the executable must configure it identically or the
-# two disagree about the size of a ma_device.
+# the MA_* feature switches: every archive that sees the header must configure it identically or
+# two of them disagree about the size of a ma_device (the function lives in core/CMakeLists.txt so
+# Pipeline, added earlier, can call it too). This is the only target that compiles miniaudio's
+# implementation, so the vendored .cpp's warning suppressions and the ALSA link live here as well.
 if(BUILD_COMMERCIAL)
   ss_apply_miniaudio_definitions(SerialStudioDevices)
+
+  if(MSVC)
+    set_source_files_properties(ThirdParty/miniaudio.cpp
+      PROPERTIES COMPILE_OPTIONS "/wd4505"
+    )
+  else()
+    set_source_files_properties(ThirdParty/miniaudio.cpp
+      PROPERTIES COMPILE_OPTIONS "-Wno-unused-function"
+    )
+  endif()
+
+  if(LINUX)
+    target_link_libraries(SerialStudioDevices PRIVATE asound)
+  endif()
 endif()
 
 if(MSVC)
@@ -286,6 +273,14 @@ if(SS_UNITY_BUILD)
 
   if(MSVC)
     target_compile_options(SerialStudioDevices PRIVATE /bigobj)
+  endif()
+
+  # ~90k-line vendored TU full of file-local symbols. Its per-source COMPILE_OPTIONS already opt it
+  # out of unity; the pin keeps a warning-flag cleanup from silently pulling it into a batch.
+  if(BUILD_COMMERCIAL)
+    set_source_files_properties(ThirdParty/miniaudio.cpp
+      PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON
+    )
   endif()
 endif()
 

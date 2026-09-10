@@ -21,9 +21,9 @@
 
 #include "DataModel/RowFilterProxy.h"
 
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
-#include "DataModel/ProjectEditor.h"
-#include "SerialStudio.h"
+#include "DataModel/Project/EntityKinds.h"
 
 /**
  * @brief Constructs a pass-through proxy; the default role set covers the project editor form
@@ -123,7 +123,7 @@ bool DataModel::RowFilterProxy::rowIsSectionHeader(const QAbstractItemModel* mod
     return false;
 
   const QModelIndex index = model->index(row, 0, parent);
-  return model->data(index, m_widgetTypeRole).toInt() == ProjectEditor::SectionHeader;
+  return model->data(index, m_widgetTypeRole).toInt() == DataModel::RowSectionHeader;
 }
 
 /**

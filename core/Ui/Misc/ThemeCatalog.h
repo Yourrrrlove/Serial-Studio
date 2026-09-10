@@ -26,7 +26,7 @@
 #include <QString>
 #include <QStringList>
 
-#include "Misc/Translator.h"
+#include "Core/Translator.h"
 
 namespace Misc {
 

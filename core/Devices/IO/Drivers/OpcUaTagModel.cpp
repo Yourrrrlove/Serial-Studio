@@ -25,8 +25,8 @@
 #include <QLoggingCategory>
 #include <QUuid>
 
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
-#include "SerialStudio.h"
 
 Q_DECLARE_LOGGING_CATEGORY(lcOpcUa)
 

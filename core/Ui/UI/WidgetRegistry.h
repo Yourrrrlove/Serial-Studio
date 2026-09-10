@@ -27,7 +27,7 @@
 #include <QVariant>
 #include <QVector>
 
-#include "SerialStudio.h"
+#include "Core/SerialStudio.h"
 
 namespace UI {
 /**

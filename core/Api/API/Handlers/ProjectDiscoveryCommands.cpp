@@ -27,7 +27,8 @@
 
 #include "API/Handlers/ProjectApiSupport.h"
 #include "API/SchemaBuilder.h"
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
 
 using namespace API::Handlers::ProjectApiSupport;
@@ -119,7 +120,7 @@ struct SearchFilters {
  */
 static void appendSourceRows(const SearchFilters& filters, QJsonArray& out)
 {
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
   for (const auto& source : projectModel.sources()) {
     if (filters.hasSourceId && source.sourceId != filters.sourceId)
       continue;
@@ -140,7 +141,7 @@ static void appendSourceRows(const SearchFilters& filters, QJsonArray& out)
  */
 static void appendGroupRows(const SearchFilters& filters, QJsonArray& out)
 {
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
   for (const auto& group : projectModel.groups()) {
     if (filters.hasSourceId && group.sourceId != filters.sourceId)
       continue;
@@ -197,7 +198,7 @@ static void appendDatasetRow(const DataModel::Group& group,
  */
 static void appendDatasetRows(const SearchFilters& filters, QJsonArray& out)
 {
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
   for (const auto& group : projectModel.groups()) {
     if (filters.hasGroupId && group.groupId != filters.groupId)
       continue;
@@ -216,7 +217,7 @@ static void appendDatasetRows(const SearchFilters& filters, QJsonArray& out)
  */
 static void appendActionRows(const SearchFilters& filters, QJsonArray& out)
 {
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
   for (const auto& action : projectModel.actions()) {
     if (filters.hasSourceId && action.sourceId != filters.sourceId)
       continue;
@@ -237,7 +238,7 @@ static void appendActionRows(const SearchFilters& filters, QJsonArray& out)
  */
 static void appendWorkspaceRows(const SearchFilters& filters, QJsonArray& out)
 {
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
   for (const auto& workspace : projectModel.activeWorkspaces()) {
     if (!matchesQuery(workspace.title, filters.query))
       continue;
@@ -255,7 +256,7 @@ static void appendWorkspaceRows(const SearchFilters& filters, QJsonArray& out)
  */
 static void appendTableRows(const SearchFilters& filters, QJsonArray& out)
 {
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
   for (const auto& table : projectModel.tables()) {
     if (!matchesQuery(table.name, filters.query))
       continue;
@@ -491,7 +492,7 @@ API::CommandResponse API::Handlers::ProjectDiscoveryCommands::groupGet(const QSt
                      "would silently resolve to group 0. ")
         + kGroupIdSpacesHint);
 
-  static auto& projectModel     = DataModel::ProjectModel::instance();
+  auto& projectModel            = DataModel::pipelineModules().projectModel;
   const auto& groups            = projectModel.groups();
   const int selector            = selectorValue.toInt();
   const DataModel::Group* match = nullptr;

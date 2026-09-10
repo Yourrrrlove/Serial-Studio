@@ -11,10 +11,12 @@
 
 #include "UI/Widgets/Output/Base.h"
 
+#include "API/HandlerContext.h"
+#include "Core/Licensing/CommercialToken.h"
 #include "DataModel/NotificationCenter.h"
 #include "DataModel/Scripting/ScriptApiCall.h"
+#include "DataModel/TextCodec.h"
 #include "IO/ConnectionManager.h"
-#include "Licensing/CommercialToken.h"
 
 //--------------------------------------------------------------------------------------------------
 // Constructor & destructor
@@ -35,7 +37,7 @@ Widgets::Output::Base::Base(const DataModel::OutputWidget& config, QQuickItem* p
   , m_txEncoding(static_cast<SerialStudio::TextEncoding>(config.txEncoding))
   , m_hasFn(false)
   , m_watchdog(&m_jsEngine, kTransmitWatchdogMs, QStringLiteral("transmit"))
-  , m_connectionManager(IO::ConnectionManager::instance())
+  , m_connectionManager(API::handlerContext().connectionManager)
 {
   m_rateLimiter.start();
   DataModel::ScriptApiCall::installAll(&m_jsEngine, m_sourceId);

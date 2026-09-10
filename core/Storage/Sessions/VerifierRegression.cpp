@@ -20,16 +20,23 @@
 #  include <QCryptographicHash>
 #  include <QDir>
 #  include <QFile>
+#  include <QJsonArray>
 #  include <QJsonDocument>
+#  include <QJsonObject>
+#  include <QList>
+#  include <QMap>
+#  include <QSet>
 #  include <QSqlQuery>
+#  include <QStringList>
 
-#  include "AppInfo.h"
+#  include "Core/AppInfo.h"
+#  include "Core/DataModel/Frame.h"
+#  include "Core/SerialStudio.h"
 #  include "Core/SSAssert.h"
-#  include "DataModel/Frame.h"
 #  include "DataModel/FrameBuilder.h"
+#  include "DataModel/PipelineModules.h"
 #  include "DataModel/Scripting/ControlScript.h"
 #  include "IO/FrameReader.h"
-#  include "SerialStudio.h"
 #  include "Sessions/BlockReader.h"
 #  include "Sessions/Verifier.h"
 
@@ -288,7 +295,7 @@ int Sessions::Verifier::runRegression()
     m_notes.append(QStringLiteral("One or more value transforms differ between the recorded "
                                   "project and the current project."));
 
-  static auto& controlScript = DataModel::ControlScript::instance();
+  auto& controlScript = DataModel::pipelineModules().controlScript;
   controlScript.shutdown();
 
   const QString replayError = replayBothSides();
@@ -414,7 +421,7 @@ QString Sessions::Verifier::replayBothSides()
  */
 QJsonObject Sessions::Verifier::replaySideStats() const
 {
-  static auto& builder = DataModel::FrameBuilder::instance();
+  auto& builder = DataModel::pipelineModules().frameBuilder;
   return QJsonObject{
     {      QStringLiteral("chunksFed"),                                   m_lastFeedChunks},
     {QStringLiteral("framesExtracted"),                                   m_lastFeedFrames},
@@ -792,13 +799,13 @@ int Sessions::Verifier::failRegress(const QString& code, const QString& reason, 
 {
   m_verdict = QStringLiteral("error");
   m_report  = QJsonObject{
-    {     QStringLiteral("mode"), QStringLiteral("regression")},
-    {  QStringLiteral("verdict"),                    m_verdict},
-    {    QStringLiteral("error"),                       reason},
-    {QStringLiteral("errorCode"),                         code},
-    {     QStringLiteral("hint"),                         hint},
-    {  QStringLiteral("archive"),             m_options.dbPath},
-    {QStringLiteral("sessionId"),                  m_sessionId}
+     {     QStringLiteral("mode"), QStringLiteral("regression")},
+     {  QStringLiteral("verdict"),                    m_verdict},
+     {    QStringLiteral("error"),                       reason},
+     {QStringLiteral("errorCode"),                         code},
+     {     QStringLiteral("hint"),                         hint},
+     {  QStringLiteral("archive"),             m_options.dbPath},
+     {QStringLiteral("sessionId"),                  m_sessionId}
   };
   cleanupRegenerated();
   return kExitError;

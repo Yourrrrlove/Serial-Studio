@@ -27,7 +27,7 @@
 #include <QSet>
 #include <vector>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
 
 /**
  * @brief Workspace widget-ref repair after a structural project change: the positional identities a

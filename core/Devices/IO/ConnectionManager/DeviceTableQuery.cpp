@@ -21,18 +21,19 @@
 
 #include "IO/ConnectionManager/DeviceTableQuery.h"
 
+#include "Core/Bus/Messages.h"
+#include "Core/IO/HAL_Driver.h"
 #include "Core/SSAssert.h"
-#include "DataModel/ProjectModel.h"
 #include "IO/DeviceManager.h"
-#include "IO/FrameReader.h"
-#include "IO/HAL_Driver.h"
 
 /**
- * @brief Binds the live device table and the project it is built from; both outlive this object.
+ * @brief Binds the live device table and the project snapshot it is built from; both outlive this
+ *        object.
  */
-IO::DeviceTableQuery::DeviceTableQuery(const DeviceTable& devices,
-                                       DataModel::ProjectModel& projectModel)
-  : m_devices(devices), m_projectModel(projectModel)
+IO::DeviceTableQuery::DeviceTableQuery(
+  const DeviceTable& devices,
+  const std::shared_ptr<const Core::Bus::ProjectStructureSnapshot>& project)
+  : m_devices(devices), m_project(project)
 {}
 
 /**
@@ -106,33 +107,11 @@ QString IO::DeviceTableQuery::linkState(bool connected, bool connecting)
 }
 
 /**
- * @brief Sums the per-device frame-reader counters for the 1 Hz diagnostics sample. No caching and
- *        no signal: this is pulled once per second and must never be called on the frame path.
- */
-IO::LinkStats IO::DeviceTableQuery::linkStats() const
-{
-  LinkStats stats{};
-  for (const auto& [id, dm] : m_devices) {
-    const auto* reader = dm ? dm->frameReader() : nullptr;
-    if (!reader)
-      continue;
-
-    stats.bytesIn         += reader->bytesReceived();
-    stats.droppedFrames   += reader->droppedFrameCount();
-    stats.overflowBytes   += reader->overflowBytes();
-    stats.checksumErrors  += reader->checksumErrorCount();
-    stats.framesExtracted += reader->framesExtracted();
-  }
-
-  return stats;
-}
-
-/**
  * @brief True when every project source has a device whose driver is configured.
  */
 bool IO::DeviceTableQuery::projectConfigurationOk() const
 {
-  const auto& sources = m_projectModel.sources();
+  const auto& sources = m_project->sources;
   if (sources.empty())
     return false;
 

@@ -29,9 +29,9 @@
 #include <QTest>
 #include <QVariantMap>
 
+#include "Core/WorkspaceManager.h"
 #include "Misc/Extensions/ExtensionCatalog.h"
 #include "Misc/Extensions/ExtensionInstaller.h"
-#include "Misc/WorkspaceManager.h"
 #include "support/FakeTransport.h"
 
 // The installer writes into the workspace, so the fixture points WorkspaceManager at a temporary

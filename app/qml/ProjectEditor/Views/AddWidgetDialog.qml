@@ -163,7 +163,7 @@ Window {
   //
   readonly property var filteredWidgets: {
     const q = String(searchText || "").toLowerCase().trim()
-    const match = (s) => SerialStudio.searchMatches(q, String(s || ""))
+    const match = (s) => SerialStudioHelpers.searchMatches(q, String(s || ""))
     if (!q)
       return allWidgets
 

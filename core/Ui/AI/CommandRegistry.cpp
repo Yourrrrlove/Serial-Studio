@@ -14,7 +14,7 @@
 #include <QString>
 
 #include "AI/Logging.h"
-#include "Misc/JsonValidator.h"
+#include "Core/JsonValidator.h"
 
 //--------------------------------------------------------------------------------------------------
 // Singleton accessor

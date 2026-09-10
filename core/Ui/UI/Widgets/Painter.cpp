@@ -19,17 +19,20 @@
 #  include <QFileInfo>
 #  include <QPainter>
 #  include <QQuickWindow>
+#  include <QStringList>
 
 #  include "AppState.h"
-#  include "DataModel/Frame.h"
+#  include "Core/DataModel/Frame.h"
+#  include "Core/SerialStudio.h"
+#  include "Core/Services.h"
+#  include "Core/TimerEvents.h"
 #  include "DataModel/FrameBuilder.h"
 #  include "DataModel/NotificationCenter.h"
+#  include "DataModel/PipelineModules.h"
 #  include "DataModel/Scripting/DashboardApi.h"
 #  include "DataModel/Scripting/DeviceWriteApi.h"
 #  include "DataModel/Scripting/ScriptApiCall.h"
 #  include "Misc/ThemeManager.h"
-#  include "Misc/TimerEvents.h"
-#  include "SerialStudio.h"
 #  include "UI/Dashboard.h"
 #  include "UI/Widgets/PainterContext.h"
 #  include "UI/Widgets/PainterDataBridge.h"
@@ -126,11 +129,11 @@ static constexpr int kSlowPaintMs       = 30;
  */
 Widgets::Painter::Painter(int index, QQuickItem* parent)
   : QQuickPaintedItem(parent)
-  , m_frameBuilder(DataModel::FrameBuilder::instance())
-  , m_appState(AppState::instance())
+  , m_frameBuilder(DataModel::pipelineModules().frameBuilder)
+  , m_appState(DataModel::pipelineModules().appState)
   , m_themeManager(Misc::ThemeManager::instance())
   , m_dashboard(UI::Dashboard::instance())
-  , m_timerEvents(Misc::TimerEvents::instance())
+  , m_timerEvents(Core::services().timerEvents)
   , m_index(index)
   , m_compileDirty(true)
   , m_runtimeOk(false)

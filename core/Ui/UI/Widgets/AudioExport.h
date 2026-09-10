@@ -31,10 +31,11 @@
 #include <unordered_map>
 #include <vector>
 
-#include "DataModel/DataBlock.h"
-#include "DataModel/FrameConsumer.h"
+#include "Core/Bus/Subscription.h"
+#include "Core/DataModel/DataBlock.h"
+#include "Core/DataModel/FrameConsumer.h"
+#include "Core/SerialStudio.h"
 #include "IO/StreamWorker.h"
-#include "SerialStudio.h"
 
 class QFile;
 
@@ -111,12 +112,18 @@ private:
 };
 
 /**
+ * @brief The consumer base spelled out: the payload is a sample, yet the export takes blocks, so it
+ *        names the block-sink base the DataBlockPtr consumers get by default (spec 0077).
+ */
+using AudioExportBase = DataModel::FrameConsumer<AudioExportItem, DataModel::IBlockSink>;
+
+/**
  * @brief Singleton facade recording FFT/Waterfall input to WAV (Pro). Widgets own their frame-lane
  * Dashboard taps; published blocks feed sessions by dataset uniqueId via @c ingestBlock
  * (queued from blockReady, so the GUI stays the queue's single producer). External auto-stop calls
  * @c closeAllSessions(), which emits @c sessionsClosed() so widgets disarm (T6/T7 contract).
  */
-class AudioExport : public DataModel::FrameConsumer<AudioExportItem> {
+class AudioExport : public AudioExportBase {
   Q_OBJECT
 
 signals:
@@ -138,6 +145,7 @@ public:
   [[nodiscard]] static quint32 sessionKey(SerialStudio::DashboardWidget kind, int index);
 
   [[nodiscard]] bool hasActiveSessions() const noexcept;
+  [[nodiscard]] bool sinkActive() const noexcept override;
   [[nodiscard]] Q_INVOKABLE QString audioPath(const QString& datasetTitle,
                                               const QString& projectTitle) const;
 
@@ -150,7 +158,7 @@ public slots:
   void openSession(SerialStudio::DashboardWidget kind, int index, AudioSessionConfig config);
   void closeSession(SerialStudio::DashboardWidget kind, int index);
   void closeAllSessions();
-  void ingestBlock(const DataModel::DataBlockPtr& block);
+  void ingestBlock(const DataModel::DataBlockPtr& block) override;
   void setupExternalConnections();
 
 private slots:
@@ -164,6 +172,7 @@ private:
   // Read by the pipeline thread in ingestBlock(), mutated by the GUI on session open/close
   mutable QMutex m_sessionDatasetsMutex;
   QHash<quint32, int> m_sessionDatasets;
+  Core::Bus::Subscription m_licenseWatch;
 };
 
 }  // namespace Widgets

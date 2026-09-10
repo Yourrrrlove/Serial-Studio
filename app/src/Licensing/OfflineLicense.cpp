@@ -29,8 +29,8 @@
 #include <QJsonObject>
 #include <QUrl>
 
-#include "AppInfo.h"
-#include "Licensing/CommercialToken.h"
+#include "Core/AppInfo.h"
+#include "Core/Licensing/CommercialToken.h"
 #include "Licensing/LemonSqueezy.h"
 #include "Licensing/MachineID.h"
 #include "Licensing/MonotonicClock.h"

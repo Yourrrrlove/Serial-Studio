@@ -23,8 +23,9 @@
 
 #include <QDebug>
 
+#include "Core/Services.h"
 #include "Core/SSAssert.h"
-#include "Misc/WorkspaceManager.h"
+#include "Core/WorkspaceManager.h"
 
 /**
  * @brief Drops the adopted schema so the next session starts from an empty template.
@@ -124,9 +125,9 @@ QDir DataModel::ExportStructure::sessionDir(const QString& workspaceKey,
 {
   SS_ASSERT(!workspaceKey.isEmpty(), return QDir());
 
-  static auto& workspaceManager = Misc::WorkspaceManager::instance();
-  const auto subdir             = workspaceManager.path(workspaceKey);
-  const auto path = QStringLiteral("%1/%2").arg(subdir, sanitizeTitle(title, fallback));
+  auto& workspaceManager = Core::services().workspaceManager;
+  const auto subdir      = workspaceManager.path(workspaceKey);
+  const auto path        = QStringLiteral("%1/%2").arg(subdir, sanitizeTitle(title, fallback));
 
   QDir dir(path);
   if (!dir.exists() && !dir.mkpath(QStringLiteral(".")))

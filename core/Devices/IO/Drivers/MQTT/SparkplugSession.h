@@ -33,36 +33,12 @@
 #include <QVector>
 
 #include "Core/SSAssert.h"
-#include "IO/Drivers/OpcUaWire.h"
+#include "Protocols/OpcUa/OpcUaWire.h"
+#include "Protocols/Sparkplug/SparkplugLimits.h"
 #include "Protocols/Sparkplug/SparkplugPayload.h"
 
 namespace IO {
 namespace Drivers {
-
-/**
- * @brief Fixed caps for the Sparkplug B session state. Broker traffic decides how many nodes,
- *        devices, metrics and out-of-order messages arrive, so every container the session grows
- *        has a ceiling here and refuses past it (counted, never resized on demand). The slot
- *        ceiling is the OPC UA wire ceiling because the delta encoder that consumes the slot
- *        table is the same one.
- */
-namespace SparkplugLimits {
-inline constexpr int kMaxSlots            = OpcUaWire::kMaxTags;
-inline constexpr int kMaxPreBirthMessages = 256;
-inline constexpr int kMaxNodes            = 256;
-inline constexpr int kMaxDevicesPerNode   = 64;
-inline constexpr int kMaxTopicElements    = 5;
-inline constexpr quint64 kSeqModulus      = 256;
-
-// Namespace element every Sparkplug B v1.0 topic starts with
-inline constexpr const char* kNamespace = "spBv1.0";
-
-// Synthetic per-edge-node metric carrying the birth/death state (R5)
-inline constexpr const char* kOnlineMetric = "Online";
-
-// The identity cap is the encoder's own truncation point, so nothing is retained that cannot ship
-static_assert(SparkplugB::kMaxIdentityBytes == OpcUaWire::kMaxStringBytes);
-}  // namespace SparkplugLimits
 
 /**
  * @brief Sparkplug B session and birth-certificate state machine (spec 0073 R2-R6, R11): turns

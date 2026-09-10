@@ -1,0 +1,122 @@
+{
+  "spec": "0077-independent-modules",
+  "regenerate": "python scripts/code-verify.py --bus-census --accept",
+  "topics": {
+    "ConnectionStateChanged": {
+      "publishers": 1,
+      "subscribers": 7
+    },
+    "NotificationRaised": {
+      "publishers": 4,
+      "subscribers": 1
+    },
+    "NotificationPosted": {
+      "publishers": 1,
+      "subscribers": 1
+    },
+    "DashboardStructureChanged": {
+      "publishers": 1,
+      "subscribers": 2
+    },
+    "DashboardUpdated": {
+      "publishers": 1,
+      "subscribers": 1
+    },
+    "DashboardDataReset": {
+      "publishers": 1,
+      "subscribers": 2
+    },
+    "MirrorAttachedChanged": {
+      "publishers": 1,
+      "subscribers": 1
+    },
+    "LicenseStateChanged": {
+      "publishers": 1,
+      "subscribers": 10
+    },
+    "OperationModeChanged": {
+      "publishers": 1,
+      "subscribers": 12
+    },
+    "FrameConfigChanged": {
+      "publishers": 2,
+      "subscribers": 3
+    },
+    "ReplayPlayerStateChanged": {
+      "publishers": 8,
+      "subscribers": 5
+    },
+    "AudioCaptureFormat": {
+      "publishers": 1,
+      "subscribers": 1
+    },
+    "WidgetExtensionCatalog": {
+      "publishers": 1,
+      "subscribers": 2
+    },
+    "DashboardViewState": {
+      "publishers": 2,
+      "subscribers": 2
+    },
+    "DashboardViewStateRestoreRequested": {
+      "publishers": 2,
+      "subscribers": 1
+    },
+    "DashboardViewStateClearRequested": {
+      "publishers": 1,
+      "subscribers": 1
+    },
+    "DisconnectRequested": {
+      "publishers": 1,
+      "subscribers": 1
+    },
+    "DeviceOpenAttempted": {
+      "publishers": 1,
+      "subscribers": 1
+    },
+    "ModbusRegisterGroupsLoaded": {
+      "publishers": 1,
+      "subscribers": 1
+    },
+    "LoadGeneratedProjectRequested": {
+      "publishers": 2,
+      "subscribers": 1
+    },
+    "GeneratedProjectLoadFinished": {
+      "publishers": 2,
+      "subscribers": 1
+    },
+    "Source0ConnectionSettingsChanged": {
+      "publishers": 2,
+      "subscribers": 1
+    },
+    "ProjectStructureSnapshot": {
+      "publishers": 1,
+      "subscribers": 4
+    },
+    "ConnectionAboutToOpen": {
+      "publishers": 1,
+      "subscribers": 1
+    },
+    "ActiveUiDriverSettings": {
+      "publishers": 1,
+      "subscribers": 1
+    },
+    "SourceSettingsCaptureRequested": {
+      "publishers": 1,
+      "subscribers": 1
+    },
+    "SourceConnectionSettingsCaptured": {
+      "publishers": 1,
+      "subscribers": 1
+    },
+    "SourceSettingsRestoreRequested": {
+      "publishers": 1,
+      "subscribers": 1
+    }
+  },
+  "value_types": [
+    "WidgetExtensionEntry"
+  ],
+  "errors": []
+}

@@ -24,7 +24,7 @@
 #include <QList>
 #include <QMap>
 
-#include "SerialStudio.h"
+#include "Core/SerialStudio.h"
 #include "UI/WidgetRegistry.h"
 
 namespace UI {

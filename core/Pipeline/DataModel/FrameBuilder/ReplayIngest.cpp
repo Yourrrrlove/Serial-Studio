@@ -24,8 +24,8 @@
 #include <charconv>
 #include <cstdio>
 
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
-#include "SerialStudio.h"
 
 /**
  * @brief Binds the three FrameBuilder members the cell writers read; the column map arrives when

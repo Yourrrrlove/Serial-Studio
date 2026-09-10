@@ -11,6 +11,16 @@
   `instance().uart()`, `.network()`, `.bluetoothLE()`, etc. QML context properties
   (`Cpp_IO_Serial`, etc.) point at these.
 - `IO::DriverFactory::create()` (spec 0070) makes **fresh** instances for live connections, owned by `DeviceManager`.
+- `driverProperties()` is the persistence snapshot AND the Project Editor's form, so a row another
+  mode does not use is never left out: it carries `DriverProperty::visibleWhen` rules (sibling key
+  plus the values that show it, ANDed; `IO::driverPropertyVisible()` evaluates them) and the
+  editor hides it. A label-less property is an opaque payload (`tags`, `points`, `registerGroups`)
+  and gets no row. The editor rebuilds its form when an edit changes which rows show or what a
+  combo offers, whichever way the driver gates them.
+- Live drivers take their settings from the UI driver, never from the user directly: a
+  single-source project mirrors every UI-driver edit onto live driver 0
+  (`UiDriverSync::syncToLive`), and a Project Editor edit to any source is mirrored onto that
+  source's live driver when its capture request is served (`UiDriverSync::serveCapture`).
 - `configurationOk()` checks the **UI** driver, not the live one. UI driver's
   `configurationChanged` forwards to `ConnectionManager::configurationChanged`. All drivers
   must `Q_EMIT configurationChanged()` from their ctor.
@@ -171,7 +181,8 @@ namesake of a removed 0034 hook, but a different, much smaller thing (see below)
   `setDriverProperty()` offers each key to every transport (`applyConnectionSettings()` replays all
   stored keys on project load, so gating on the active type silently drops settings). For the same
   reason `driverProperties()` emits **every** transport's rows unconditionally, so a project saved
-  while on TCP keeps its WebSocket, HTTP and TLS settings. Only UDP still settles synchronously;
+  while on TCP keeps its WebSocket, HTTP and TLS settings; each row's `visibleWhen` names the socket
+  types that show it. Only UDP still settles synchronously;
   **TCP, WebSocket and HTTP dial async**, so `isConnecting()` returns `m_dialPending` for those
   three. Their verdict funnels are
   `succeedDial()` / `failDial()`, and `failDial()` only REPORTS, because `onDriverOpenFinished`
@@ -419,8 +430,8 @@ namesake of a removed 0034 hook, but a different, much smaller thing (see below)
 ## ConnectionManager's Sub-objects
 
 The facade owns its concerns as member sub-objects under `core/Devices/IO/ConnectionManager/`, one
-class per `.h/.cpp` pair (`ConnectFanOut`, `DeviceIoRouter`, `DeviceTableQuery`, `DriverFactory`,
-`DriverUiRegistry`, `ReplyCapture`, `StreamConfigBuilder`, `StreamWorkerPool`, `UiDriverSync`).
+class per `.h/.cpp` pair (`BusBridge`, `ConnectFanOut`, `DeviceIoRouter`, `DeviceTableQuery`,
+`DriverFactory`, `DriverUiRegistry`, `ReplyCapture`, `StreamConfigBuilder`, `UiDriverSync`).
 The four that matter on the connect path:
 What stays in `ConnectionManager.cpp` is connect/disconnect orchestration, because
 it needs `QObject::sender()` (`onDriverOpenFinished` resolves which driver reported), `Q_EMIT`,
@@ -430,16 +441,21 @@ it needs `QObject::sender()` (`onDriverOpenFinished` resolves which driver repor
   dial ids (`notePendingDial` / `takePendingDial`), the latched connected/connecting snapshots and
   the wait cursor. It queries no device and emits nothing.
 - **`DeviceIoRouter` (`m_io`)** — what crosses the device link and how it is framed: the
-  delimiters and checksum the readers are rebuilt from, the inbound payload fan-in to the console
-  and the API/session/MQTT/gRPC taps, and the outbound write path with its reply capture.
-  ConnectionManager's byte path is this class.
+  delimiters and checksum the readers are rebuilt from, the inbound chunk fan-out to the
+  `IO::IRawByteTap` array the composition root bound (console, API servers, historian, MQTT
+  publisher, gRPC; spec 0077) and to the `IO::IIngestBinder` for injected payloads, and the
+  outbound write path with its reply capture. ConnectionManager's byte path is this class; it
+  names no sink type.
 - **`DeviceTableQuery` (`m_query`)** — every read over the live device table: open counts,
-  `linkState()`, the 1 Hz `linkStats()` sample, the configuration verdict and the id lookups the
-  connect fan-outs iterate. Read-only by construction, so nothing here can mutate a device or emit
-  a signal. **`IO::LinkStats` is declared in `DeviceTableQuery.h`**, not in `ConnectionManager.h`;
-  `ConnectionManager::linkStats()` forwards.
-- **`StreamWorkerPool`** — the per-source `IO::StreamWorker` lifecycle joined first in
-  `ModuleManager::stopFrameConsumerWorkers()`.
+  `linkState()`, the configuration verdict and the id lookups the connect fan-outs iterate.
+  Read-only by construction, so nothing here can mutate a device or emit a signal. The 1 Hz
+  `linkStats()` sample comes from the binder: the pipeline host owns the readers.
+- **Readers and stream workers live in the pipeline.** `DeviceManager` calls
+  `IIngestBinder::attach/reconfigure/detach`; `IO::PipelineHost` creates the `FrameReader`,
+  feeds it the driver's `dataReceived` (Auto, so queued once moved) and adopts it onto the
+  processing thread. `IO::StreamWorkerPool` (`core/Pipeline/IO/`) owns the per-source
+  `IO::StreamWorker`s from the `StreamAttachment`s `ConnectionManager::rebuildStreamWorkers()`
+  derives; the pool is stopped first in `ModuleManager::stopFrameConsumerWorkers()`.
 
 Other IO invariants worth naming at the point of action:
 

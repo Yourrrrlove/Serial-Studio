@@ -37,13 +37,13 @@
 #include <QVariant>
 #include <QVector>
 
-#include "DataModel/Frame.h"
-#include "IO/Drivers/OpcUaWire.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/IO/HAL_Driver.h"
+#include "IO/Drivers/GeneratedProjectRequest.h"
 #include "IO/Drivers/PolledPlcWorkerBase.h"
-#include "IO/HAL_Driver.h"
+#include "Protocols/OpcUa/OpcUaWire.h"
 
 class QTimer;
-class AppState;
 
 namespace DataModel {
 class ProjectModel;
@@ -199,7 +199,7 @@ public:
   [[nodiscard]] QJsonArray wireSchema() const;
   [[nodiscard]] QJsonObject statusJson() const;
   [[nodiscard]] QJsonObject buildProject() const;
-  [[nodiscard]] DataModel::ProjectModel* loadGeneratedProject();
+  [[nodiscard]] bool loadGeneratedProject();
 
   [[nodiscard]] Q_INVOKABLE QString tagInfo(const int index) const;
 
@@ -228,8 +228,7 @@ private:
   [[nodiscard]] const EthernetIp* sessionPeer() const;
   [[nodiscard]] static DataModel::Dataset datasetFor(const EipTag& tag, int index);
 
-  AppState& m_appState;
-  DataModel::ProjectModel& m_projectModel;
+  GeneratedProjectRequest m_generatedProject;
 
   bool m_open;
   bool m_connecting;

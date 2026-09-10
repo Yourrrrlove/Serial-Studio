@@ -12,7 +12,7 @@
 #include <QString>
 
 #include "AI/Tools/ToolSupport.h"
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
 
 namespace AI::ToolDetail {
 

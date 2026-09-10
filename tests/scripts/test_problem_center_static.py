@@ -85,29 +85,27 @@ def test_problem_commands_are_in_exactly_one_tier():
 
 
 def test_problem_commands_are_registered_in_cpp():
-    handler = read_text("core/Api/API/Handlers/ProblemsHandler.cpp")
+    handler = read_text("core/Ui/ApiHandlers/ProblemsHandler.cpp")
 
     for name in COMMANDS:
         assert f'QStringLiteral("{name}")' in handler
 
 
 def test_problems_handler_is_registered_in_the_gpl_block():
-    source = read_text("core/Api/API/CommandHandler.cpp")
+    source = read_text("core/Ui/ApiHandlers/UiHandlers.cpp")
 
-    assert "API/Handlers/ProblemsHandler.h" in source
+    assert "ApiHandlers/ProblemsHandler.h" in source
     assert "Handlers::ProblemsHandler::registerCommands();" in source
 
     call = source.index("Handlers::ProblemsHandler::registerCommands();")
-    commercial = source.index(
-        "#ifdef BUILD_COMMERCIAL", source.index("initializeHandlers")
-    )
+    commercial = source.index("#ifdef BUILD_COMMERCIAL", source.index("registerAll()"))
     assert call < commercial, "the handler must register outside the commercial block"
 
 
 def test_problems_handler_carries_no_commercial_guard():
     for path in (
-        "core/Api/API/Handlers/ProblemsHandler.h",
-        "core/Api/API/Handlers/ProblemsHandler.cpp",
+        "core/Ui/ApiHandlers/ProblemsHandler.h",
+        "core/Ui/ApiHandlers/ProblemsHandler.cpp",
     ):
         assert "BUILD_COMMERCIAL" not in read_text(path), f"{path} must stay GPL-clean"
 

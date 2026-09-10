@@ -19,6 +19,7 @@
 #include "AI/Tools/ToolSchemas.h"
 #include "AI/Tools/ToolSupport.h"
 #include "API/CommandRegistry.h"
+#include "API/HandlerContext.h"
 
 namespace AI::ToolDetail {
 
@@ -47,9 +48,9 @@ QJsonArray availableTools(const QString& category)
   appendVirtual(assistantToolDefs());
   appendVirtual(fsToolDefs());
 
-  static auto& apiRegistry = API::CommandRegistry::instance();
-  const auto& commands     = apiRegistry.commands();
-  static auto& aiReg       = AI::CommandRegistry::instance();
+  auto& apiRegistry    = API::handlerContext().registry;
+  const auto& commands = apiRegistry.commands();
+  static auto& aiReg   = AI::CommandRegistry::instance();
 
   for (auto it = commands.constBegin(); it != commands.constEnd(); ++it) {
     const auto& def = it.value();
@@ -125,9 +126,9 @@ static const QVector<AssistantToolDef>& metaToolRoster()
  *         0 = all), and reduced to bare name strings when namesOnly is set. */
 QJsonObject listCommands(const QString& prefix, int offset, int limit, bool namesOnly)
 {
-  static auto& apiRegistry = API::CommandRegistry::instance();
-  const auto& commands     = apiRegistry.commands();
-  static auto& aiReg       = AI::CommandRegistry::instance();
+  auto& apiRegistry    = API::handlerContext().registry;
+  const auto& commands = apiRegistry.commands();
+  static auto& aiReg   = AI::CommandRegistry::instance();
 
   QJsonArray entries;
   QSet<QString> seen;
@@ -229,9 +230,9 @@ QJsonObject searchCommands(const QString& query, int offset, int limit)
   for (const auto& def : metaToolRoster())
     consider(def.name, def.description);
 
-  static auto& apiRegistry = API::CommandRegistry::instance();
-  static auto& aiReg       = AI::CommandRegistry::instance();
-  const auto& commands     = apiRegistry.commands();
+  auto& apiRegistry    = API::handlerContext().registry;
+  static auto& aiReg   = AI::CommandRegistry::instance();
+  const auto& commands = apiRegistry.commands();
   for (auto it = commands.constBegin(); it != commands.constEnd(); ++it) {
     if (aiReg.safetyOf(it.value().name) == Safety::Blocked)
       continue;
@@ -347,7 +348,7 @@ static const QHash<QString, QString>& scopeDescriptions()
 QJsonObject listCategories()
 {
   const auto& kDescriptions = scopeDescriptions();
-  static auto& apiRegistry  = API::CommandRegistry::instance();
+  auto& apiRegistry         = API::handlerContext().registry;
   const auto& commands      = apiRegistry.commands();
   static auto& aiReg        = AI::CommandRegistry::instance();
 
@@ -402,7 +403,7 @@ QString canonicalToolName(const QString& name)
   if (isAssistantTool(name) || isFsTool(name))
     return name;
 
-  static auto& apiRegistry = API::CommandRegistry::instance();
+  auto& apiRegistry = API::handlerContext().registry;
   if (apiRegistry.hasCommand(name))
     return name;
 
@@ -420,8 +421,8 @@ QString canonicalToolName(const QString& name)
     for (const auto& def : fsToolDefs())
       add(def.name);
 
-    static auto& registry = API::CommandRegistry::instance();
-    const auto& commands  = registry.commands();
+    auto& registry       = API::handlerContext().registry;
+    const auto& commands = registry.commands();
     for (auto it = commands.constBegin(); it != commands.constEnd(); ++it)
       add(it.value().name);
 
@@ -450,9 +451,9 @@ QJsonObject describeCommand(const QString& requestedName)
   if (isFsTool(name))
     return fsToolDescription(name);
 
-  static auto& apiRegistry = API::CommandRegistry::instance();
-  const auto& commands     = apiRegistry.commands();
-  const auto it            = commands.constFind(name);
+  auto& apiRegistry    = API::handlerContext().registry;
+  const auto& commands = apiRegistry.commands();
+  const auto it        = commands.constFind(name);
   if (it == commands.constEnd())
     return {};
 

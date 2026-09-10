@@ -27,10 +27,10 @@
 #include <QSet>
 
 #include "AppState.h"
+#include "Core/DataModel/PropertyValidators.h"
+#include "Core/SerialStudio.h"
 #include "DataModel/Project/ProjectTables.h"
 #include "DataModel/ProjectModel.h"
-#include "Misc/IconEngine.h"
-#include "UI/WidgetExtensions.h"
 
 namespace DataModel {
 
@@ -80,7 +80,7 @@ static QString extension_scope_key(int widgetType,
   if (package.isEmpty())
     return widget_scope_key(widgetType, uniqueId);
 
-  return UI::WidgetExtensions::persistedTypeToken(package) + QLatin1Char(':')
+  return SerialStudio::persistedExtensionTypeToken(package) + QLatin1Char(':')
        + QString::number(uniqueId);
 }
 
@@ -774,7 +774,7 @@ QVariantList DataModel::ProjectPresentation::actionsForDiagram() const
     map[Keys::ActionId] = act.actionId;
     map[Keys::SourceId] = act.sourceId;
     map[Keys::Title]    = act.title;
-    map[Keys::Icon]     = Misc::IconEngine::resolveActionIconSource(act.icon);
+    map[Keys::Icon]     = DataModel::PropertyHooks::resolveActionIcon(act.icon);
     result.append(map);
   }
 

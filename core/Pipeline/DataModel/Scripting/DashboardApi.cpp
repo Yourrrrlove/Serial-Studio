@@ -32,11 +32,64 @@ extern "C" {
 #include <QString>
 #include <stdexcept>
 
+#include "Core/DataModel/Frame.h"
 #include "Core/SSAssert.h"
-#include "DataModel/Frame.h"
+#include "DataModel/IDashboardControl.h"
 #include "DataModel/ProjectModel.h"
 #include "DataModel/Scripting/ScriptResult.h"
-#include "UI/Dashboard.h"
+
+//--------------------------------------------------------------------------------------------------
+// Dashboard control binding (spec 0077 T64)
+//--------------------------------------------------------------------------------------------------
+
+static DataModel::IDashboardControl* s_dashboardControl = nullptr;
+
+/**
+ * @brief Binds the dashboard the script APIs drive; the composition root calls this once.
+ */
+void DataModel::setDashboardControl(IDashboardControl* control) noexcept
+{
+  s_dashboardControl = control;
+}
+
+/**
+ * @brief Returns the bound dashboard control, or nullptr before the root binds one.
+ */
+DataModel::IDashboardControl* DataModel::dashboardControl() noexcept
+{
+  return s_dashboardControl;
+}
+
+/**
+ * @brief Returns the bound dashboard control; a script API reached before the root has bound one
+ *        is a composition defect, so the release fallback is a static control that ignores every
+ *        verb and knows no action, never a null dereference.
+ */
+DataModel::IDashboardControl& DataModel::requireDashboardControl()
+{
+  struct NullControl final : IDashboardControl {
+    void clearPlotData() override {}
+
+    void setPoints(int) override {}
+
+    void setClockEnabled(bool) override {}
+
+    void setTerminalEnabled(bool) override {}
+
+    void setStopwatchEnabled(bool) override {}
+
+    void setNotificationLogEnabled(bool) override {}
+
+    void activateAction(int, bool) override {}
+
+    [[nodiscard]] int actionIndexForId(int) const noexcept override { return -1; }
+  };
+
+  static NullControl nullControl;
+
+  SS_ASSERT(s_dashboardControl != nullptr, return nullControl);
+  return *s_dashboardControl;
+}
 
 using namespace DataModel::ScriptResult;
 
@@ -50,7 +103,7 @@ using namespace DataModel::ScriptResult;
 static bool coreClearPlots(QString& errorMsgOut)
 {
   try {
-    static auto& dashboard = UI::Dashboard::instance();
+    auto& dashboard = DataModel::requireDashboardControl();
     dashboard.clearPlotData();
   } catch (const std::exception& e) {
     errorMsgOut = QString::fromUtf8(e.what());
@@ -72,7 +125,7 @@ static bool coreSetPlotPoints(int points, QString& errorMsgOut)
   }
 
   try {
-    static auto& dashboard = UI::Dashboard::instance();
+    auto& dashboard = DataModel::requireDashboardControl();
     dashboard.setPoints(points);
   } catch (const std::exception& e) {
     errorMsgOut = QString::fromUtf8(e.what());
@@ -86,12 +139,12 @@ static bool coreSetPlotPoints(int points, QString& errorMsgOut)
 /**
  * @brief Toggles a boolean dashboard property via a Dashboard setter.
  */
-static bool coreSetVisibility(void (UI::Dashboard::*setter)(const bool),
+static bool coreSetVisibility(void (DataModel::IDashboardControl::*setter)(bool),
                               bool visible,
                               QString& errorMsgOut)
 {
   try {
-    static auto& dashboard = UI::Dashboard::instance();
+    auto& dashboard = DataModel::requireDashboardControl();
     (dashboard.*setter)(visible);
   } catch (const std::exception& e) {
     errorMsgOut = QString::fromUtf8(e.what());
@@ -189,7 +242,7 @@ static int luaSetPlotPoints(lua_State* L)
 /**
  * @brief Lua entry for a single boolean-arg dashboard setter.
  */
-template<void (UI::Dashboard::*Setter)(const bool)>
+template<void (DataModel::IDashboardControl::*Setter)(bool)>
 static int luaSetVisibility(lua_State* L)
 {
   if (!lua_isboolean(L, 1)) {
@@ -262,7 +315,7 @@ QVariantMap DataModel::DashboardBridge::setPlotPoints(const QJSValue& pointsVal)
  */
 static QVariantMap setVisibilityJs(const QJSValue& visibleVal,
                                    const char* name,
-                                   void (UI::Dashboard::*setter)(const bool))
+                                   void (DataModel::IDashboardControl::*setter)(bool))
 {
   if (!visibleVal.isBool())
     return makeResult(false, QStringLiteral("%1: visible must be a boolean").arg(name));
@@ -277,7 +330,8 @@ static QVariantMap setVisibilityJs(const QJSValue& visibleVal,
  */
 QVariantMap DataModel::DashboardBridge::setTerminalVisible(const QJSValue& visibleVal)
 {
-  return setVisibilityJs(visibleVal, "setTerminalVisible", &UI::Dashboard::setTerminalEnabled);
+  return setVisibilityJs(
+    visibleVal, "setTerminalVisible", &DataModel::IDashboardControl::setTerminalEnabled);
 }
 
 /**
@@ -285,8 +339,9 @@ QVariantMap DataModel::DashboardBridge::setTerminalVisible(const QJSValue& visib
  */
 QVariantMap DataModel::DashboardBridge::setNotificationLogVisible(const QJSValue& visibleVal)
 {
-  return setVisibilityJs(
-    visibleVal, "setNotificationLogVisible", &UI::Dashboard::setNotificationLogEnabled);
+  return setVisibilityJs(visibleVal,
+                         "setNotificationLogVisible",
+                         &DataModel::IDashboardControl::setNotificationLogEnabled);
 }
 
 /**
@@ -294,7 +349,8 @@ QVariantMap DataModel::DashboardBridge::setNotificationLogVisible(const QJSValue
  */
 QVariantMap DataModel::DashboardBridge::setClockVisible(const QJSValue& visibleVal)
 {
-  return setVisibilityJs(visibleVal, "setClockVisible", &UI::Dashboard::setClockEnabled);
+  return setVisibilityJs(
+    visibleVal, "setClockVisible", &DataModel::IDashboardControl::setClockEnabled);
 }
 
 /**
@@ -302,7 +358,8 @@ QVariantMap DataModel::DashboardBridge::setClockVisible(const QJSValue& visibleV
  */
 QVariantMap DataModel::DashboardBridge::setStopwatchVisible(const QJSValue& visibleVal)
 {
-  return setVisibilityJs(visibleVal, "setStopwatchVisible", &UI::Dashboard::setStopwatchEnabled);
+  return setVisibilityJs(
+    visibleVal, "setStopwatchVisible", &DataModel::IDashboardControl::setStopwatchEnabled);
 }
 
 /**
@@ -340,16 +397,16 @@ void DataModel::DashboardApi::installLua(lua_State* L)
   lua_pushcfunction(L, luaSetPlotPoints);
   lua_setglobal(L, "setPlotPoints");
 
-  lua_pushcfunction(L, &luaSetVisibility<&UI::Dashboard::setTerminalEnabled>);
+  lua_pushcfunction(L, &luaSetVisibility<&DataModel::IDashboardControl::setTerminalEnabled>);
   lua_setglobal(L, "setTerminalVisible");
 
-  lua_pushcfunction(L, &luaSetVisibility<&UI::Dashboard::setNotificationLogEnabled>);
+  lua_pushcfunction(L, &luaSetVisibility<&DataModel::IDashboardControl::setNotificationLogEnabled>);
   lua_setglobal(L, "setNotificationLogVisible");
 
-  lua_pushcfunction(L, &luaSetVisibility<&UI::Dashboard::setClockEnabled>);
+  lua_pushcfunction(L, &luaSetVisibility<&DataModel::IDashboardControl::setClockEnabled>);
   lua_setglobal(L, "setClockVisible");
 
-  lua_pushcfunction(L, &luaSetVisibility<&UI::Dashboard::setStopwatchEnabled>);
+  lua_pushcfunction(L, &luaSetVisibility<&DataModel::IDashboardControl::setStopwatchEnabled>);
   lua_setglobal(L, "setStopwatchVisible");
 
   lua_pushcfunction(L, luaSetActiveWorkspace);

@@ -27,8 +27,9 @@
 #include <QKeySequence>
 #include <QtLogging>
 
+#include "Core/Services.h"
 #include "Core/SSAssert.h"
-#include "Misc/Translator.h"
+#include "Core/Translator.h"
 
 /**
  * @brief Name-to-StandardKey table for the "StandardKey.X" shortcut spellings
@@ -55,7 +56,7 @@ static const QHash<QString, QKeySequence::StandardKey> kStandardKeys = {
  * @brief Loads and validates every command and layout manifest from resources;
  *        malformed entries warn and are skipped, never fatal.
  */
-UI::CommandRegistry::CommandRegistry() : m_translator(Misc::Translator::instance())
+UI::CommandRegistry::CommandRegistry() : m_translator(Core::services().translator)
 {
   loadManifest(QStringLiteral(":/commands/app.json"));
   loadManifest(QStringLiteral(":/commands/dashboard.json"));

@@ -23,6 +23,7 @@
 #include "API/Handlers/InfluxHandler.h"
 
 #include "API/CommandRegistry.h"
+#include "API/HandlerContext.h"
 #include "API/SchemaBuilder.h"
 #include "InfluxDB/Export.h"
 
@@ -111,7 +112,7 @@ API::CommandResponse API::Handlers::InfluxHandler::setConfig(const QString& id,
       ErrorCode::InvalidParam,
       QStringLiteral("URL must use https, or http only for a loopback host"));
 
-  static auto& sink = InfluxDB::Export::instance();
+  auto& sink = API::handlerContext().influxExport;
 
   if (params.contains(QStringLiteral("url")))
     sink.setUrl(url);
@@ -155,7 +156,7 @@ API::CommandResponse API::Handlers::InfluxHandler::setEnabled(const QString& id,
       id, ErrorCode::InvalidParam, QStringLiteral("Parameter 'enabled' must be a boolean"));
   }
 
-  static auto& sink = InfluxDB::Export::instance();
+  auto& sink = API::handlerContext().influxExport;
   sink.setExportEnabled(enabled.toBool());
 
   QJsonObject result;
@@ -175,7 +176,7 @@ API::CommandResponse API::Handlers::InfluxHandler::getStatus(const QString& id,
 {
   Q_UNUSED(params)
 
-  static const auto& sink = InfluxDB::Export::instance();
+  static const auto& sink = API::handlerContext().influxExport;
 
   QJsonObject result;
   result[QStringLiteral("enabled")]     = sink.exportEnabled();

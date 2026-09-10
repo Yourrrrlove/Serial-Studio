@@ -199,7 +199,7 @@
   the pinned composition root (benchmark pattern) and runs `Sessions::Verifier` — archive
   opened read-only; integrity re-hash; classification check; then re-parse: archived
   `project_json` into `ProjectModel`, one `FrameReader` per archived device from
-  `ConnectionManager::buildFrameConfig`, chunks fed in `raw_id` order into
+  `IO::FrameConfigBuilder::build` (the retained project snapshot, spec 0077), chunks fed in `raw_id` order into
   `FrameBuilder::hotpathRxSourceFrame`, re-recorded by the **untouched** `Sessions::Export`
   into a temp DB (`DatabaseManager::setDbPathOverride`), with blocking `flushWorker()`
   every 4096 frames so the re-record never drops. Diff = per-uid lockstep walk ordered by
@@ -250,7 +250,7 @@
   0044.
 - **Diff & verdicts.** Per-uid merge-join on the provenance key across the two regen DBs:
   `structural-drift` (uid sets differ, or archived devices absent from a side's source
-  list — excluded from that side's feed explicitly, never left to `buildFrameConfig()`'s
+  list — excluded from that side's feed explicitly, never left to `FrameConfigBuilder::build()`'s
   silent `/* */` fallback) > `coverage-drift` (one-sided keys) > `value-drift` (bit-exact
   compare fails) > `identical`. Console-only archives are `not_verifiable`;
   virtual/table-fed datasets classified, never compared. **Control-script sessions compare

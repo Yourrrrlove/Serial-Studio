@@ -26,6 +26,7 @@
 #include <QTimer>
 #include <QVariantMap>
 
+#include "DataModel/ActionBytes.h"
 #include "DataModel/ProjectModel.h"
 #include "IO/ConnectionManager.h"
 #include "Misc/IconEngine.h"

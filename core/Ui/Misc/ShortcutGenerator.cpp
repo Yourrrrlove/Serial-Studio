@@ -21,8 +21,7 @@
 #  include <QStandardPaths>
 #  include <QUrl>
 
-#  include "Licensing/LemonSqueezy.h"
-#  include "Licensing/Trial.h"
+#  include "Core/License.h"
 #  include "Misc/Utilities.h"
 
 //--------------------------------------------------------------------------------------------------
@@ -344,12 +343,7 @@ QString Misc::ShortcutGenerator::quoteArg(const QString& arg) const
  */
 bool Misc::ShortcutGenerator::hasProLicense() const
 {
-  static auto& lemonSqueezy = Licensing::LemonSqueezy::instance();
-  if (lemonSqueezy.isActivated())
-    return true;
-
-  static auto& trial = Licensing::Trial::instance();
-  return trial.trialEnabled();
+  return Core::License::activated();
 }
 
 /**

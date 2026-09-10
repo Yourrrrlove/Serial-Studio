@@ -26,8 +26,8 @@
 #include <QDateTime>
 
 #include "Core/DSPSimd.h"
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
-#include "SerialStudio.h"
 
 static constexpr qsizetype kBatchRows = 65536;
 

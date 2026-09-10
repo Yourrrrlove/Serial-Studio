@@ -30,15 +30,22 @@
 
 #include "Console/Annotations.h"
 #include "Console/TextFormat.h"
+#include "Core/Bus/Subscription.h"
 #include "Core/CircularBuffer.h"
-#include "IO/HAL_Driver.h"
-#include "SerialStudio.h"
+#include "Core/IO/HAL_Driver.h"
+#include "Core/IO/IRawByteTap.h"
+#include "Core/SerialStudio.h"
+
+namespace Core::Bus {
+class MessageBus;
+}  // namespace Core::Bus
 
 class AppState;
 class SessionContext;
 
 namespace Misc {
 class CommonFonts;
+class Translator;
 }  // namespace Misc
 
 namespace IO {
@@ -53,7 +60,9 @@ namespace Console {
 /**
  * @brief Receives device data and formats it for the console text view.
  */
-class Handler : public QObject {
+class Handler
+  : public QObject
+  , public IO::IRawByteTap {
   // clang-format off
   Q_OBJECT
   Q_PROPERTY(bool echo
@@ -106,6 +115,9 @@ class Handler : public QObject {
   Q_PROPERTY(QStringList textEncodings
              READ textEncodings
              NOTIFY languageChanged)
+  Q_PROPERTY(QString welcomeConsoleText
+             READ welcomeConsoleText
+             NOTIFY welcomeConsoleTextChanged)
   Q_PROPERTY(QString currentHistoryString
              READ currentHistoryString
              NOTIFY historyItemChanged)
@@ -200,12 +212,17 @@ signals:
   void imageWidgetActiveChanged();
   void collapseDuplicatesChanged();
   void searchCaseSensitiveChanged();
+  void welcomeConsoleTextChanged();
   void displayString(const QString& text);
   void deviceDataReady(int deviceId, const QString& text);
 
 private:
   friend class ::SessionContext;
-  explicit Handler();
+
+  static void bindInstance(Handler* instance) noexcept { s_instance = instance; }
+
+  static Handler* s_instance;
+  Handler(Core::Bus::MessageBus& bus, IO::ConnectionManager& connectionManager);
   Handler(Handler&&)                 = delete;
   Handler(const Handler&)            = delete;
   Handler& operator=(Handler&&)      = delete;
@@ -255,6 +272,7 @@ public:
   [[nodiscard]] QStringList displayModes() const;
   [[nodiscard]] QStringList checksumMethods() const;
   [[nodiscard]] QStringList textEncodings() const;
+  [[nodiscard]] QString welcomeConsoleText() const;
 
   [[nodiscard]] QFont font() const;
   [[nodiscard]] int fontSize() const;
@@ -309,6 +327,10 @@ public slots:
   void displayDebugData(const QString& data);
   void hotpathRxData(const QByteArray& data);
   void hotpathRxDeviceData(int deviceId, const QByteArray& data);
+  void onDeviceBytes(int deviceId, const IO::CapturedDataPtr& data) override;
+  void onConsoleBytes(int deviceId, const IO::CapturedDataPtr& data) override;
+  void onInjectedBytes(const IO::CapturedDataPtr& data) override;
+  void onSentBytes(int deviceId, const QByteArray& data) override;
 
 private slots:
   void updateFont();
@@ -327,6 +349,8 @@ private:
   [[nodiscard]] QString appendToDevice(int deviceId, const QString& str, bool addTimestamp);
 
 private:
+  Core::Bus::MessageBus& m_bus;
+  Core::Bus::Subscription m_terminalModeWatch;
   DataMode m_dataMode;
   LineEnding m_lineEnding;
   DisplayMode m_displayMode;
@@ -362,6 +386,7 @@ private:
   QString m_pendingDisplay;
 
   Misc::CommonFonts* m_commonFonts;
+  Misc::Translator* m_translator;
   IO::ConnectionManager* m_connectionManager;
   AppState* m_appState;
   DataModel::ProjectModel* m_projectModel;

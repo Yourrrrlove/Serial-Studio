@@ -27,6 +27,7 @@
 #include <QDebug>
 #include <QDesktopServices>
 #include <QDir>
+#include <QFileDialog>
 #include <QFileInfo>
 #include <QGridLayout>
 #include <QGuiApplication>
@@ -41,7 +42,8 @@
 #include <QThread>
 #include <QUrl>
 
-#include "AppInfo.h"
+#include "Core/AppInfo.h"
+#include "Core/SSAssert.h"
 
 //--------------------------------------------------------------------------------------------------
 // Singleton access
@@ -139,6 +141,63 @@ QString Misc::Utilities::hdpiImagePath(const QString& path)
   filename.append(extension);
 
   return filename;
+}
+
+//--------------------------------------------------------------------------------------------------
+// Core prompt seam
+//--------------------------------------------------------------------------------------------------
+
+/**
+ * @brief The seam's message box: the Core enums are numerically QMessageBox's, so this is the
+ *        existing dialog with its GUI-thread marshalling and offscreen short-circuit.
+ */
+int Misc::Utilities::promptMessage(const QString& text,
+                                   const QString& informativeText,
+                                   const Core::Prompt::Icon icon,
+                                   const QString& windowTitle,
+                                   const Core::Prompt::Buttons buttons,
+                                   const Core::Prompt::Button defaultButton,
+                                   const Core::Prompt::ButtonLabels& buttonLabels)
+{
+  ButtonTextMap texts;
+  for (auto it = buttonLabels.constBegin(); it != buttonLabels.constEnd(); ++it)
+    texts.insert(static_cast<QMessageBox::StandardButton>(it.key()), it.value());
+
+  return showMessageBox(text,
+                        informativeText,
+                        static_cast<QMessageBox::Icon>(icon),
+                        windowTitle,
+                        QMessageBox::StandardButtons::fromInt(buttons.toInt()),
+                        static_cast<QMessageBox::StandardButton>(defaultButton),
+                        texts);
+}
+
+/**
+ * @brief The seam's directory picker: a non-modal dialog that deletes itself on close and calls
+ *        the handler only with a non-empty choice.
+ */
+void Misc::Utilities::promptDirectory(const QString& title,
+                                      const QString& initialPath,
+                                      DirectoryHandler onSelected)
+{
+  SS_ASSERT(onSelected != nullptr, return);
+  auto* dialog = new QFileDialog(qApp->activeWindow(), title, initialPath);
+  dialog->setFileMode(QFileDialog::Directory);
+  dialog->setOption(QFileDialog::ShowDirsOnly, true);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  connect(dialog, &QFileDialog::fileSelected, dialog, [onSelected](const QString& path) {
+    if (!path.isEmpty())
+      onSelected(path);
+  });
+  dialog->open();
+}
+
+/**
+ * @brief The seam's file reveal.
+ */
+void Misc::Utilities::revealInFileManager(const QString& path)
+{
+  revealFile(path);
 }
 
 /**

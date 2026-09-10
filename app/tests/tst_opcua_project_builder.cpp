@@ -22,11 +22,12 @@
 
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QList>
 #include <QTest>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/SerialStudio.h"
 #include "IO/Drivers/OpcUa/OpcUaProjectBuilder.h"
-#include "SerialStudio.h"
 
 // Every test function builds its own tag list: no state is carried between slots, so Qt Test's
 // declaration-order execution is never load-bearing.
@@ -240,8 +241,8 @@ void TstOpcUaProjectBuilder::connectionSettingsAreStored()
 
   const QList<OpcUaTag> tags = {makeTag("ns=2;i=1", "Speed", IO::Drivers::OpcUaWire::Type::F64)};
   const auto stored          = projectSource(OpcUaProjectBuilder(tags).buildProject(connection))
-                                 .value(Keys::SourceConn)
-                                 .toObject();
+                        .value(Keys::SourceConn)
+                        .toObject();
 
   QCOMPARE(stored.value(QStringLiteral("endpointUrl")).toString(),
            QStringLiteral("opc.tcp://plc.local:4840"));

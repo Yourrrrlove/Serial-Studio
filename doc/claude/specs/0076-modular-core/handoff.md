@@ -4,6 +4,10 @@ Overnight run of 2026-09-03/04. Manager: Claude Fable 5.1. Executors: Opus (CMak
 two reviewers), Sonnet (lint roots, docs, script review). **Nothing is committed; nothing was
 compiled** (repo rule). Everything below is in the working tree.
 
+> Follow-up: spec 0077 (`doc/claude/specs/0077-independent-modules/`, 2026-09-08/09) drove the
+> ratcheted edges this handoff left to zero: every layer strict, no cross-library `instance()`
+> reach, the transitional `MessageBus::instance()` gone. Its tasks.md carries the per-phase logs.
+
 ## What landed
 
 - `core/Core/` → `SerialStudio::Core` (13 files) and `core/Protocols/` → `SerialStudio::Protocols`

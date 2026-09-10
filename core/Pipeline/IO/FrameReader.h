@@ -24,15 +24,17 @@
 #include <deque>
 #include <memory>
 #include <QByteArray>
+#include <QList>
 #include <QObject>
 #include <QString>
+#include <QVector>
 #include <vector>
 
 #include "Core/Checksum.h"
 #include "Core/CircularBuffer.h"
-#include "IO/HAL_Driver.h"
-#include "SerialStudio.h"
-#include "ThirdParty/readerwriterqueue.h"
+#include "Core/IO/HAL_Driver.h"
+#include "Core/SerialStudio.h"
+#include "Core/ThirdParty/readerwriterqueue.h"
 
 namespace IO {
 /**

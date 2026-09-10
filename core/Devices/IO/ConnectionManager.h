@@ -27,10 +27,18 @@
 #include <QObject>
 #include <QSet>
 #include <QSettings>
-#include <QTimer>
+#include <span>
 #include <unordered_map>
 #include <vector>
 
+#include "Core/Bus/Messages.h"
+#include "Core/IO/FrameConfig.h"
+#include "Core/IO/HAL_Driver.h"
+#include "Core/IO/IDeviceWriter.h"
+#include "Core/IO/IIngestBinder.h"
+#include "Core/IO/IPayloadInjector.h"
+#include "Core/SerialStudio.h"
+#include "IO/ConnectionManager/BusBridge.h"
 #include "IO/ConnectionManager/ConnectFanOut.h"
 #include "IO/ConnectionManager/DeviceIoRouter.h"
 #include "IO/ConnectionManager/DeviceTableQuery.h"
@@ -38,59 +46,33 @@
 #include "IO/ConnectionManager/DriverUiRegistry.h"
 #include "IO/ConnectionManager/ReplyCapture.h"
 #include "IO/ConnectionManager/StreamConfigBuilder.h"
-#include "IO/ConnectionManager/StreamWorkerPool.h"
 #include "IO/ConnectionManager/UiDriverSync.h"
 #include "IO/DeviceManager.h"
-#include "IO/HAL_Driver.h"
-#include "IO/StreamWorker.h"
-#include "SerialStudio.h"
 
-class AppState;
+namespace Core::Bus {
+class MessageBus;
+}  // namespace Core::Bus
+
 class SessionContext;
-
-namespace API {
-class Server;
-}  // namespace API
-
-namespace Console {
-class Handler;
-}  // namespace Console
-
-namespace DataModel {
-struct Source;
-class FrameBuilder;
-class ProjectModel;
-}  // namespace DataModel
 
 namespace Misc::Diagnostics {
 enum class Bus : int;
 }  // namespace Misc::Diagnostics
 
-#ifdef BUILD_COMMERCIAL
-namespace MQTT {
-class Publisher;
-}  // namespace MQTT
-
-namespace Sessions {
-class Export;
-}  // namespace Sessions
-#endif
-
-#ifdef ENABLE_GRPC
-namespace API::GRPC {
-class GRPCServer;
-}  // namespace API::GRPC
-#endif
-
 namespace IO {
 
 class FileTransmission;
+class IRawByteTap;
 
 /**
- * @brief Singleton orchestrator that owns all DeviceManager instances and wires
- *        them to FrameBuilder, Console, and the API server.
+ * @brief Singleton orchestrator that owns all DeviceManager instances, hands their byte streams to
+ *        the acquisition pipeline through the ingest binder and fans raw chunks out to the taps the
+ *        composition root bound (spec 0077).
  */
-class ConnectionManager : public QObject {
+class ConnectionManager
+  : public QObject
+  , public IDeviceWriter
+  , public IPayloadInjector {
   // clang-format off
   Q_OBJECT
   Q_PROPERTY(bool readOnly
@@ -154,7 +136,11 @@ signals:
 
 private:
   friend class ::SessionContext;
-  explicit ConnectionManager();
+
+  static void bindInstance(ConnectionManager* instance) noexcept { s_instance = instance; }
+
+  static ConnectionManager* s_instance;
+  explicit ConnectionManager(Core::Bus::MessageBus& bus, IIngestBinder& binder);
   ConnectionManager(ConnectionManager&&)                 = delete;
   ConnectionManager(const ConnectionManager&)            = delete;
   ConnectionManager& operator=(ConnectionManager&&)      = delete;
@@ -185,8 +171,6 @@ public:
 
   [[nodiscard]] QString linkState() const;
   [[nodiscard]] LinkStats linkStats() const;
-  [[nodiscard]] FrameConfig buildFrameConfig(int deviceId) const;
-  [[nodiscard]] const std::vector<std::unique_ptr<StreamWorker>>& streamWorkers() const noexcept;
 
   [[nodiscard]] SerialStudio::BusType busType() const noexcept;
 
@@ -195,6 +179,8 @@ public:
   [[nodiscard]] const QString& checksumAlgorithm() const noexcept;
 
   [[nodiscard]] QStringList availableBuses() const;
+
+  void bindRawTaps(std::span<IRawByteTap* const> taps);
 
   [[nodiscard]] HAL_Driver* driver(int deviceId = 0) const;
   [[nodiscard]] HAL_Driver* driverForEditing(int deviceId);
@@ -220,12 +206,12 @@ public:
 #endif
 
   [[nodiscard]] Q_INVOKABLE qint64 writeData(const QByteArray& data);
-  [[nodiscard]] Q_INVOKABLE qint64 writeDataToDevice(int deviceId, const QByteArray& data);
+  [[nodiscard]] Q_INVOKABLE qint64 writeDataToDevice(int deviceId, const QByteArray& data) override;
   [[nodiscard]] Q_INVOKABLE bool isDeviceConnected(int deviceId) const;
 
-  [[nodiscard]] qint64 writeAndArmReply(int deviceId, const QByteArray& data);
-  [[nodiscard]] QByteArray pollReplyBuffer(int deviceId) const;
-  void disarmReplyCapture(int deviceId);
+  [[nodiscard]] qint64 writeAndArmReply(int deviceId, const QByteArray& data) override;
+  [[nodiscard]] QByteArray pollReplyBuffer(int deviceId) const override;
+  void disarmReplyCapture(int deviceId) override;
 
 public slots:
   void connectDevice();
@@ -242,7 +228,6 @@ public slots:
   void resetFrameReader();
   void setupExternalConnections();
   void rebuildStreamWorkers();
-  void refreshStreamExportFlags();
   void stopStreamWorkers();
 
   void setPaused(bool paused);
@@ -252,10 +237,10 @@ public slots:
   void setChecksumAlgorithm(const QString& algorithm);
   void setBusType(SerialStudio::BusType type);
   void setUiDriverProperty(const QString& key, const QVariant& value);
-  void processPayload(const QByteArray& payload);
+  void processPayload(const QByteArray& payload) override;
 
   void processMultiSourcePayload(const QByteArray& fullPayload,
-                                 const QMap<int, QByteArray>& sourcePayloads);
+                                 const QMap<int, QByteArray>& sourcePayloads) override;
 
 private slots:
   void rebuildDevices();
@@ -286,28 +271,21 @@ private:
   void dropUnavailablePrimaryDevice(SerialStudio::BusType type);
 
 private:
+  Core::Bus::MessageBus& m_bus;
+  IIngestBinder& m_binder;
   std::atomic<bool> m_paused;
   bool m_writeEnabled;
   bool m_rebuildingDevices;
   SerialStudio::BusType m_busType;
 
   QSettings m_settings;
-  QTimer m_uiDriverSaveTimer;
 
-  AppState& m_appState;
-  DataModel::FrameBuilder& m_frameBuilder;
-  DataModel::ProjectModel& m_projectModel;
+  SerialStudio::OperationMode m_operationMode;
+  IO::FrameConfig m_frameConfig;
+  std::shared_ptr<const Core::Bus::ProjectStructureSnapshot> m_project;
+  ConnectionBusBridge m_busBridge;
 
-  API::Server* m_apiServer;
-  Console::Handler* m_console;
   IO::FileTransmission* m_fileTransmission;
-#ifdef BUILD_COMMERCIAL
-  MQTT::Publisher* m_mqttPublisher;
-  Sessions::Export* m_sessionExport;
-#endif
-#ifdef ENABLE_GRPC
-  API::GRPC::GRPCServer* m_grpcServer;
-#endif
 
   std::unordered_map<int, std::unique_ptr<DeviceManager>> m_devices;
 
@@ -318,7 +296,6 @@ private:
   DriverUiRegistry m_uiDrivers;
   DriverFactory m_driverFactory;
   StreamConfigBuilder m_streamConfigs;
-  StreamWorkerPool m_streamPool;
   UiDriverSync m_uiSync;
 };
 

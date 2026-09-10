@@ -29,6 +29,10 @@ namespace IO {
 class FrameReader;
 }  // namespace IO
 
+namespace Core::Bus {
+class MessageBus;
+}  // namespace Core::Bus
+
 namespace Sessions {
 
 /**
@@ -52,7 +56,7 @@ public:
     bool keepRegenerated = false;
   };
 
-  explicit Verifier(const Options& options);
+  Verifier(const Options& options, Core::Bus::MessageBus& bus);
   Verifier(Verifier&&)                 = delete;
   Verifier(const Verifier&)            = delete;
   Verifier& operator=(Verifier&&)      = delete;
@@ -119,6 +123,7 @@ private:
                          const QString& hint);
 
 private:
+  Core::Bus::MessageBus& m_bus;
   Options m_options;
 
   QSqlDatabase m_db;

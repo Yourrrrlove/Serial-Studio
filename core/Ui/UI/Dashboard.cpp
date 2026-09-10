@@ -23,28 +23,29 @@
 
 #include "API/Mirror/MirrorSession.h"
 #include "AppState.h"
-#include "Benchmark/HotpathBenchmark.h"
+#include "Core/Runtime.h"
+#include "Core/Services.h"
 #include "Core/SSAssert.h"
-#include "CSV/Player.h"
+#include "Core/TimerEvents.h"
 #include "DataModel/FrameBuilder.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
 #include "IO/ConnectionManager.h"
 #include "IO/PipelineHost.h"
-#include "MDF4/Player.h"
-#include "Misc/TimerEvents.h"
-#include "SessionContext.h"
 #include "UI/WidgetExtensions.h"
 #include "UI/WidgetRegistry.h"
 #include "UI/Widgets/FFTWindow.h"
 
 #ifdef BUILD_COMMERCIAL
-#  include "Licensing/LemonSqueezy.h"
-#  include "Sessions/Player.h"
+#  include "Core/DataModel/FrameSupport.h"
+#  include "Core/License.h"
 #  include "UI/Widgets/AudioExport.h"
 #endif
 
 #include <algorithm>
 #include <cmath>
+
+UI::Dashboard* UI::Dashboard::s_instance = nullptr;
 
 //--------------------------------------------------------------------------------------------------
 // Constants
@@ -124,11 +125,9 @@ static DSP::EnvelopeRing makeHistoryRing(const double plotTimeRangeSec,
  * @brief Sample rate of the stream worker feeding a source, or 0 when the source is frame-fed.
  *        Read at layout-build time only; a source that connects later rebuilds the layout.
  */
-static double streamSampleRate(const int sourceId)
+static double streamSampleRate(IO::PipelineHost& pipeline, const int sourceId)
 {
-  static auto& ioManager = IO::ConnectionManager::instance();
-
-  for (const auto& worker : ioManager.streamWorkers())
+  for (const auto& worker : pipeline.streamWorkers())
     if (worker && worker->sourceId() == sourceId)
       return worker->config().sampleRate;
 
@@ -144,11 +143,14 @@ static double streamSampleRate(const int sourceId)
  *        bound here is already built: the composition root pins this object last, so the binding
  *        resolves an existing instance instead of constructing one inside a constructor.
  */
-UI::Dashboard::Dashboard()
-  : m_appState(&AppState::instance())
+UI::Dashboard::Dashboard(Core::Bus::MessageBus& bus, IO::ConnectionManager& connectionManager)
+  : m_bus(bus)
+  , m_connectionManager(connectionManager)
+  , m_pipelineHost(DataModel::pipelineModules().pipelineHost)
+  , m_appState(&DataModel::pipelineModules().appState)
   , m_widgetRegistry(&UI::WidgetRegistry::instance())
-  , m_frameBuilder(&DataModel::FrameBuilder::instance())
-  , m_projectModel(&DataModel::ProjectModel::instance())
+  , m_frameBuilder(&DataModel::pipelineModules().frameBuilder)
+  , m_projectModel(&DataModel::pipelineModules().projectModel)
   , m_drainBudgetNs(kDrainBudgetNs / kMaxDisplayFps)
   , m_points(kDefaultPlotPoints)
   , m_widgetCount(0)
@@ -157,11 +159,12 @@ UI::Dashboard::Dashboard()
   , m_updateRetryInProgress(false)
   , m_layoutValid(false)
   , m_streamAvailable(false)
+  , m_openReplayPlayers(0)
   , m_plotTimeRange(10.0)
   , m_plotDisplayTimeSec(0)
   , m_pltXAxis(kDefaultPlotPoints)
   , m_multipltXAxis(kDefaultPlotPoints)
-  , m_tools(m_settings, IO::ConnectionManager::instance(), DataModel::ProjectModel::instance())
+  , m_tools(m_settings, connectionManager, *m_projectModel)
   , m_viewState(m_settings)
   , m_plotControls(UI::PlotControlBindings{.activePlots      = m_activePlots,
                                            .activeFFTPlots   = m_activeFFTPlots,
@@ -233,12 +236,14 @@ UI::Dashboard::Dashboard()
                                 .sourceRawFrames    = m_sourceRawFrames,
                                 .sourceStructureGen = m_sourceStructureGen},
              *this)
+  , m_wiring(*this)
 {
   connectSessionResets();
   connectStreamAvailableInputs();
   connectViewStateResets(*m_appState);
   connectDisplayTimers();
   connectToolSignals();
+  m_wiring.wire();
 
   updateStreamAvailable();
   restorePersistedSettings();
@@ -251,15 +256,9 @@ UI::Dashboard::Dashboard()
  */
 void UI::Dashboard::connectSessionResets()
 {
-  static auto* csvPlayer  = &CSV::Player::instance();
-  static auto* mdf4Player = &MDF4::Player::instance();
-  static auto* ioManager  = &IO::ConnectionManager::instance();
-
   // clang-format off
-  connect(csvPlayer, &CSV::Player::openChanged, this, [this] { resetData(true); }, Qt::QueuedConnection);
-  connect(mdf4Player, &MDF4::Player::openChanged, this, [this] { resetData(true); }, Qt::QueuedConnection);
-  connect(ioManager, &IO::ConnectionManager::connectedChanged, this, [this] {
-    if (!ioManager->isConnected() && !streamAvailable())
+  connect(&m_connectionManager, &IO::ConnectionManager::connectedChanged, this, [this] {
+    if (!m_connectionManager.isConnected() && !streamAvailable())
       resetData(true);
   }, Qt::QueuedConnection);
   connect(m_appState, &AppState::projectFileChanged, this, [this] { resetData(); }, Qt::QueuedConnection);
@@ -270,16 +269,6 @@ void UI::Dashboard::connectSessionResets()
   }, Qt::QueuedConnection);
   connect(m_appState, &AppState::operationModeChanged, this, &UI::Dashboard::applyOperationModeDefaults, Qt::QueuedConnection);
   // clang-format on
-
-#ifdef BUILD_COMMERCIAL
-  static auto* sessPlayer = &Sessions::Player::instance();
-  connect(
-    sessPlayer,
-    &Sessions::Player::openChanged,
-    this,
-    [this] { resetData(true); },
-    Qt::QueuedConnection);
-#endif
 }
 
 /**
@@ -327,7 +316,7 @@ void UI::Dashboard::applyOperationModeDefaults()
  */
 void UI::Dashboard::connectDisplayTimers()
 {
-  static auto* timerEvents = &Misc::TimerEvents::instance();
+  static auto* timerEvents = &Core::services().timerEvents;
   connect(timerEvents, &Misc::TimerEvents::uiTimeout, this, &UI::Dashboard::onDisplayTick);
   connect(timerEvents, &Misc::TimerEvents::timeout1Hz, this, &UI::Dashboard::pollThinningState);
 
@@ -361,11 +350,14 @@ void UI::Dashboard::connectToolSignals()
           &DataModel::ProjectModel::widgetDisplayChanged,
           this,
           &UI::Dashboard::refreshDisplayTitles);
-#ifdef BUILD_COMMERCIAL
-  static auto* lemonSqueezy = &Licensing::LemonSqueezy::instance();
-  connect(
-    lemonSqueezy, &Licensing::LemonSqueezy::activatedChanged, this, &UI::Dashboard::frozenChanged);
-#endif
+  connect(m_projectModel, &DataModel::ProjectModel::pointCountChanged, this, [this] {
+    if (m_appState->operationMode() == SerialStudio::ProjectFile)
+      setPoints(m_projectModel->pointCount());
+  });
+  connect(m_projectModel, &DataModel::ProjectModel::plotTimeRangeChanged, this, [this] {
+    if (m_appState->operationMode() == SerialStudio::ProjectFile)
+      setPlotTimeRange(m_projectModel->plotTimeRange());
+  });
 }
 
 /**
@@ -401,7 +393,7 @@ void UI::Dashboard::onDisplayTick()
  */
 void UI::Dashboard::drainStructureSnapshots()
 {
-  static auto& pipeline = IO::PipelineHost::instance();
+  auto& pipeline = m_pipelineHost;
 
   DataModel::StructureSnapshotPtr snapshot;
   // code-verify off
@@ -422,7 +414,7 @@ void UI::Dashboard::drainStructureSnapshots()
  */
 void UI::Dashboard::drainBlockRing(const QElapsedTimer& clock, const qint64 budgetNs)
 {
-  static auto& pipeline = IO::PipelineHost::instance();
+  auto& pipeline = m_pipelineHost;
 
   const int max_drain = pipeline.dashboardRingCapacity();
   SS_ASSERT(max_drain > 0, return);
@@ -552,14 +544,13 @@ void UI::Dashboard::restorePersistedSettings()
 }
 
 /**
- * @brief Returns this session's dashboard. The object is owned by the SessionContext and built
- *        last by the composition root, so a reach before adoption is a named fatal instead of an
- *        out-of-order lazy construction. Every widget and helper binds it once into a static or a
- *        member reference, so the draw path never re-enters this (spec 0039 M2, wave D3).
+ * @brief Returns this session's dashboard, bound by the session context right after adoption;
+ *        a reach before that is a named fatal (spec 0039 M2, spec 0077 T66).
  */
 UI::Dashboard& UI::Dashboard::instance()
 {
-  return SessionContext::current().dashboard();
+  SS_ASSERT(s_instance != nullptr, qFatal("UI::Dashboard::instance() before adoption"));
+  return *s_instance;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -626,7 +617,7 @@ bool UI::Dashboard::available() const
  */
 bool UI::Dashboard::frozen() const
 {
-  return m_projectModel->frozen() && SerialStudio::activated()
+  return m_projectModel->frozen() && Core::License::activated()
       && m_appState->operationMode() == SerialStudio::ProjectFile;
 }
 
@@ -668,27 +659,13 @@ bool UI::Dashboard::useTimeXAxisGroup(const DataModel::Group& group) const
  */
 bool UI::Dashboard::streamAvailable() const
 {
-  if (Benchmark::HotpathBenchmark::active()) [[unlikely]]
+  if (Core::Runtime::benchmarkActive()) [[unlikely]]
     return true;
 
   if (API::MirrorSession::mirroring()) [[unlikely]]
     return true;
 
-  static auto& manager   = IO::ConnectionManager::instance();
-  static auto& csvPlayer = CSV::Player::instance();
-  static auto& mf4Player = MDF4::Player::instance();
-
-  const bool csvOpen = csvPlayer.isOpen();
-  const bool mf4Open = mf4Player.isOpen();
-  const bool devOpen = manager.isConnected();
-
-#ifdef BUILD_COMMERCIAL
-  static auto& sessPlayer = Sessions::Player::instance();
-  const bool sessOpen     = sessPlayer.isOpen();
-  return devOpen || csvOpen || mf4Open || sessOpen;
-#else
-  return devOpen || csvOpen || mf4Open;
-#endif
+  return m_connectionManager.isConnected() || m_openReplayPlayers != 0;
 }
 
 /**
@@ -698,46 +675,21 @@ bool UI::Dashboard::streamAvailable() const
 void UI::Dashboard::updateStreamAvailable()
 {
   m_streamAvailable = streamAvailable();
-
-  static auto& pipeline = IO::PipelineHost::instance();
-  pipeline.setDashboardAccepting(m_streamAvailable);
+  m_pipelineHost.setDashboardAccepting(m_streamAvailable);
 }
 
 /**
- * @brief Wires every streamAvailable() input to the cache refresh. Direct connections keep the
- *        cached flag valid for frames arriving in the same event-loop turn. The mirror-attached
- *        input is wired from API::MirrorSession's own constructor, also direct: that module is
- *        built after the pinned order, so reaching it from here would add a constructor edge.
+ * @brief Wires the link state to the cache refresh, direct so the cached flag is valid for frames
+ *        arriving in the same event-loop turn. The replay players' state and the mirror-attached
+ *        input arrive through the wiring's bus subscriptions, also direct (spec 0077).
  */
 void UI::Dashboard::connectStreamAvailableInputs()
 {
-  static auto& ioManager  = IO::ConnectionManager::instance();
-  static auto& csvPlayer  = CSV::Player::instance();
-  static auto& mdf4Player = MDF4::Player::instance();
-
-  connect(&ioManager,
+  connect(&m_connectionManager,
           &IO::ConnectionManager::connectedChanged,
           this,
           &UI::Dashboard::updateStreamAvailable,
           Qt::DirectConnection);
-  connect(&csvPlayer,
-          &CSV::Player::openChanged,
-          this,
-          &UI::Dashboard::updateStreamAvailable,
-          Qt::DirectConnection);
-  connect(&mdf4Player,
-          &MDF4::Player::openChanged,
-          this,
-          &UI::Dashboard::updateStreamAvailable,
-          Qt::DirectConnection);
-#ifdef BUILD_COMMERCIAL
-  static auto& sessPlayer = Sessions::Player::instance();
-  connect(&sessPlayer,
-          &Sessions::Player::openChanged,
-          this,
-          &UI::Dashboard::updateStreamAvailable,
-          Qt::DirectConnection);
-#endif
 }
 
 /**
@@ -1081,6 +1033,8 @@ void UI::Dashboard::setPoints(const int points)
     rebuildLineSeriesPreservingState();
 
     Q_EMIT pointsChanged();
+    if (m_appState->operationMode() == SerialStudio::ProjectFile)
+      m_projectModel->setPointCount(m_points);
   }
 }
 
@@ -1328,6 +1282,8 @@ void UI::Dashboard::setPlotTimeRange(const double seconds)
 
   m_updateRequired = true;
   Q_EMIT plotTimeRangeChanged();
+  if (m_appState->operationMode() == SerialStudio::ProjectFile)
+    m_projectModel->setPlotTimeRange(m_plotTimeRange);
 }
 
 /**
@@ -1424,7 +1380,7 @@ void UI::Dashboard::reconfigureDashboard(const DataModel::Frame& frame)
   SS_ASSERT(!frame.groups.empty(), return);
   SS_ASSERT(streamAvailable(), return);
 
-  const bool pro = SerialStudio::activated();
+  const bool pro = Core::License::activated();
 
   auto savedSourceFrames  = m_sourceRawFrames;
   auto savedClocks        = m_plotClocks;
@@ -1740,8 +1696,8 @@ void UI::Dashboard::configureLineSeries()
 
     if (useTimeXAxis(yDataset)) {
       const int cap = timeRingCapacity(m_plotTimeRange);
-      m_plotTimeRings.insert(i,
-                             makeHistoryRing(m_plotTimeRange, streamSampleRate(yDataset.sourceId)));
+      m_plotTimeRings.insert(
+        i, makeHistoryRing(m_plotTimeRange, streamSampleRate(m_pipelineHost, yDataset.sourceId)));
 
       DSP::SweepEngine sweep;
       sweep.configure(1, cap, m_plotTimeRange);
@@ -1838,7 +1794,7 @@ void UI::Dashboard::configureMultiLineSeries()
 
     if (useTimeXAxisGroup(group)) {
       const int cap     = timeRingCapacity(m_plotTimeRange);
-      const double rate = streamSampleRate(group.sourceId);
+      const double rate = streamSampleRate(m_pipelineHost, group.sourceId);
       std::vector<DSP::EnvelopeRing> rings;
       rings.reserve(group.datasets.size());
       for (size_t j = 0; j < group.datasets.size(); ++j)

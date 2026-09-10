@@ -29,9 +29,9 @@
 #include <utility>
 #include <vector>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/SerialStudio.h"
 #include "DSP.h"
-#include "SerialStudio.h"
 
 namespace UI {
 

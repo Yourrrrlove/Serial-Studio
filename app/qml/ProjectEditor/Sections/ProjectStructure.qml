@@ -22,6 +22,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import QtQuick.Controls.impl
 
 import SerialStudio
 import "../../Widgets" as Widgets
@@ -736,9 +737,9 @@ Widgets.Pane {
           anchors.leftMargin: padding + (isTreeNode ? depth * indentation : 0)
 
           //
-          // Expanded indicator
+          // Expanded indicator, tinted like the row's text so it follows the selection
           //
-          Image {
+          IconImage {
             id: indicator
 
             enabled: hasChildren
@@ -747,6 +748,8 @@ Widgets.Pane {
             rotation: expanded ? 0 : 270
             Layout.alignment: Qt.AlignVCenter
             source: Cpp_Misc_IconRegistry.icon("editor", "indicator", 16)
+            color: (selected || current) ? Cpp_ThemeManager.colors["highlighted_text"]
+                                         : Cpp_ThemeManager.colors["text"]
 
             MouseArea {
               anchors.fill: parent
@@ -817,7 +820,7 @@ Widgets.Pane {
                 return Cpp_ThemeManager.colors["highlighted_text"]
 
               if (Cpp_JSON_ProjectModel.sourceCount > 1)
-                return SerialStudio.getDeviceColor(model.treeViewSourceId + 1)
+                return SerialStudioHelpers.getDeviceColor(model.treeViewSourceId + 1)
 
               return Cpp_ThemeManager.colors["text"]
             }
@@ -847,7 +850,7 @@ Widgets.Pane {
                 return Cpp_ThemeManager.colors["highlighted_text"]
 
               if (Cpp_JSON_ProjectModel.sourceCount > 1)
-                return SerialStudio.getDeviceColor(model.treeViewSourceId + 1)
+                return SerialStudioHelpers.getDeviceColor(model.treeViewSourceId + 1)
 
               return Cpp_ThemeManager.colors["text"]
             }

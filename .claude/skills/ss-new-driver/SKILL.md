@@ -17,7 +17,7 @@ the read, restate the driver contract in chat in 2-3 sentences (pure virtuals, p
 timestamp-at-boundary) before scaffolding — a contract you've just named is one the new code
 follows, not one it drifts from (`doc/claude/j-space.md`).
 
-A driver subclasses `IO::HAL_Driver` (`core/Devices/IO/HAL_Driver.h`) and must implement the pure
+A driver subclasses `IO::HAL_Driver` (`core/Core/IO/HAL_Driver.h`) and must implement the pure
 virtuals: `close`, `isOpen`, `isReadable`, `isWritable`, `configurationOk`, `write`, `open`,
 `driverProperties`, and `setDriverProperty`. Also consider the non-pure virtuals with default
 bodies — `deviceIdentifier()`, `selectByIdentifier()`, `applyConnectionSettings()` — which
@@ -28,7 +28,7 @@ see [ss-hotpath]). Never re-stamp downstream.
 ## Touch-points to wire (verify each against an existing driver)
 
 1. `core/Devices/IO/Drivers/<Name>.h` / `.cpp` — the driver class, SPDX header, `.h` ordering rules.
-2. `app/src/SerialStudio.h` — add the value to the `BusType` enum (QML uses `SerialStudio.BusType.*`,
+2. `core/Core/SerialStudio.h` — add the value to the `BusType` enum (QML uses `SerialStudio.BusType.*`,
    never integer literals).
 3. `core/Devices/IO/ConnectionManager.{h,cpp}` — accessor (e.g. `network()` / `uart()` analogue)
    plus signal forwarding; the bus lookups live in `ConnectionManager/DriverUiRegistry.cpp`
@@ -37,17 +37,19 @@ see [ss-hotpath]). Never re-stamp downstream.
 4. `core/Devices/CMakeLists.txt` — add `IO/Drivers/<Name>.cpp` to the source list (sources are
    listed explicitly, not globbed; commercial drivers go in the guarded
    `if(BUILD_COMMERCIAL)` block).
-5. QML configuration UI — the driver panes are bespoke forms (nothing renders
-   `driverProperties()` generically): create
+5. QML configuration UI — the driver panes are bespoke forms (only the Project Editor renders
+   `driverProperties()` generically; a row one mode does not use stays in the list and carries a
+   `visibleWhen` rule, never a conditional append, because the list is also what a project
+   persists): create
    `app/qml/MainWindow/Panes/SetupPanes/Drivers/<Name>.qml`, add its `Loader` to the
    `StackLayout` in `SetupPanes/Hardware.qml` **at the bus's enum position** (the layout
    indexes by `Cpp_IO_Manager.busType`), and register the new .qml in the `QML_SOURCES` list
    in `app/CMakeLists.txt`.
-6. `core/Api/API/EnumLabels.cpp` — add the bus to the `busTypeSlug()` and `busTypeLabel()`
+6. `core/Core/EnumLabels.cpp` — add the bus to the `busTypeSlug()` and `busTypeLabel()`
    switches (the API's string names for the bus; commercial buses go inside the
    `#ifdef BUILD_COMMERCIAL` block).
-7. `core/Pipeline/DataModel/Project/ProjectEditorIcons.h` — add the bus to the `busTypeIcon()`
-   switch, and `core/Pipeline/DataModel/Project/ProjectEditorForms.cpp` — add it to the `busTypes`
+7. `core/Ui/ProjectEditor/ProjectEditorIcons.h` — add the bus to the `busTypeIcon()`
+   switch, and `core/Ui/ProjectEditor/EditorForms.cpp` — add it to the `busTypes`
    combobox list in the source form model.
 8. Icon — add the driver SVG under `app/rcc/icons/devices/<tier>/` (16/24/32) and register it with a
    `<file>` entry in `app/rcc/rcc.qrc` (`busTypeIcon()` returns its `qrc:/` path).

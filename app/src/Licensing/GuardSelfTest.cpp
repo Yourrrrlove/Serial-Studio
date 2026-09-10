@@ -25,12 +25,19 @@
 #include <QDebug>
 #include <QString>
 
-#include "Licensing/CommercialToken.h"
-#include "SerialStudio.h"
+#include "Core/Licensing/CommercialToken.h"
 
 //--------------------------------------------------------------------------------------------------
 // Assertion helper
 //--------------------------------------------------------------------------------------------------
+
+/**
+ * @brief The gate the old SerialStudio::activated() evaluated: a valid token plus the guard chain.
+ */
+[[nodiscard]] static bool gatesOpen()
+{
+  return Licensing::CommercialToken::current().isValid() && SS_LICENSE_GUARD();
+}
 
 /**
  * @brief Reports a single check and returns 1 on failure, 0 on success.
@@ -99,17 +106,16 @@
 
   int fails  = 0;
   fails     += expect(QStringLiteral("synthetic trial token validates"),
-                      Licensing::CommercialToken::current().isValid());
-  fails += expect(QStringLiteral("activated() opens with trial token"), SerialStudio::activated());
+                  Licensing::CommercialToken::current().isValid());
+  fails     += expect(QStringLiteral("activated() opens with trial token"), gatesOpen());
 
   auto tampered = token;
   tampered.setFeatureTier(Licensing::FeatureTier::Enterprise);
   Licensing::CommercialToken::setCurrent(tampered);
-  fails +=
-    expect(QStringLiteral("tier mutated after seal() is rejected"), !SerialStudio::activated());
+  fails += expect(QStringLiteral("tier mutated after seal() is rejected"), !gatesOpen());
 
   Licensing::CommercialToken::clearCurrent();
-  fails += expect(QStringLiteral("cleared token closes all gates"), !SerialStudio::activated());
+  fails += expect(QStringLiteral("cleared token closes all gates"), !gatesOpen());
 
   Licensing::CommercialToken::setCurrent(previous);
   return fails;

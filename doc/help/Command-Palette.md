@@ -61,5 +61,7 @@ Opening a workspace switches to it; opening a widget reveals it inside its works
 ## See also
 
 - [Toolbar & Button Reference](Toolbar-Reference.md): every button the palette's commands mirror, and the workspace switcher that also opens it.
+- [Macros](Macros.md): the command terminal and script editor in the palette's **Tools** category, reachable only from here.
+- [Problem Center](Problem-Center.md): the diagnostics window behind the **Problem Center** and **Connection Diagnostics** entries, also palette-only.
 - [Getting Started](Getting-Started.md): the main-window layout and a first connection walkthrough.
 - [Operation Modes](Operation-Modes.md): how the Console and Dashboard views are chosen.

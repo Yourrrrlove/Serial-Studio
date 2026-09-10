@@ -24,6 +24,7 @@
 #include <algorithm>
 
 #include "Core/SSAssert.h"
+#include "DataModel/IReplayPlotSink.h"
 
 //--------------------------------------------------------------------------------------------------
 // Construction
@@ -54,7 +55,7 @@ UI::ReplaySeekEngine::ReplaySeekEngine(const ReplaySeekBindings& bindings)
  */
 qint64 UI::ReplaySeekEngine::seekKey(int sourceId, int uniqueId) noexcept
 {
-  return (static_cast<qint64>(sourceId) << 32) | static_cast<quint32>(uniqueId);
+  return DataModel::replaySeekKey(sourceId, uniqueId);
 }
 
 /**

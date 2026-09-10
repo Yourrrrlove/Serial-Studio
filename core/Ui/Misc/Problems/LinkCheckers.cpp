@@ -23,12 +23,16 @@
 
 #include <QCoreApplication>
 #include <QDateTime>
+#include <QList>
 #include <QString>
 
+#include "API/HandlerContext.h"
+#include "Core/SerialStudio.h"
 #include "DataModel/FrameBuilder.h"
+#include "DataModel/PipelineModules.h"
 #include "IO/ConnectionManager.h"
 #include "Misc/ProblemCenter.h"
-#include "SerialStudio.h"
+#include "Replay/PlayerState.h"
 
 //--------------------------------------------------------------------------------------------------
 // Constants, local aliases & sampler state
@@ -75,7 +79,7 @@ static quint64 s_totalOverflowBytes  = 0;
  */
 [[nodiscard]] static IO::ConnectionManager& linkConnectionManager()
 {
-  static auto& manager = IO::ConnectionManager::instance();
+  auto& manager = API::handlerContext().connectionManager;
   return manager;
 }
 
@@ -84,7 +88,7 @@ static quint64 s_totalOverflowBytes  = 0;
  */
 [[nodiscard]] static DataModel::FrameBuilder& frameBuilder()
 {
-  static auto& builder = DataModel::FrameBuilder::instance();
+  auto& builder = DataModel::pipelineModules().frameBuilder;
   return builder;
 }
 

@@ -27,17 +27,23 @@
 #  include <windows.h>
 #endif
 
-#include "DataModel/NotificationCenter.h"
+#include "Core/Bus/MessageBus.h"
+#include "Core/Bus/Messages.h"
+#include "Core/Services.h"
+#include "Core/TimerEvents.h"
+#include "Core/Translator.h"
 #include "IO/ConnectionManager.h"
 #include "IO/Drivers/SerialPortIdentity.h"
 #include "IO/Drivers/UART/UartPolicy.h"
-#include "Misc/TimerEvents.h"
-#include "Misc/Translator.h"
-#include "Misc/Utilities.h"
 
 //--------------------------------------------------------------------------------------------------
 // Static utility functions
 //--------------------------------------------------------------------------------------------------
+
+/**
+ * @brief Warning severity of a Core::Bus::NotificationRaised (NotificationCenter::Warning).
+ */
+static constexpr int kNotificationWarning = 1;
 
 /**
  * @brief Calculates an ideal read buffer size for a serial port.
@@ -523,12 +529,12 @@ QSerialPort::FlowControl IO::Drivers::UART::flowControl() const
  */
 void IO::Drivers::UART::setupExternalConnections()
 {
-  connect(&Misc::TimerEvents::instance(),
+  connect(&Core::services().timerEvents,
           &Misc::TimerEvents::timeout1Hz,
           this,
           &IO::Drivers::UART::refreshSerialDevices);
 
-  connect(&Misc::Translator::instance(),
+  connect(&Core::services().translator,
           &Misc::Translator::languageChanged,
           this,
           &IO::Drivers::UART::languageChanged);
@@ -612,16 +618,16 @@ void IO::Drivers::UART::registerDevice(const QString& device)
     logDriverError(tr("\"%1\" is not a valid path").arg(trimmedPath),
                    tr("Please type another path to register a custom serial device"));
 
-    static auto& notifications = DataModel::NotificationCenter::instance();
-    QMetaObject::invokeMethod(&notifications,
-                              "postWarning",
-                              Qt::QueuedConnection,
-                              Q_ARG(QString, QStringLiteral("UART")),
-                              Q_ARG(QString, tr("Serial device not registered")),
-                              Q_ARG(QString,
-                                    tr("\"%1\" is not a valid path; type another path to register "
-                                       "a custom serial device.")
-                                      .arg(trimmedPath)));
+    auto* bus = messageBus();
+    if (bus)
+      bus->publish<Core::Bus::NotificationRaised>(
+        kNotificationWarning,
+        QStringLiteral("UART"),
+        QString(),
+        tr("Serial device not registered"),
+        tr("\"%1\" is not a valid path; type another path to register a custom serial device.")
+          .arg(trimmedPath));
+
     return;
   }
 

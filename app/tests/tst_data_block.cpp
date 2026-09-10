@@ -23,7 +23,7 @@
 #include <QString>
 #include <QTest>
 
-#include "DataModel/DataBlock.h"
+#include "Core/DataModel/DataBlock.h"
 
 // The unified publication payload (spec 0055). Two properties carry the whole design: a block
 // must reproduce every sample's time on both timebases, and a recycled block must not allocate --

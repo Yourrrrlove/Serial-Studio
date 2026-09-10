@@ -11,7 +11,7 @@
 #include <QQuickItem>
 #include <QVariantList>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
 
 namespace Widgets {
 namespace Output {

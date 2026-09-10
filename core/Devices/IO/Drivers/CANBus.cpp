@@ -28,12 +28,12 @@
 #include <stdexcept>
 #include <utility>
 
+#include "Core/Services.h"
 #include "Core/SSAssert.h"
+#include "Core/TimerEvents.h"
 #include "IO/ConnectionManager.h"
 #include "IO/Drivers/CANBus/CanBackends.h"
 #include "IO/Drivers/CANBus/GsUsbCanBackend.h"
-#include "Misc/TimerEvents.h"
-#include "Misc/Utilities.h"
 
 // Default CAN FD data-phase bitrate (the gs_usb backend applies the same fallback)
 static constexpr quint32 kDefaultDataBitrate = 2000000;
@@ -296,10 +296,10 @@ qint64 IO::Drivers::CANBus::write(const QByteArray& data)
     quint32 can_id = 0;
     int dlc_index  = 2;
     if (extended) {
-      can_id    = (static_cast<quint32>(static_cast<quint8>(data[0]) & 0x1F) << 24)
-                | (static_cast<quint32>(static_cast<quint8>(data[1])) << 16)
-                | (static_cast<quint32>(static_cast<quint8>(data[2])) << 8)
-                | static_cast<quint8>(data[3]);
+      can_id = (static_cast<quint32>(static_cast<quint8>(data[0]) & 0x1F) << 24)
+             | (static_cast<quint32>(static_cast<quint8>(data[1])) << 16)
+             | (static_cast<quint32>(static_cast<quint8>(data[2])) << 8)
+             | static_cast<quint8>(data[3]);
       dlc_index = 4;
     } else
       can_id = ((static_cast<quint8>(data[0]) & 0x07) << 8) | static_cast<quint8>(data[1]);
@@ -788,7 +788,7 @@ void IO::Drivers::CANBus::setInterfaceIndex(const quint8 index)
  */
 void IO::Drivers::CANBus::setupExternalConnections()
 {
-  connect(&Misc::TimerEvents::instance(),
+  connect(&Core::services().timerEvents,
           &Misc::TimerEvents::timeout1Hz,
           this,
           &IO::Drivers::CANBus::refreshPlugins);
@@ -1257,6 +1257,7 @@ QList<IO::DriverProperty> IO::Drivers::CANBus::driverProperties() const
   dataBitrate.value = m_dataBitrate;
   dataBitrate.min   = 100000;
   dataBitrate.max   = 8000000;
+  dataBitrate.showWhen(QStringLiteral("canFD"), {true});
   props.append(dataBitrate);
 
   IO::DriverProperty loopback;

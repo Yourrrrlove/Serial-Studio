@@ -4,6 +4,12 @@
 > gotchas the linter can't always catch. Rule-driven mistakes are listed once in the style
 > sections (CLAUDE.md "Code Style") — don't restate. Four essay-length entries live in full
 > in `doc/claude/architecture/`; their rows here are pointers.
+>
+> A row is closed only when something mechanical catches the class. Rows added from
+> 2026-09-09 on end their Fix with `Codified:` naming the check (a `code-verify.py` rule, a
+> `claim-verify.py` anchor, a hook in `.claude/hooks/`, a ctest/pytest) or `not yet`; older
+> rows carry no tag. `not yet` is open debt, written down but still repeatable. Add rows with
+> `/ss-log-mistake`, which asks the mechanical question before the row lands.
 
 ## Hotpath & Frame Pool
 
@@ -105,7 +111,7 @@
 
 | Mistake | Fix |
 |---------|-----|
-| Calling `SessionContext::current()` from a method body | Sanctioned sites only: the composition root, and a class's own `instance()` accessor passing the context into its ctor. The singleton census (`code-verify.py --singleton-census --check`) fails on any increase. Full contract: [architecture/startup.md](architecture/startup.md) "Session Context". |
+| Calling `SessionContext::current()` from a method body | Sanctioned site: the composition root only; a module's `instance()` reads the pointer `adopt*()` bound (spec 0077 T66). The singleton census (`code-verify.py --singleton-census --check`) fails on any increase. Full contract: [architecture/startup.md](architecture/startup.md) "Session Context". |
 | Changing the pinned instantiation order without touching `SessionContext::shutdown()` (or vice versa) | `shutdown()` releases in the exact reverse of `instantiateCoreModules()`; the two must move in lockstep, and `shutdown()` stays in `main.cpp` (qApp alive, QML engine dead) — never a destructor/atexit path. |
 
 ## Process & Trust
@@ -113,6 +119,8 @@
 | Mistake | Fix |
 |---------|-----|
 | Bundled scope creep — slipping an unrelated bug-fix, "small cleanup", rename, or import-sort into the same diff as the user's actual ask | Name it in chat first ("noticed X — want it in this pass?"). Every unrelated file you touch costs the reviewer an audit pass, and "all the changes were individually correct" doesn't restore the trust the surprise diff cost. The user can always say yes; they can't say no after the fact. |
+| Duplicating a pinned constant into a second file with an "update in lockstep" comment (the canary in `.claude/hooks/canary-check.py` mirrors CLAUDE.md) | Bind the copy in `scripts/doc-anchors.json` so `claim-verify.py` fails when either side drifts. A lockstep comment is a reminder, and a reminder is not enforcement: the Qt 6.11.2 bump on 2026-08-20 left the hook on 6.11.1, and it reported CANARY MUTATED on every healthy turn for three weeks before anyone looked. Codified: `qt-version` anchor, 2026-09-09. |
+| Ending a turn that edited files on "done", "fixed", "verified" or "tests pass" without having run the check the claim rests on | Run it (`code-verify.py --check` on the touched files at minimum, the relevant pytest/ctest when one exists) and report the actual result, or scope the claim to what was verified by reading. "Done" is the one word the reviewer cannot audit from the diff. Codified: `.claude/hooks/claim-check.py`, Stop hook, warn only, 2026-09-09. |
 | Treating a subagent's report as ground truth — writing docs, edits, or follow-up agent prompts on top of its claims without checking | Spot-check before you build: open 2-3 of the cited files/symbols (or grep for them) yourself before propagating anything a subagent reported. Agent reports are leads, not facts — the 2026 AI-docs audits repeatedly traced shipped wrong claims back to unverified agent output. Same discipline for cached workflow results: an empty result is a finding to verify, not proof of absence. |
 
 ## Diagnosing a GUI Stall — Sample, Don't Theorize

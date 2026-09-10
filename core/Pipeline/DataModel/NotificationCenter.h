@@ -28,8 +28,15 @@
 #include <QVariantList>
 #include <QVariantMap>
 
+#include "Core/Bus/Subscription.h"
+
 class QSystemTrayIcon;
 class QJSEngine;
+
+namespace Core::Bus {
+class MessageBus;
+}  // namespace Core::Bus
+
 class SessionContext;
 struct lua_State;
 
@@ -77,7 +84,11 @@ signals:
 
 private:
   friend class ::SessionContext;
-  explicit NotificationCenter();
+
+  static void bindInstance(NotificationCenter* instance) noexcept { s_instance = instance; }
+
+  static NotificationCenter* s_instance;
+  explicit NotificationCenter(Core::Bus::MessageBus& bus);
   NotificationCenter(NotificationCenter&&)                 = delete;
   NotificationCenter(const NotificationCenter&)            = delete;
   NotificationCenter& operator=(NotificationCenter&&)      = delete;
@@ -87,6 +98,7 @@ public:
   ~NotificationCenter();
 
   [[nodiscard]] static NotificationCenter& instance();
+  void setupExternalConnections();
 
   static void installScriptApi(lua_State* L);
   static void installScriptApi(QJSEngine* js);
@@ -146,6 +158,7 @@ private:
   static constexpr int kTrayTimeoutMs   = 5000;
   static constexpr int kMaxDedupEntries = 4096;
 
+  Core::Bus::MessageBus& m_bus;
   std::deque<Event> m_history;
   QHash<DedupKey, qint64> m_lastSeen;
   QHash<QString, int> m_channelCounts;
@@ -153,6 +166,7 @@ private:
   bool m_systemNotificationsEnabled;
   bool m_routeWarningsToNotifications;
   QSystemTrayIcon* m_tray;
+  Core::Bus::Subscription m_raisedSubscription;
 };
 
 inline size_t qHash(const NotificationCenter::DedupKey& k, size_t seed = 0) noexcept

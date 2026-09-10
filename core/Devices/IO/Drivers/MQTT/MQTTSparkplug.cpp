@@ -22,19 +22,20 @@
 
 #include <chrono>
 #include <QDateTime>
+#include <QHash>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QJsonObject>
+#include <QList>
 #include <QLoggingCategory>
-#include <QMessageBox>
+#include <QVector>
 #include <utility>
 
-#include "AppState.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/Prompt/UserPrompt.h"
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
-#include "DataModel/Frame.h"
-#include "DataModel/ProjectModel.h"
 #include "IO/Drivers/MQTT.h"
-#include "Misc/Utilities.h"
-#include "SerialStudio.h"
 
 Q_DECLARE_LOGGING_CATEGORY(lcMqttSub)
 
@@ -623,6 +624,7 @@ void IO::Drivers::MQTT::appendSparkplugProperties(QList<IO::DriverProperty>& pro
   group.label = tr("Sparkplug Group ID");
   group.type  = IO::DriverProperty::Text;
   group.value = m_sparkplugGroupId;
+  group.showWhen(QStringLiteral("sparkplugEnabled"), {true});
   props.append(group);
 
   if (!m_sparkplugEnabled)
@@ -682,7 +684,7 @@ QJsonObject IO::Drivers::MQTT::buildSparkplugProject() const
   source[Keys::FrameParserLanguage]   = static_cast<int>(SerialStudio::Native);
   source[Keys::FrameParserTemplate]   = QStringLiteral("sparkplug");
   source[Keys::FrameParserParams]     = QJsonObject{
-    {QStringLiteral("schema"), sparkplugSchema(slotTable)}
+        {QStringLiteral("schema"), sparkplugSchema(slotTable)}
   };
 
   QJsonObject conn;
@@ -698,9 +700,9 @@ QJsonObject IO::Drivers::MQTT::buildSparkplugProject() const
 
 /**
  * @brief Generates a project from the metrics the birth certificates declared and opens it in the
- *        editor. The slot table is marked as generated on a successful load, so the metrics that
- *        arrive afterwards are the ones a regeneration prompt counts. A failed load restores the
- *        previous operation mode: switching first leaves the app in ProjectFile with no project.
+ *        editor (over the bus, spec 0077). The slot table is marked as generated once the model
+ *        reports the load, so later metrics are the ones a regeneration prompt counts; the model
+ *        owns the mode switch and restores the previous mode on a failed load.
  */
 void IO::Drivers::MQTT::generateProject()
 {
@@ -708,46 +710,35 @@ void IO::Drivers::MQTT::generateProject()
   SS_ASSERT_LOG(sparkplugSession().slotValues().size() <= SpLimits::kMaxSlots);
 
   if (sparkplugSession().slotCount() <= 0) {
-    Misc::Utilities::showMessageBox(tr("No Sparkplug metrics discovered"),
-                                    tr("Connect to the broker and wait for at least one birth "
-                                       "certificate before generating a project."),
-                                    QMessageBox::Warning,
-                                    tr("Sparkplug Project Generator"));
+    Core::Prompt::showMessageBox(tr("No Sparkplug metrics discovered"),
+                                 tr("Connect to the broker and wait for at least one birth "
+                                    "certificate before generating a project."),
+                                 Core::Prompt::Warning,
+                                 tr("Sparkplug Project Generator"));
     return;
   }
 
-  const auto project      = buildSparkplugProject();
-  const auto previousMode = m_appState.operationMode();
-  m_appState.setOperationMode(SerialStudio::ProjectFile);
-  if (!m_projectModel.loadFromJsonDocument(QJsonDocument(project), QString())) {
-    m_appState.setOperationMode(previousMode);
-    logDriverError(tr("Failed to load generated project"),
-                   tr("The generated project JSON could not be loaded."));
-    return;
-  }
-
-  m_projectModel.setModified(true);
-  sparkplugSession().markGenerated();
-
+  const auto project   = buildSparkplugProject();
   const int groupCount = project.value(Keys::Groups).toArray().size();
   const int datasets   = sparkplugSession().slotCount();
-  QObject::connect(
-    &m_projectModel,
-    &DataModel::ProjectModel::saveDialogCompleted,
-    this,
-    [groupCount, datasets](bool accepted) {
+  m_generatedProject.loadAndSave(
+    messageBus(), QJsonDocument(project), [this, groupCount, datasets](bool loaded, bool accepted) {
+      if (!loaded) {
+        logDriverError(tr("Failed to load generated project"),
+                       tr("The generated project JSON could not be loaded."));
+        return;
+      }
+
+      sparkplugSession().markGenerated();
       if (!accepted)
         return;
 
-      Misc::Utilities::showMessageBox(
+      Core::Prompt::showMessageBox(
         tr("Successfully generated project with %1 groups and %2 datasets.")
           .arg(groupCount)
           .arg(datasets),
         tr("The project editor is now open for customization."),
-        QMessageBox::Information,
+        Core::Prompt::Information,
         tr("Sparkplug Project Generator"));
-    },
-    Qt::SingleShotConnection);
-
-  (void)m_projectModel.saveJsonFile(true);
+    });
 }

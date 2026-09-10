@@ -22,24 +22,24 @@
 #include "DataModel/ProjectModel.h"
 
 #include <algorithm>
+#include <QDebug>
 #include <QFileInfo>
 #include <QInputDialog>
 #include <QJsonDocument>
-#include <QMessageBox>
 #include <QTimer>
 
 #include "AppState.h"
+#include "Core/Bus/MessageBus.h"
+#include "Core/Bus/Messages.h"
+#include "Core/License.h"
+#include "Core/Prompt/UserPrompt.h"
+#include "Core/Services.h"
+#include "Core/SSAssert.h"
+#include "Core/WorkspaceManager.h"
 #include "DataModel/Scripting/ControlScript.h"
-#include "IO/ConnectionManager.h"
 #include "Misc/PasswordHash.h"
-#include "Misc/Utilities.h"
-#include "Misc/WorkspaceManager.h"
-#include "SessionContext.h"
-#include "UI/Dashboard.h"
 
-#ifdef BUILD_COMMERCIAL
-#  include "Licensing/LemonSqueezy.h"
-#endif
+DataModel::ProjectModel* DataModel::ProjectModel::s_instance = nullptr;
 
 //--------------------------------------------------------------------------------------------------
 // Constructor/destructor & singleton instance access
@@ -51,8 +51,9 @@
  *        instance() at construction, so the protected ctor closure stays free of the Meyers-guard
  *        recursion that shipped and crashed once (2026-07-07).
  */
-DataModel::ProjectModel::ProjectModel()
-  : m_title("")
+DataModel::ProjectModel::ProjectModel(Core::Bus::MessageBus& bus)
+  : m_bus(bus)
+  , m_title("")
   , m_frameEndSequence("")
   , m_checksumAlgorithm("")
   , m_frameStartSequence("")
@@ -75,6 +76,7 @@ DataModel::ProjectModel::ProjectModel()
   , m_passwordHash("")
   , m_locked(false)
   , m_mutationEpoch(0)
+  , m_structureGeneration(0)
   , m_presentation(*this)
   , m_persistence(*this)
   , m_folders(*this)
@@ -128,6 +130,8 @@ DataModel::ProjectModel::ProjectModel()
   connect(this, &ProjectModel::editorWorkspacesChanged, this, &ProjectModel::scheduleAutoSave);
   connect(this, &ProjectModel::titleChanged, this, &ProjectModel::scheduleAutoSave);
 
+  wireStructureSnapshot();
+
   // code-verify off
   // Must run before the groupsChanged auto-regen connect below: newJsonFile()
   // emits groupsChanged while AppState is still mid-init, so wiring first would
@@ -142,13 +146,13 @@ DataModel::ProjectModel::ProjectModel()
 }
 
 /**
- * @brief Returns this session's project document. The object is owned by the SessionContext and
- *        built by the composition root, so a reach before adoption is a named fatal instead of
- *        an out-of-order lazy construction (spec 0039 M2, wave C2).
+ * @brief Returns this session's project document, bound by the session context right after
+ * adoption; a reach before that is a named fatal (spec 0039 M2, spec 0077 T66).
  */
 DataModel::ProjectModel& DataModel::ProjectModel::instance()
 {
-  return SessionContext::current().projectModel();
+  SS_ASSERT(s_instance != nullptr, qFatal("ProjectModel::instance() before adoption"));
+  return *s_instance;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -163,8 +167,8 @@ bool DataModel::ProjectModel::validateProject(const bool silent)
 {
   if (m_title.isEmpty()) {
     if (!silent) {
-      Misc::Utilities::showMessageBox(
-        tr("Project error"), tr("Project title cannot be empty!"), QMessageBox::Warning);
+      Core::Prompt::showMessageBox(
+        tr("Project error"), tr("Project title cannot be empty!"), Core::Prompt::Warning);
     }
 
     return false;
@@ -172,8 +176,8 @@ bool DataModel::ProjectModel::validateProject(const bool silent)
 
   if (groupCount() <= 0) {
     if (!silent) {
-      Misc::Utilities::showMessageBox(
-        tr("Project error"), tr("You need to add at least one group!"), QMessageBox::Warning);
+      Core::Prompt::showMessageBox(
+        tr("Project error"), tr("You need to add at least one group!"), Core::Prompt::Warning);
     }
 
     return false;
@@ -186,8 +190,8 @@ bool DataModel::ProjectModel::validateProject(const bool silent)
 
   if (datasetCount() <= 0 && !hasDatasetlessGroup) {
     if (!silent) {
-      Misc::Utilities::showMessageBox(
-        tr("Project error"), tr("You need to add at least one dataset!"), QMessageBox::Warning);
+      Core::Prompt::showMessageBox(
+        tr("Project error"), tr("You need to add at least one dataset!"), Core::Prompt::Warning);
     }
 
     return false;
@@ -283,10 +287,10 @@ void DataModel::ProjectModel::lockProject()
 
   if (first != second || !ok) {
     QTimer::singleShot(0, this, [] {
-      Misc::Utilities::showMessageBox(
+      Core::Prompt::showMessageBox(
         tr("Passwords do not match"),
         tr("The two passwords you entered do not match. The project was not locked."),
-        QMessageBox::Warning);
+        Core::Prompt::Warning);
     });
     return;
   }
@@ -332,10 +336,10 @@ void DataModel::ProjectModel::unlockProject()
 
   if (!Misc::PasswordHash::verifyPassword(pwd, m_passwordHash)) {
     QTimer::singleShot(0, this, [] {
-      Misc::Utilities::showMessageBox(
+      Core::Prompt::showMessageBox(
         tr("Incorrect password"),
         tr("The password you entered does not match the one stored in the project file."),
-        QMessageBox::Warning);
+        Core::Prompt::Warning);
     });
     return;
   }
@@ -423,7 +427,7 @@ QString DataModel::ProjectModel::jsonFileName() const
  */
 QString DataModel::ProjectModel::jsonProjectsPath() const
 {
-  static auto& workspaceManager = Misc::WorkspaceManager::instance();
+  auto& workspaceManager = Core::services().workspaceManager;
   return workspaceManager.path("Projects");
 }
 
@@ -605,20 +609,14 @@ void DataModel::ProjectModel::emitSinkConfigResets(bool hadMqttPublisher, bool h
  */
 void DataModel::ProjectModel::setupExternalConnections()
 {
-  connect(&UI::Dashboard::instance(), &UI::Dashboard::pointsChanged, this, [this]() {
-    if (AppState::instance().operationMode() != SerialStudio::ProjectFile)
-      return;
+  m_dashboardStructure = m_bus.subscribe<Core::Bus::DashboardStructureChanged>(
+    this, [this](const std::shared_ptr<const Core::Bus::DashboardStructureChanged>&) {
+      if (AppState::instance().operationMode() != SerialStudio::QuickPlot)
+        return;
 
-    setPointCount(UI::Dashboard::instance().points());
-  });
-
-  connect(&UI::Dashboard::instance(), &UI::Dashboard::widgetCountChanged, this, [this] {
-    if (AppState::instance().operationMode() != SerialStudio::QuickPlot)
-      return;
-
-    m_workspaces.rebuildSessionWorkspaces();
-    Q_EMIT activeWorkspacesChanged();
-  });
+      m_workspaces.rebuildSessionWorkspaces();
+      Q_EMIT activeWorkspacesChanged();
+    });
 
   connect(&AppState::instance(), &AppState::operationModeChanged, this, [this] {
     const auto opMode = AppState::instance().operationMode();
@@ -630,15 +628,14 @@ void DataModel::ProjectModel::setupExternalConnections()
     Q_EMIT activeWorkspacesChanged();
   });
 
-  connect(
-    &IO::ConnectionManager::instance(), &IO::ConnectionManager::connectedChanged, this, [this] {
-      if (!IO::ConnectionManager::instance().isConnected())
+  m_linkState = m_bus.subscribe<Core::Bus::ConnectionStateChanged>(
+    this, [this](const std::shared_ptr<const Core::Bus::ConnectionStateChanged>& link) {
+      if (!link->connected)
         clearTransientState();
     });
 
-#ifdef BUILD_COMMERCIAL
-  connect(
-    &Licensing::LemonSqueezy::instance(), &Licensing::LemonSqueezy::activatedChanged, this, [this] {
+  m_licenseState = m_bus.subscribe<Core::Bus::LicenseStateChanged>(
+    this, [this](const std::shared_ptr<const Core::Bus::LicenseStateChanged>&) {
       if (AppState::instance().operationMode() != SerialStudio::ProjectFile) {
         m_workspaces.rebuildSessionWorkspaces();
         Q_EMIT activeWorkspacesChanged();
@@ -658,7 +655,69 @@ void DataModel::ProjectModel::setupExternalConnections()
       Q_EMIT editorWorkspacesChanged();
       Q_EMIT activeWorkspacesChanged();
     });
-#endif
+
+  m_source0Settings = m_bus.subscribe<Core::Bus::Source0ConnectionSettingsChanged>(
+    this,
+    [this](const std::shared_ptr<const Core::Bus::Source0ConnectionSettingsChanged>& message) {
+      m_sourceOps.applySource0Settings(*message);
+    },
+    Qt::DirectConnection);
+  m_capturedSettings = m_bus.subscribe<Core::Bus::SourceConnectionSettingsCaptured>(
+    this,
+    [this](const std::shared_ptr<const Core::Bus::SourceConnectionSettingsCaptured>& message) {
+      m_sourceOps.applyCapturedSettings(message->sourceId, message->settings);
+    },
+    Qt::DirectConnection);
+  m_loader.watchGeneratedProjectRequests();
+}
+
+/**
+ * @brief Connects the model's own structure signals to the retained project snapshot (spec 0077):
+ *        the device layer reads the project from it and dispatches on the change kind, so the
+ *        kinds mirror the four signals it used to connect to; every other edit refreshes the data.
+ */
+void DataModel::ProjectModel::wireStructureSnapshot()
+{
+  using Snapshot = Core::Bus::ProjectStructureSnapshot;
+  connect(this, &ProjectModel::sourceStructureChanged, this, [this] {
+    publishStructureSnapshot(Snapshot::Structure);
+  });
+  connect(this, &ProjectModel::sourceChanged, this, [this](int sourceId) {
+    publishStructureSnapshot(Snapshot::Source, sourceId);
+  });
+  connect(this, &ProjectModel::sourceStreamLaneChanged, this, [this](int sourceId) {
+    publishStructureSnapshot(Snapshot::StreamLane, sourceId);
+  });
+  connect(this, &ProjectModel::luaFastModeChanged, this, [this] {
+    publishStructureSnapshot(Snapshot::LuaFastMode);
+  });
+
+  const auto refresh = [this] {
+    publishStructureSnapshot(Snapshot::Content);
+  };
+  connect(this, &ProjectModel::sourcesChanged, this, refresh);
+  connect(this, &ProjectModel::frameDetectionChanged, this, refresh);
+  connect(this, &ProjectModel::groupsChanged, this, refresh);
+  connect(this, &ProjectModel::groupDataChanged, this, refresh);
+  connect(this, &ProjectModel::jsonFileChanged, this, refresh);
+  connect(this, &ProjectModel::modifiedChanged, this, refresh);
+  connect(this, &ProjectModel::contentTouched, this, refresh);
+}
+
+/**
+ * @brief Retains the project structure the libraries below read (sources, groups, the Lua mode,
+ *        the frame detection and the file path) with the kind of change that produced it.
+ */
+void DataModel::ProjectModel::publishStructureSnapshot(int change, int sourceId)
+{
+  m_bus.publishState<Core::Bus::ProjectStructureSnapshot>(m_sources,
+                                                          m_groups,
+                                                          m_filePath,
+                                                          m_luaFastMode,
+                                                          static_cast<int>(m_frameDetection),
+                                                          change,
+                                                          sourceId,
+                                                          ++m_structureGeneration);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -721,15 +780,6 @@ void DataModel::ProjectModel::newJsonFile()
 
   m_filePath = "";
   m_persistence.watchProjectFile();
-
-  if (m_initialized) {
-    static auto& appState = AppState::instance();
-    if (appState.operationMode() == SerialStudio::ProjectFile) {
-      static auto& dashboard = UI::Dashboard::instance();
-      dashboard.setPoints(m_pointCount);
-      dashboard.setPlotTimeRange(m_plotTimeRange);
-    }
-  }
 
   Q_EMIT groupsChanged();
   Q_EMIT actionsChanged();
@@ -890,7 +940,8 @@ void DataModel::ProjectModel::setControlScriptCode(const QString& code)
 }
 
 /**
- * @brief Sets the dashboard point count and syncs it to the Dashboard.
+ * @brief Sets the project's point count; the dashboard follows pointCountChanged in ProjectFile
+ *        mode and writes its own edits back through here (spec 0077 inversion).
  */
 void DataModel::ProjectModel::setPointCount(const int points)
 {
@@ -901,18 +952,13 @@ void DataModel::ProjectModel::setPointCount(const int points)
 
   m_pointCount = points;
 
-  static auto& appState = AppState::instance();
-  if (appState.operationMode() == SerialStudio::ProjectFile) {
-    static auto& dashboard = UI::Dashboard::instance();
-    dashboard.setPoints(points);
-  }
-
   setModified(true);
   Q_EMIT pointCountChanged();
 }
 
 /**
- * @brief Sets the project's plot time range (seconds) and syncs it to the Dashboard.
+ * @brief Sets the project's plot time range (seconds); the dashboard follows plotTimeRangeChanged
+ *        in ProjectFile mode and writes its own edits back through here.
  */
 void DataModel::ProjectModel::setPlotTimeRange(const double seconds)
 {
@@ -923,12 +969,6 @@ void DataModel::ProjectModel::setPlotTimeRange(const double seconds)
   const ProjectUndoScope undo_scope{*this, tr("Change Plot Time Range")};
 
   m_plotTimeRange = clamped;
-
-  static auto& appState = AppState::instance();
-  if (appState.operationMode() == SerialStudio::ProjectFile) {
-    static auto& dashboard = UI::Dashboard::instance();
-    dashboard.setPlotTimeRange(clamped);
-  }
 
   setModified(true);
   Q_EMIT plotTimeRangeChanged();
@@ -943,7 +983,7 @@ void DataModel::ProjectModel::setFrozen(const bool frozen)
   if (m_frozen == frozen)
     return;
 
-  if (frozen && !SerialStudio::activated())
+  if (frozen && !Core::License::activated())
     return;
 
   const ProjectUndoScope undo_scope{*this, tr("Toggle Freeze")};
@@ -998,18 +1038,18 @@ void DataModel::ProjectModel::requestLuaFastMode(const bool enabled)
     return;
   }
 
-  const int choice = Misc::Utilities::showMessageBox(
+  const int choice = Core::Prompt::showMessageBox(
     tr("Enable Fast Lua Execution?"),
     tr("Fast mode runs Lua parsers and transforms through the JIT compiler (up to ~40x "
        "faster), but the runaway-script watchdog cannot operate: a script stuck in an "
        "infinite loop will stall its data source until you disconnect.\n\n"
        "Enable it only for scripts you trust and have tested in Safe mode first."),
-    QMessageBox::Warning,
+    Core::Prompt::Warning,
     tr("Fast Lua Execution"),
-    QMessageBox::Ok | QMessageBox::Cancel,
-    QMessageBox::Cancel);
+    Core::Prompt::Ok | Core::Prompt::Cancel,
+    Core::Prompt::Cancel);
 
-  if (choice == QMessageBox::Ok)
+  if (choice == Core::Prompt::Ok)
     setLuaFastMode(true);
   else
     Q_EMIT luaFastModeChanged();

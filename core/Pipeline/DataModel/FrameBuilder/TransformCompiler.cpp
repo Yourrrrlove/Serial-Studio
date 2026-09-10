@@ -37,6 +37,7 @@ extern "C" {
 #include <stdexcept>
 #include <utility>
 
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
 #include "DataModel/NotificationCenter.h"
 #include "DataModel/ProjectModel.h"
@@ -46,7 +47,6 @@ extern "C" {
 #include "DataModel/Scripting/LuaCompatJIT.h"
 #include "DataModel/Scripting/LuaDeadlineHook.h"
 #include "DataModel/Scripting/ScriptApiCall.h"
-#include "SerialStudio.h"
 
 //--------------------------------------------------------------------------------------------------
 // Constants & file-local helpers

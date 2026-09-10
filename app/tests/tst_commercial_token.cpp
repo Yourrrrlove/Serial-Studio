@@ -22,7 +22,7 @@
 #include <QString>
 #include <QTest>
 
-#include "Licensing/CommercialToken.h"
+#include "Core/Licensing/CommercialToken.h"
 
 // The suite compiles CommercialToken.cpp with its own build salt, so the tier stays independent
 // of how the application was configured. Every case builds its own token; the process-wide

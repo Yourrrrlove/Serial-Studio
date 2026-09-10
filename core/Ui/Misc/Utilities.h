@@ -25,6 +25,8 @@
 #include <QMessageBox>
 #include <QObject>
 
+#include "Core/Prompt/IUserPrompter.h"
+
 /**
  * @brief Maps QMessageBox standard buttons to their localized labels.
  */
@@ -32,13 +34,29 @@ typedef QMap<QMessageBox::StandardButton, QString> ButtonTextMap;
 
 namespace Misc {
 /**
- * @brief Application-wide utility functions for common UI and system operations.
+ * @brief Application-wide utility functions for common UI and system operations; also the Ui
+ *        layer's implementation of the Core prompt seam the lower libraries speak through.
  */
-class Utilities : public QObject {
+class Utilities
+  : public QObject
+  , public Core::Prompt::IUserPrompter {
   Q_OBJECT
 
 public:
   [[nodiscard]] static Utilities& instance();
+
+  [[nodiscard]] int promptMessage(const QString& text,
+                                  const QString& informativeText,
+                                  Core::Prompt::Icon icon,
+                                  const QString& windowTitle,
+                                  Core::Prompt::Buttons buttons,
+                                  Core::Prompt::Button defaultButton,
+                                  const Core::Prompt::ButtonLabels& buttonLabels) override;
+  void promptDirectory(const QString& title,
+                       const QString& initialPath,
+                       DirectoryHandler onSelected) override;
+  void revealInFileManager(const QString& path) override;
+
   static void rebootApplication();
   static QPixmap getHiDpiPixmap(const QString& path);
 

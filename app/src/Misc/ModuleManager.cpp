@@ -26,10 +26,13 @@
 // code-verify off
 #include <iostream>
 #include <memory>
+#include <vector>
 // code-verify on
 
+#include <QColor>
 #include <QCoreApplication>
 #include <QFile>
+#include <QGuiApplication>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QQmlContext>
@@ -40,35 +43,54 @@
 // clang-format off
 #  include <windows.h>
 #  include <appmodel.h>
+#  include <QVariant>
 // clang-format on
 #endif
 
+#include "API/CommandHandler.h"
+#include "API/CommandRegistry.h"
+#include "API/HandlerContext.h"
 #include "API/Mirror/MirrorPublisher.h"
 #include "API/Mirror/MirrorSession.h"
 #include "API/ProcessLauncher.h"
 #include "API/Server.h"
 #include "API/TerminalBridge.h"
-#include "AppInfo.h"
+#include "ApiHandlers/UiHandlers.h"
 #include "AppState.h"
 #include "Benchmark/BenchmarkRunner.h"
 #include "Console/Export.h"
 #include "Console/Handler.h"
+#include "Core/AppInfo.h"
+#include "Core/Bus/MessageBus.h"
+#include "Core/Bus/Messages.h"
+#include "Core/Crypto/MachineKey.h"
+#include "Core/DataModel/IBlockSink.h"
+#include "Core/DataModel/PropertyValidators.h"
+#include "Core/IconRegistry.h"
+#include "Core/IO/IRawByteTap.h"
+#include "Core/License.h"
+#include "Core/Prompt/UserPrompt.h"
+#include "Core/Runtime.h"
+#include "Core/SerialStudio.h"
+#include "Core/Services.h"
+#include "Core/TimerEvents.h"
+#include "Core/Translator.h"
+#include "Core/WorkspaceManager.h"
 #include "CSV/Export.h"
 #include "CSV/Player.h"
-#include "DataModel/Editors/ControlScriptEditor.h"
-#include "DataModel/Editors/FrameParserModel.h"
-#include "DataModel/Editors/JsCodeEditor.h"
-#include "DataModel/Editors/MacroEditor.h"
-#include "DataModel/Editors/OutputCodeEditor.h"
+#include "DataModel/DataTable.h"
 #include "DataModel/FrameBuilder.h"
 #include "DataModel/Importers/ProtoImporter.h"
 #include "DataModel/NotificationCenter.h"
-#include "DataModel/ProjectEditor.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
 #include "DataModel/RowFilterProxy.h"
 #include "DataModel/Scripting/ControlScript.h"
+#include "DataModel/Scripting/DashboardApi.h"
+#include "DataModel/Scripting/DeviceWriteApi.h"
 #include "DataModel/Scripting/FrameParser.h"
 #include "DataModel/Scripting/MacroRunner.h"
+#include "DataModel/Scripting/ScriptApiCall.h"
 #include "IO/ConnectionManager.h"
 #include "IO/FileTransmission.h"
 #include "IO/PipelineHost.h"
@@ -85,20 +107,22 @@
 #include "Misc/HelpCenter.h"
 #include "Misc/HighDpiScaling.h"
 #include "Misc/IconEngine.h"
-#include "Misc/IconRegistry.h"
 #include "Misc/ProblemCenter.h"
 #include "Misc/ThemeManager.h"
-#include "Misc/TimerEvents.h"
-#include "Misc/Translator.h"
 #include "Misc/Utilities.h"
-#include "Misc/WorkspaceManager.h"
 #include "Platform/AppPlatform.h"
-#include "SerialStudio.h"
+#include "ProjectEditor/Editors/ControlScriptEditor.h"
+#include "ProjectEditor/Editors/FrameParserModel.h"
+#include "ProjectEditor/Editors/JsCodeEditor.h"
+#include "ProjectEditor/Editors/MacroEditor.h"
+#include "ProjectEditor/Editors/OutputCodeEditor.h"
+#include "ProjectEditor/ProjectEditor.h"
 #include "SessionContext.h"
 #include "UI/AlarmMonitor.h"
 #include "UI/CommandRegistry.h"
 #include "UI/Dashboard.h"
 #include "UI/DashboardWidget.h"
+#include "UI/SerialStudioHelpers.h"
 #include "UI/Taskbar.h"
 #include "UI/TaskbarSettings.h"
 #include "UI/WidgetExtensions.h"
@@ -124,7 +148,8 @@
 
 #ifdef BUILD_COMMERCIAL
 #  include "AI/Assistant.h"
-#  include "DataModel/Editors/PainterCodeEditor.h"
+#  include "API/Handlers/LicensingHandler.h"
+#  include "Core/Licensing/CommercialToken.h"
 #  include "DataModel/Importers/DBCImporter.h"
 #  include "DataModel/Importers/ModbusMapImporter.h"
 #  include "InfluxDB/Export.h"
@@ -134,6 +159,7 @@
 #  include "Licensing/Trial.h"
 #  include "Misc/ShortcutGenerator.h"
 #  include "MQTT/Publisher.h"
+#  include "ProjectEditor/Editors/PainterCodeEditor.h"
 #  include "Sessions/DatabaseManager.h"
 #  include "Sessions/Export.h"
 #  include "Sessions/Player.h"
@@ -619,9 +645,15 @@ void Misc::ModuleManager::registerQmlTypes()
   qmlRegisterType<UI::Taskbar>("SerialStudio.UI", 1, 0, "TaskBar");
   qmlRegisterType<UI::WindowManager>("SerialStudio.UI", 1, 0, "WindowManager");
 
-  qmlRegisterSingletonType<SerialStudio>(
-    "SerialStudio", 1, 0, "SerialStudio", [](QQmlEngine*, QJSEngine*) -> QObject* {
-      return new SerialStudio();
+  qmlRegisterUncreatableMetaObject(SerialStudio::staticMetaObject,
+                                   "SerialStudio",
+                                   1,
+                                   0,
+                                   "SerialStudio",
+                                   QStringLiteral("SerialStudio is a namespace"));
+  qmlRegisterSingletonType<UI::SerialStudioHelpers>(
+    "SerialStudio", 1, 0, "SerialStudioHelpers", [](QQmlEngine*, QJSEngine*) -> QObject* {
+      return new UI::SerialStudioHelpers();
     });
 }
 
@@ -643,10 +675,17 @@ void Misc::ModuleManager::initializeQmlInterface()
 
   Misc::TimerEvents::instance().startTimers();
 
-  connect(&Misc::Translator::instance(),
+  auto& translator = Misc::Translator::instance();
+  connect(&translator,
           &Misc::Translator::languageChanged,
           &m_engine,
           &QQmlApplicationEngine::retranslate);
+
+  const auto applyLayoutDirection = [&translator] {
+    QGuiApplication::setLayoutDirection(translator.rtl() ? Qt::RightToLeft : Qt::LeftToRight);
+  };
+  connect(&translator, &Misc::Translator::languageChanged, &translator, applyLayoutDirection);
+  applyLayoutDirection();
 
   setupCrossModuleConnections();
 
@@ -675,6 +714,94 @@ void Misc::ModuleManager::initializeQmlInterface()
 #endif
 }
 
+#ifdef BUILD_COMMERCIAL
+/**
+ * @brief Publishes the licensing facts into Core::License, the flag every layer reads instead of
+ *        the token (spec 0077): once after the licensing block constructs, then on every real
+ *        activation transition, so late or offline activation re-derives like startup does.
+ */
+static void publishLicenseState(Core::Bus::MessageBus& bus, const Licensing::Trial& trial)
+{
+  const auto& token  = Licensing::CommercialToken::current();
+  const auto tier    = static_cast<quint8>(token.featureTier());
+  const bool expired = trial.trialExpired();
+  Core::License::set(token.isValid() && SS_LICENSE_GUARD(), tier, expired);
+  bus.publishState<Core::Bus::LicenseStateChanged>(
+    Core::License::activated(), static_cast<int>(tier), expired);
+}
+#endif
+
+/**
+ * @brief Adopts the bus (slot 0) and binds the Core service set (spec 0077 T71): the four Core
+ *        singletons construct here, each reaching only Qt. Runs right after QApplication, before
+ *        the CLI and the theme override construct Ui singletons that read the set; the pinned
+ *        order calls it again and finds the bus already adopted.
+ */
+void Misc::ModuleManager::bootstrapCoreServices()
+{
+  auto& ctx = SessionContext::current();
+  if (ctx.hasBus())
+    return;
+
+  Core::Runtime::setSessionId(ctx.sessionId());
+  ctx.adoptBus(std::make_unique<Core::Bus::MessageBus>());
+  static Core::Services services{ctx.bus(),
+                                 Misc::Translator::instance(),
+                                 Misc::TimerEvents::instance(),
+                                 Misc::WorkspaceManager::instance(),
+                                 Misc::IconRegistry::instance()};
+  Core::bindServices(&services);
+}
+
+/**
+ * @brief Binds the Pipeline module set once the seven modules are adopted; every Storage, Api and
+ *        Ui module is constructed after this point, so its constructor may read the set.
+ */
+static void bindPipelineModuleSet(SessionContext& ctx)
+{
+  static DataModel::PipelineModules modules{ctx.appState(),
+                                            ctx.projectModel(),
+                                            ctx.frameBuilder(),
+                                            ctx.frameParser(),
+                                            DataModel::ControlScript::instance(),
+                                            ctx.pipelineHost(),
+                                            ctx.notifications()};
+  DataModel::bindPipelineModules(&modules);
+}
+
+/**
+ * @brief Binds the handler context once the dashboard (its frame surface) is adopted: the Devices,
+ *        Storage and Api modules the API handlers and the Ui read.
+ */
+static void bindHandlerContextSet(SessionContext& ctx)
+{
+#ifdef BUILD_COMMERCIAL
+  static API::HandlerContext context{ctx.connectionManager(),
+                                     ctx.dashboard(),
+                                     API::CommandRegistry::instance(),
+                                     API::Server::instance(),
+                                     CSV::Player::instance(),
+                                     CSV::Export::instance(),
+                                     MDF4::Player::instance(),
+                                     MDF4::Export::instance(),
+                                     Sessions::Player::instance(),
+                                     Sessions::Export::instance(),
+                                     Sessions::DatabaseManager::instance(),
+                                     MQTT::Publisher::instance(),
+                                     InfluxDB::Export::instance()};
+#else
+  static API::HandlerContext context{ctx.connectionManager(),
+                                     ctx.dashboard(),
+                                     API::CommandRegistry::instance(),
+                                     API::Server::instance(),
+                                     CSV::Player::instance(),
+                                     CSV::Export::instance(),
+                                     MDF4::Player::instance(),
+                                     MDF4::Export::instance()};
+#endif
+  API::bindHandlerContext(&context);
+}
+
 /**
  * @brief Constructs every core singleton in a pinned, dependency-verified order (ctor-edge
  *        proof in doc/claude/specs/0001-composition-root/). Licensing sits right after
@@ -684,44 +811,135 @@ void Misc::ModuleManager::initializeQmlInterface()
 void Misc::ModuleManager::instantiateCoreModules()
 {
   auto& ctx = SessionContext::current();
+  bootstrapCoreServices();
+  auto& messageBus = ctx.bus();
 
-  (void)Misc::Translator::instance();
+  Core::Prompt::setPrompter(&Misc::Utilities::instance());
+  DataModel::PropertyHooks::setColorValidator(
+    [](const QString& color) { return QColor::fromString(color).isValid(); });
+  DataModel::PropertyHooks::setActionIconResolver(&Misc::IconEngine::resolveActionIconSource);
+  Misc::Translator::instance().attachMessageBus(messageBus);
 #ifdef BUILD_COMMERCIAL
-  (void)Licensing::MachineID::instance();
-  (void)Licensing::LemonSqueezy::instance();
+  Core::Crypto::setMachineKey(Licensing::MachineID::instance().machineSpecificKey());
+  auto& lemonSqueezy = Licensing::LemonSqueezy::instance();
   (void)Licensing::OfflineLicense::instance();
-  (void)Licensing::Trial::instance();
+  auto& trial = Licensing::Trial::instance();
+  publishLicenseState(messageBus, trial);
+  QObject::connect(&lemonSqueezy,
+                   &Licensing::LemonSqueezy::activatedChanged,
+                   &lemonSqueezy,
+                   [&messageBus, &trial] { publishLicenseState(messageBus, trial); });
+  QObject::connect(&trial, &Licensing::Trial::enabledChanged, &trial, [&messageBus, &trial] {
+    publishLicenseState(messageBus, trial);
+  });
 #endif
-  (void)Misc::TimerEvents::instance();
   (void)Misc::CommonFonts::instance();
-  (void)Misc::WorkspaceManager::instance();
-  ctx.adoptNotifications(SessionContext::create<DataModel::NotificationCenter>());
-  (void)Misc::ProblemCenter::instance();
-  (void)Misc::ConnectionDiagnostics::instance();
+  ctx.adoptNotifications(SessionContext::create<DataModel::NotificationCenter>(messageBus));
+  Misc::ProblemCenter::instance().attachMessageBus(messageBus);
+  Misc::ConnectionDiagnostics::instance().attachMessageBus(messageBus);
   (void)Misc::ThemeManager::instance();
   (void)Misc::ExtensionManager::instance();
   (void)DataModel::ControlScript::instance();
-  ctx.adoptProjectModel(SessionContext::create<DataModel::ProjectModel>());
-  ctx.adoptAppState(SessionContext::create<AppState>());
-  ctx.adoptFrameBuilder(SessionContext::create<DataModel::FrameBuilder>());
-  ctx.adoptPipelineHost(SessionContext::create<IO::PipelineHost>());
-  ctx.adoptConnectionManager(SessionContext::create<IO::ConnectionManager>());
-  ctx.adoptConsole(SessionContext::create<Console::Handler>());
+  ctx.adoptProjectModel(SessionContext::create<DataModel::ProjectModel>(messageBus));
+  ctx.adoptAppState(SessionContext::create<AppState>(messageBus));
+  ctx.adoptFrameBuilder(SessionContext::create<DataModel::FrameBuilder>(messageBus));
+  ctx.adoptPipelineHost(SessionContext::create<IO::PipelineHost>(messageBus));
+  ctx.adoptFrameParser(SessionContext::create<DataModel::FrameParser>(messageBus));
+  bindPipelineModuleSet(ctx);
+  ctx.adoptConnectionManager(
+    SessionContext::create<IO::ConnectionManager>(messageBus, ctx.pipelineHost()));
+  ctx.adoptConsole(SessionContext::create<Console::Handler>(messageBus, ctx.connectionManager()));
   (void)API::Server::instance();
-  (void)CSV::Player::instance();
-  (void)MDF4::Player::instance();
+  CSV::Player::instance().attachMessageBus(messageBus);
+  MDF4::Player::instance().attachMessageBus(messageBus);
 #ifdef BUILD_COMMERCIAL
-  (void)Sessions::Player::instance();
-  (void)Sessions::Export::instance();
-  (void)Sessions::DatabaseManager::instance();
-  (void)MQTT::Publisher::instance();
+  Sessions::Player::instance().attachMessageBus(messageBus);
+  Sessions::Export::instance().attachMessageBus(messageBus);
+  Sessions::DatabaseManager::instance().attachMessageBus(messageBus);
+  MQTT::Publisher::instance().attachMessageBus(messageBus);
 #endif
-  (void)CSV::Export::instance();
-  (void)MDF4::Export::instance();
-  (void)Console::Export::instance();
-  ctx.adoptFrameParser(SessionContext::create<DataModel::FrameParser>());
-  (void)UI::WidgetExtensions::instance();
-  ctx.adoptDashboard(SessionContext::create<UI::Dashboard>());
+  CSV::Export::instance().attachMessageBus(messageBus);
+  MDF4::Export::instance().attachMessageBus(messageBus);
+  Console::Export::instance().attachMessageBus(messageBus);
+  UI::WidgetExtensions::instance().attachMessageBus(messageBus);
+  ctx.adoptDashboard(SessionContext::create<UI::Dashboard>(messageBus, ctx.connectionManager()));
+  bindHandlerContextSet(ctx);
+}
+
+/**
+ * @brief Binds the seams every root needs before any wiring or the first device open (spec 0077):
+ *        block sinks (two read-only observers named by slot), raw-byte taps and the per-frame tap.
+ *        ONE list for the GUI, headless and benchmark roots: a sink missing here never reaches
+ *        the any-async-sink flag and records an empty file; the benchmark tiers need them all.
+ */
+void Misc::ModuleManager::bindInterfaces()
+{
+  auto& frameBuilder = DataModel::FrameBuilder::instance();
+  auto& pipelineHost = IO::PipelineHost::instance();
+  auto& ioManager    = IO::ConnectionManager::instance();
+  auto& server       = API::Server::instance();
+  auto& console      = Console::Handler::instance();
+
+  std::vector<DataModel::IBlockSink*> sinks{
+    &CSV::Export::instance(), &MDF4::Export::instance(), &server};
+  std::vector<IO::IRawByteTap*> taps{&server, &console};
+  DataModel::IBlockSink* grpc = nullptr;
+#ifdef BUILD_COMMERCIAL
+  auto& sessions = Sessions::Export::instance();
+  auto& mqtt     = MQTT::Publisher::instance();
+  sinks.push_back(&sessions);
+  sinks.push_back(&mqtt);
+  sinks.push_back(&Widgets::AudioExport::instance());
+  sinks.push_back(&InfluxDB::Export::instance());
+  taps.push_back(&sessions);
+  taps.push_back(&mqtt);
+  pipelineHost.setRawFrameTap(&mqtt);
+  DataModel::setMqttPublisher(&mqtt);
+#endif
+#ifdef ENABLE_GRPC
+  auto& grpcServer = API::GRPC::GRPCServer::instance();
+  sinks.push_back(&grpcServer);
+  taps.push_back(&grpcServer);
+  grpc = &grpcServer;
+#endif
+
+  pipelineHost.bindFrameBuilder(frameBuilder);
+  frameBuilder.bindBlockSinks(sinks, &server, grpc);
+  ioManager.bindRawTaps(taps);
+
+  DataModel::setCommandExecutor(&API::CommandHandler::instance());
+  API::CommandRegistry::instance().bindCheckpointStore(Misc::BackupManager::instance());
+
+  auto& dashboard = UI::Dashboard::instance();
+  DataModel::setDashboardControl(&dashboard);
+  DataModel::setDeviceWriter(&ioManager);
+  CSV::Player::instance().setPlotSink(&dashboard);
+  CSV::Player::instance().setPayloadInjector(&ioManager);
+  MDF4::Player::instance().setPlotSink(&dashboard);
+  MDF4::Player::instance().setPayloadInjector(&ioManager);
+#ifdef BUILD_COMMERCIAL
+  Sessions::Player::instance().setPlotSink(&dashboard);
+  Sessions::Player::instance().setPayloadInjector(&ioManager);
+#endif
+}
+
+/**
+ * @brief Registers every API command set in one place (spec 0077 T60/T62): the core set the API
+ *        library owns, the user-interface set from the Ui library and the licensing set from the
+ *        executable. Idempotent, so the schema dump and the GUI root may both call it.
+ */
+void Misc::ModuleManager::registerApiHandlers()
+{
+  static bool registered = false;
+  if (registered)
+    return;
+
+  registered = true;
+  API::CommandHandler::instance().registerCoreHandlers();
+  UI::ApiHandlers::registerAll();
+#ifdef BUILD_COMMERCIAL
+  API::Handlers::LicensingHandler::registerCommands();
+#endif
 }
 
 /**
@@ -731,6 +949,9 @@ void Misc::ModuleManager::instantiateCoreModules()
  */
 void Misc::ModuleManager::setupHeadlessSessionConnections()
 {
+  bindInterfaces();
+  registerApiHandlers();
+  DataModel::NotificationCenter::instance().setupExternalConnections();
   DataModel::FrameBuilder::instance().setupExternalConnections();
   IO::PipelineHost::instance().setupExternalConnections();
 #ifdef BUILD_COMMERCIAL
@@ -788,20 +1009,23 @@ static void setupCommercialModuleConnections()
   Sessions::Export::instance().setupExternalConnections();
   Sessions::DatabaseManager::instance().setupExternalConnections();
   MQTT::Publisher::instance().setupExternalConnections();
-  InfluxDB::Export::instance().setupExternalConnections();
+  auto& influx = InfluxDB::Export::instance();
+  influx.attachMessageBus(SessionContext::current().bus());
+  influx.setupExternalConnections();
 }
 #endif
 
 /**
- * @brief Wires inter-module signals and runs each module's setupExternalConnections. The
- *        session context is published right after the pinned order and before any wiring,
- *        so an injected class can never be constructed before it exists (spec 0039); the
- *        FrameBuilder/FrameParser affinity move to the pipeline thread runs last (spec 0051).
+ * @brief Wires inter-module signals and runs each module's setupExternalConnections. The seams
+ *        are bound right after the pinned order and before any wiring, so an injected class is
+ *        never constructed before its context exists (spec 0039) and no sink is missing when the
+ *        first block flows (spec 0077); the pipeline-thread affinity move runs last (spec 0051).
  */
 void Misc::ModuleManager::setupCrossModuleConnections()
 {
   instantiateCoreModules();
-  (void)SessionContext::current();
+  bindInterfaces();
+  registerApiHandlers();
 
   auto* appState             = &AppState::instance();
   auto* ioManager            = &IO::ConnectionManager::instance();
@@ -812,6 +1036,7 @@ void Misc::ModuleManager::setupCrossModuleConnections()
   auto* miscThemeManager     = &Misc::ThemeManager::instance();
 
   appState->setEphemeralSession(m_ephemeralSession);
+  notificationCenter->setupExternalConnections();
   appState->setupExternalConnections();
   CSV::Export::instance().setupExternalConnections();
   API::Server::instance().setupExternalConnections();

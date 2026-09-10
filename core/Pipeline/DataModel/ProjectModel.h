@@ -22,12 +22,17 @@
 #pragma once
 
 #include <QJsonArray>
+#include <QJsonDocument>
 #include <QJsonObject>
+#include <QList>
 #include <QObject>
 #include <QSet>
 #include <QVariantList>
 
-#include "DataModel/Frame.h"
+#include "Core/Bus/Subscription.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/DataModel/FrameSupport.h"
+#include "Core/SerialStudio.h"
 #include "DataModel/Project/ProjectBulkOps.h"
 #include "DataModel/Project/ProjectEntities.h"
 #include "DataModel/Project/ProjectFolders.h"
@@ -39,7 +44,10 @@
 #include "DataModel/Project/ProjectSources.h"
 #include "DataModel/Project/ProjectTables.h"
 #include "DataModel/Project/ProjectWorkspaces.h"
-#include "SerialStudio.h"
+
+namespace Core::Bus {
+class MessageBus;
+}  // namespace Core::Bus
 
 class SessionContext;
 
@@ -215,6 +223,7 @@ signals:
   void sourceDeleted();
   void outputWidgetAdded(int groupId, int widgetId);
   void outputWidgetDeleted(int groupId);
+  void editorSelectionRequested(int kind, int id, const QString& path);
 
 private:
   /**
@@ -230,6 +239,10 @@ private:
   [[nodiscard]] SaveBlocker saveBlockerCode() const;
 
   friend class ::SessionContext;
+
+  static void bindInstance(ProjectModel* instance) noexcept { s_instance = instance; }
+
+  static ProjectModel* s_instance;
   friend class ProjectBulkOps;
   friend class ProjectEntities;
   friend class ProjectFolders;
@@ -241,7 +254,7 @@ private:
   friend class ProjectTables;
   friend class ProjectWorkspaces;
 
-  explicit ProjectModel();
+  explicit ProjectModel(Core::Bus::MessageBus& bus);
   ProjectModel(ProjectModel&&)                 = delete;
   ProjectModel(const ProjectModel&)            = delete;
   ProjectModel& operator=(ProjectModel&&)      = delete;
@@ -568,6 +581,11 @@ public slots:
   bool loadFromJsonDocument(const QJsonDocument& document, const QString& sourcePath = {})
   {
     return m_loader.loadFromJsonDocument(document, sourcePath);
+  }
+
+  [[nodiscard]] bool loadGeneratedProject(const QJsonDocument& document)
+  {
+    return m_loader.loadGeneratedProject(document);
   }
 
   void importProjectFromJson(const QJsonObject& project, const QString& suggestedFileName)
@@ -1184,12 +1202,20 @@ private:
   void scheduleWorkspaceRegen();
   void flushWorkspaceRegen();
   void emitSinkConfigResets(bool hadMqttPublisher, bool hadInfluxSink);
+  void wireStructureSnapshot();
+  void publishStructureSnapshot(int change, int sourceId = -1);
 
   [[nodiscard]] int nextDatasetIndex();
 
   [[nodiscard]] int allocateUniqueId() { return m_nextUniqueId++; }
 
 private:
+  Core::Bus::MessageBus& m_bus;
+  Core::Bus::Subscription m_linkState;
+  Core::Bus::Subscription m_licenseState;
+  Core::Bus::Subscription m_dashboardStructure;
+  Core::Bus::Subscription m_source0Settings;
+  Core::Bus::Subscription m_capturedSettings;
   QString m_title;
   QString m_frameEndSequence;
   QString m_checksumAlgorithm;
@@ -1222,6 +1248,7 @@ private:
   bool m_locked;
 
   qint64 m_mutationEpoch;
+  quint64 m_structureGeneration;
   ProjectHistory m_history;
 
   DataModel::Group m_selectedGroup;

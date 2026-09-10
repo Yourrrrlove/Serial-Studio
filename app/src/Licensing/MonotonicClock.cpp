@@ -25,8 +25,8 @@
 #include <QElapsedTimer>
 #include <QSettings>
 
+#include "Core/Crypto/SimpleCrypt.h"
 #include "Licensing/MachineID.h"
-#include "Licensing/SimpleCrypt.h"
 
 // Shortest interval between two persisted floors: the getters reading it are QML-bound (K10)
 static constexpr qint64 kPersistIntervalMs = 60000;

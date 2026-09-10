@@ -25,24 +25,42 @@
 #include <QDebug>
 #include <QThread>
 
+#include "Core/IO/IMqttPublisher.h"
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
 #include "IO/PipelineHost.h"
-#include "SerialStudio.h"
-
-#ifdef BUILD_COMMERCIAL
-#  include "MQTT/Publisher.h"
-#endif
 
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
 
 static const QString kSystemTable = QStringLiteral("__datasets__");
+
 static const QString kRawPrefix   = QStringLiteral("raw:");
 static const QString kFinalPrefix = QStringLiteral("final:");
 
 static constexpr int kHandleIndexBits    = 24;
 static constexpr qint64 kHandleIndexMask = (static_cast<qint64>(1) << kHandleIndexBits) - 1;
+
+// The publisher the composition root bound; null in a GPL build or a root that bound none
+static IO::IMqttPublisher* s_mqttPublisher = nullptr;
+
+/**
+ * @brief Binds the MQTT publisher the script verbs reach (spec 0077); the composition root calls
+ *        this once, before any script runs.
+ */
+void DataModel::setMqttPublisher(IO::IMqttPublisher* publisher) noexcept
+{
+  s_mqttPublisher = publisher;
+}
+
+/**
+ * @brief The bound MQTT publisher, or null when no root bound one.
+ */
+IO::IMqttPublisher* DataModel::mqttPublisher() noexcept
+{
+  return s_mqttPublisher;
+}
 
 /**
  * @brief Returns the reserved name of the internal per-dataset mirror table.
@@ -1135,7 +1153,10 @@ qint64 DataModel::TableApiBridge::mqttPublish(const QString& topic,
                                               int qos,
                                               bool retain)
 {
-  static auto& publisher = MQTT::Publisher::instance();
-  return publisher.mqttPublish(topic, payload, qos, retain);
+  auto* publisher = s_mqttPublisher;
+  if (!publisher)
+    return -1;
+
+  return publisher->mqttPublish(topic, payload, qos, retain);
 }
 #endif

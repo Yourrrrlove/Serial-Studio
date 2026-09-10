@@ -393,7 +393,13 @@ endif()
 #                                 /Zc:lambda and /Zc:throwingNew are dropped: clang-cl ignores them
 #                                 and warns "argument unused during compilation".
 #   MSVC cl.exe (Windows)         /wd4324 (C4324 alignment padding) /wd4267 (C4267 size_t->int) plus
-#                                 /Zc:inline /Zc:lambda /Zc:throwingNew conformance switches.
+#                                 /Zc:inline /Zc:lambda /Zc:throwingNew conformance switches, and
+#                                 /external:anglebrackets /external:W0 so a warning raised inside an
+#                                 angle-bracket header (the CRT, Qt's qnumeric.h C4702, lib/) is
+#                                 silenced without lowering /W4 on first-party code. Every
+#                                 first-party include is quoted, so nothing of ours turns external;
+#                                 /external:templates- is deliberately absent (it would surface the
+#                                 same Qt template warnings again through our instantiations).
 #   GCC/Clang/MinGW               -Wall -Wextra -pedantic, plus -Wshadow (locals shadowing
 #                                 members/outers) and -Wundef (undefined macros in #if silently
 #                                 evaluating to 0).
@@ -415,6 +421,8 @@ elseif(MSVC)
     /Zc:inline
     /Zc:lambda
     /Zc:throwingNew
+    /external:anglebrackets
+    /external:W0
   )
 else()
   add_compile_options(

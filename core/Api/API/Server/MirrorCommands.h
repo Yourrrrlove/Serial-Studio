@@ -24,8 +24,8 @@
 #include <functional>
 #include <QString>
 
-#include "API/CommandProtocol.h"
 #include "API/Server/ConnectionState.h"
+#include "Core/Api/CommandProtocol.h"
 
 class QTcpSocket;
 

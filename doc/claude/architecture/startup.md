@@ -24,9 +24,9 @@ invariants hold it together:
   so QML never binds a half-wired object.
 - **`qInstallMessageHandler(MessageHandler)` runs only after `Console::Handler` and
   `NotificationCenter` exist.** `MessageHandler` reaches both on the first warning **from any
-  thread**, and since spec 0039 neither `instance()` constructs anything: they forward to
-  `SessionContext::current()`, whose accessors `qFatal` with the slot's name when the module has
-  not been adopted yet. So a warning emitted before the composition root reached those two slots
+  thread**, and since spec 0039 neither `instance()` constructs anything: each reads the pointer
+  the `SessionContext` bound at adoption (spec 0077 T66) and `qFatal`s with its own name when the
+  module has not been adopted yet. So a warning emitted before the composition root reached those two slots
   is not a late off-thread construction any more, it is an immediate named abort. Installing the
   handler after `setupCrossModuleConnections` is what keeps that impossible.
 
@@ -44,15 +44,18 @@ leaves), but it means a ctor init-list capture inside ThemeManager/NativeWindow 
 the pinned order; treat those files as pre-root code.
 
 **Pinned instantiation order** (the topological order the modules must construct in, verbatim from
-`instantiateCoreModules()`): `Translator`, [`MachineID`, `LemonSqueezy`, `OfflineLicense`,
-`Trial`, commercial], `TimerEvents`, `CommonFonts`, `WorkspaceManager`,
+`instantiateCoreModules()`): the Core service set first (`Translator`, `TimerEvents`,
+`WorkspaceManager`, `IconRegistry`, each reaching only Qt, bound as `Core::services()` by
+`bootstrapCoreServices()`, which `main.cpp` already ran right after `QApplication`), then
+[`MachineID`, `LemonSqueezy`, `OfflineLicense`, `Trial`, commercial], `CommonFonts`,
 `NotificationCenter`, `Misc::ProblemCenter`, `Misc::ConnectionDiagnostics`, `ThemeManager`,
 `ExtensionManager`, `ControlScript`, **`ProjectModel` before `AppState`**, `FrameBuilder`,
-`IO::PipelineHost`, `IO::ConnectionManager`,
-`Console::Handler`, `API::Server`, `CSV::Player`, `MDF4::Player`, [`Sessions::Player`,
-`Sessions::Export`, `Sessions::DatabaseManager`, `MQTT::Publisher`, commercial], `CSV::Export`,
-`MDF4::Export`, `Console::Export`, `FrameParser`, `UI::WidgetExtensions`, and `UI::Dashboard`
-**last** (its ctor wires multiple core modules, the file/session players, and `TimerEvents`).
+`IO::PipelineHost`, `FrameParser` (the Pipeline module set binds here, spec 0077),
+`IO::ConnectionManager`, `Console::Handler`, `API::Server`, `CSV::Player`, `MDF4::Player`,
+[`Sessions::Player`, `Sessions::Export`, `Sessions::DatabaseManager`, `MQTT::Publisher`,
+commercial], `CSV::Export`, `MDF4::Export`, `Console::Export`, `UI::WidgetExtensions`, and
+`UI::Dashboard` **last** (its ctor takes the connection manager and reads the Pipeline set; the
+handler context binds right after it).
 
 Two entries in that list carry their own reason to sit where they do:
 
@@ -175,15 +178,30 @@ ctors with `friend class ::SessionContext`; the composition root constructs them
   plus the benchmark harness). Never move it into a destructor or atexit path — that
   reinstates the `__cxa_finalize` teardown-crash class. Release order in `shutdown()` is the
   exact reverse of the pinned instantiation order; update the two in lockstep.
-- **Never call `SessionContext::current()` from a method body.** Sanctioned sites: the
-  composition root, and a class's own `instance()` accessor passing the context into its ctor.
-  The nine legacy `instance()` accessors are thin forwarders to `current()`, so existing call
-  sites keep working. The `arch-session-context-bypass` advisory and the singleton-census gate
+- **Never call `SessionContext::current()` from a method body.** The one sanctioned site is the
+  composition root: `adopt*()` binds the module's private `s_instance` (`bindInstance()`) and
+  `shutdown()` clears it before each release, so the nine `instance()` accessors read a pointer
+  and no library includes `SessionContext.h` (spec 0077 T66). The `arch-session-context-bypass` advisory and the singleton-census gate
   (`scripts/singleton-census.json` baseline; `code-verify.py --singleton-census --check` fails
   on any increase) hold the line — don't add new `instance()` reach or a casual fourth pilot.
-- **Injection pilots** (ctor takes `SessionContext&`): `Misc::BackupManager`,
-  `DataModel::ProtoImporter`, `DataModel::DBCImporter`, plus `API::MirrorPublisher` /
-  `API::MirrorSession` from spec 0040.
+- **Root-bound module sets (spec 0077 T71/T72).** A library never reaches another library's
+  singleton: it reads one of three reference sets the root binds inside `instantiateCoreModules()`
+  and clears at the end of `shutdown()`. `Core::services()` (bus, `Translator`, `TimerEvents`,
+  `WorkspaceManager`, `IconRegistry`) binds in `ModuleManager::bootstrapCoreServices()`, called
+  from `main.cpp` right after `QApplication` (the CLI's self-tests and the theme override construct
+  Ui singletons that read it before the pinned order runs); it adopts the bus and constructs the
+  four Core singletons, each reaching only Qt, and the pinned order finds it done. `DataModel::pipelineModules()` (AppState, ProjectModel,
+  FrameBuilder, FrameParser, ControlScript, PipelineHost, NotificationCenter) binds right after
+  `FrameParser` is adopted, which is why `FrameParser` now follows `PipelineHost` in the pinned
+  order and precedes every Storage, Api and Ui construction. `API::handlerContext()` (the
+  connection manager, the dashboard's frame surface, the command registry and server, the players,
+  exports and the historian) binds right after `Dashboard`. `Dashboard` and `Console::Handler` take
+  the connection manager by constructor; a reach before a set is bound is a named fatal.
+- **Concrete-reference pilots** (spec 0077 T66 retired the `SessionContext&` ctors):
+  `Misc::BackupManager`, `DataModel::ProtoImporter` and `DataModel::DBCImporter` take
+  `ProjectModel&`; `API::MirrorPublisher` / `API::MirrorSession` (spec 0040) take the dashboard,
+  project, app state (and connection manager) their `instance()` resolves from the adopted
+  modules.
 
 **The frame pipeline moves threads as the last wiring step (spec 0051 M3).**
 `setupCrossModuleConnections()` ends with `IO::PipelineHost::relocateProcessingObjects()`,
@@ -197,14 +215,17 @@ The pipeline thread is joined in `stopFrameConsumerWorkers()` **before**
 `SessionContext::shutdown()` frees the modules, with `prepareShutdown()` queued ahead of the
 quit so Lua states and QJSEngines die on the thread that owns them.
 
-**A composition root that skips `setupCrossModuleConnections()` still has to bind the block
-sinks.** `instantiateCoreModules()` constructs the modules but wires nothing, and since spec 0075
-the publish path holds its pipeline as a bound pointer (`BlockPublisher::Sinks::pipeline`) rather
-than reaching `IO::PipelineHost::instance()` per block. `FrameBuilder::setupExternalConnections()`
-binds it for the GUI and headless-session roots; `--benchmark-hotpath` builds its own root and
-calls `FrameBuilder::bindBlockSinks()` instead, which resolves the same sink list without wiring a
-signal. Skipping it publishes through a null host: the benchmark segfaulted on its first flushed
-block for exactly that reason.
+**Every composition root calls `ModuleManager::bindInterfaces()` right after
+`instantiateCoreModules()`.** Construction wires nothing, and since spec 0075 the publish path
+holds its pipeline as a bound pointer (`BlockPublisher::Sinks::pipeline`) rather than reaching
+`IO::PipelineHost::instance()` per block; since spec 0077 the sinks are bound the same way, as
+`DataModel::IBlockSink*`, and the device router's raw taps as `IO::IRawByteTap*`.
+`bindInterfaces()` is the one list of all three (`FrameBuilder::bindBlockSinks()`,
+`ConnectionManager::bindRawTaps()`, `PipelineHost::setRawFrameTap()`), shared by the GUI root,
+`setupHeadlessSessionConnections()` and `--benchmark-hotpath`; `FrameBuilder::
+setupExternalConnections()` then only wires each bound sink's `sinkActivityChanged` edge into the
+cached any-async-sink flag. Skipping the bind publishes through a null host: the benchmark
+segfaulted on its first flushed block for exactly that reason.
 
 M3 (a real second session) is not started; everything above is single-context with session
 id 0. Ctor-edge proofs: `0039-session-context/ctor-proof.md` (M1) and `ctor-proof-m2.md`

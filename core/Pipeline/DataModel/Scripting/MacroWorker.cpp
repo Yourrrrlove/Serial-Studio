@@ -25,10 +25,11 @@
 #include <QJSEngine>
 #include <QThread>
 
-#include "API/CommandRegistry.h"
+#include "Core/Api/ICommandExecutor.h"
 #include "Core/SSAssert.h"
 #include "DataModel/Scripting/ControlScriptWorker.h"
 #include "DataModel/Scripting/JsWatchdog.h"
+#include "DataModel/Scripting/ScriptApiCall.h"
 #include "DataModel/Scripting/ScriptDeviceWait.h"
 #include "DataModel/Scripting/ScriptResult.h"
 
@@ -54,7 +55,7 @@ DataModel::MacroApiBridge::MacroApiBridge(ControlApiMarshaller* marshaller,
   , m_marshaller(marshaller)
   , m_watchdog(nullptr)
   , m_stop(stopFlag)
-  , m_registry(API::CommandRegistry::instance())
+  , m_executor(DataModel::requireCommandExecutor())
 {
   SS_ASSERT_LOG(marshaller != nullptr);
   SS_ASSERT_LOG(stopFlag != nullptr);
@@ -114,10 +115,10 @@ QVariantMap DataModel::MacroApiBridge::call(const QString& method, const QVarian
 QVariantList DataModel::MacroApiBridge::listCommands()
 {
   QVariantList result;
-  const auto& commands = m_registry.commands();
-  result.reserve(commands.size());
-  for (auto it = commands.constBegin(); it != commands.constEnd(); ++it)
-    result.append(it.key());
+  const auto names = m_executor.commandNames();
+  result.reserve(names.size());
+  for (const auto& name : names)
+    result.append(name);
 
   return result;
 }

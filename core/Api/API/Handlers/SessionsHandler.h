@@ -15,7 +15,7 @@
 
 #ifdef BUILD_COMMERCIAL
 
-#  include "API/CommandProtocol.h"
+#  include "Core/Api/CommandProtocol.h"
 
 namespace API {
 namespace Handlers {

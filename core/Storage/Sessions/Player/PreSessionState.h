@@ -17,7 +17,7 @@
 
 #  include <QString>
 
-#  include "SerialStudio.h"
+#  include "Core/SerialStudio.h"
 
 namespace Sessions {
 /**

@@ -18,7 +18,8 @@
 #include "AI/Tools/ToolSchemas.h"
 #include "AI/Tools/ToolSupport.h"
 #include "API/CommandRegistry.h"
-#include "Misc/JsonValidator.h"
+#include "API/HandlerContext.h"
+#include "Core/JsonValidator.h"
 
 namespace AI::ToolDetail {
 
@@ -103,9 +104,9 @@ QJsonObject executeCommand(const QString& requestedName, const QJsonObject& args
   if (isFsTool(name))
     return executeFsTool(name, args);
 
-  const auto callId        = QUuid::createUuid().toString(QUuid::WithoutBraces);
-  static auto& apiRegistry = API::CommandRegistry::instance();
-  const auto response      = apiRegistry.execute(name, callId, withDefaultListLimit(name, args));
+  const auto callId   = QUuid::createUuid().toString(QUuid::WithoutBraces);
+  auto& apiRegistry   = API::handlerContext().registry;
+  const auto response = apiRegistry.execute(name, callId, withDefaultListLimit(name, args));
 
   QJsonObject reply;
   reply[QStringLiteral("ok")] = response.success;

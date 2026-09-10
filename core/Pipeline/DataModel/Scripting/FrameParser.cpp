@@ -22,9 +22,14 @@
 #include "DataModel/Scripting/FrameParser.h"
 
 #include <QCoreApplication>
+#include <QList>
 #include <QThread>
 
+#include "Core/SerialStudio.h"
+#include "Core/Services.h"
 #include "Core/SSAssert.h"
+#include "Core/TimerEvents.h"
+#include "Core/Translator.h"
 #include "DataModel/ProjectModel.h"
 #include "DataModel/Scripting/CFrameParser.h"
 #include "DataModel/Scripting/IScriptEngine.h"
@@ -32,10 +37,8 @@
 #include "DataModel/Scripting/LuaScriptEngine.h"
 #include "DataModel/Scripting/NativeTemplates/NativeTemplate.h"
 #include "IO/PipelineHost.h"
-#include "Misc/TimerEvents.h"
-#include "Misc/Translator.h"
-#include "SerialStudio.h"
-#include "SessionContext.h"
+
+DataModel::FrameParser* DataModel::FrameParser::s_instance = nullptr;
 
 //--------------------------------------------------------------------------------------------------
 // Constructor & singleton access functions
@@ -44,8 +47,9 @@
 /**
  * @brief Constructs the FrameParser singleton and seeds the source-0 engine.
  */
-DataModel::FrameParser::FrameParser()
-  : m_hasLuaEngine(false)
+DataModel::FrameParser::FrameParser(Core::Bus::MessageBus& bus)
+  : m_bus(bus)
+  , m_hasLuaEngine(false)
   , m_suppressMessageBoxes(false)
   , m_languagesDirty(true)
   , m_engineEpoch(0)
@@ -54,12 +58,12 @@ DataModel::FrameParser::FrameParser()
 {
   (void)engineForSource(0);
 
-  static auto& timerEvents = Misc::TimerEvents::instance();
+  auto& timerEvents = Core::services().timerEvents;
   connect(
     &timerEvents, &Misc::TimerEvents::timeout1Hz, this, &DataModel::FrameParser::collectGarbage);
   connect(&timerEvents, &Misc::TimerEvents::timeout1Hz, this, [this] { publishScriptStats(); });
 
-  static auto& translator = Misc::Translator::instance();
+  auto& translator = Core::services().translator;
   connect(&translator,
           &Misc::Translator::languageChanged,
           this,
@@ -98,13 +102,13 @@ void DataModel::FrameParser::releaseEngines()
 }
 
 /**
- * @brief Returns this session's frame parser. The object is owned by the SessionContext and
- *        built by the composition root, so a reach before adoption is a named fatal instead of
- *        an out-of-order lazy construction (spec 0039 M2, wave B2).
+ * @brief Returns this session's frame parser, bound by the session context right after adoption;
+ *        a reach before that is a named fatal (spec 0039 M2, spec 0077 T66).
  */
 DataModel::FrameParser& DataModel::FrameParser::instance()
 {
-  return SessionContext::current().frameParser();
+  SS_ASSERT(s_instance != nullptr, qFatal("FrameParser::instance() before adoption"));
+  return *s_instance;
 }
 
 //--------------------------------------------------------------------------------------------------

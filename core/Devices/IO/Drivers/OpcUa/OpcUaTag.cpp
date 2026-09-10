@@ -22,7 +22,7 @@
 
 #include "IO/Drivers/OpcUa/OpcUaTag.h"
 
-#include "SerialStudio.h"
+#include "Core/SerialStudio.h"
 
 /**
  * @brief {id, name, path, unit, t, n} -> OpcUaTag.

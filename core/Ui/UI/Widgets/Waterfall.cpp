@@ -33,10 +33,12 @@
 #include <QWheelEvent>
 
 #include "Core/DSPSimd.h"
+#include "Core/License.h"
+#include "Core/Services.h"
 #include "Core/SSAssert.h"
+#include "Core/TimerEvents.h"
 #include "Misc/CommonFonts.h"
 #include "Misc/ThemeManager.h"
-#include "Misc/TimerEvents.h"
 #include "UI/Dashboard.h"
 #include "UI/Widgets/AudioExport.h"
 #include "UI/Widgets/FFTWindow.h"
@@ -92,7 +94,7 @@ Widgets::Waterfall::Waterfall(const int index, QQuickItem* parent)
   , m_dashboard(UI::Dashboard::instance())
   , m_themeManager(Misc::ThemeManager::instance())
   , m_commonFonts(Misc::CommonFonts::instance())
-  , m_timerEvents(Misc::TimerEvents::instance())
+  , m_timerEvents(Core::services().timerEvents)
   , m_audioExport(Widgets::AudioExport::instance())
   , m_view(static_cast<int>(ColorMapCount), static_cast<int>(Turbo))
   , m_overlay(m_view, m_themeManager, m_commonFonts, m_timerEvents)
@@ -1141,7 +1143,7 @@ void Widgets::Waterfall::setAudioRecordingEnabled(const bool enabled)
     return;
 
   if (enabled) {
-    if (!SerialStudio::activated())
+    if (!Core::License::activated())
       return;
 
     const auto& dataset = GET_DATASET(SerialStudio::DashboardWaterfall, m_index);

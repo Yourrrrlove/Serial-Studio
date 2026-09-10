@@ -27,7 +27,6 @@
 
 #include "IO/ConnectionManager.h"
 #include "IO/Drivers/BluetoothLE/BleUuids.h"
-#include "Misc/Utilities.h"
 
 using namespace IO::Drivers::BleDetail;
 

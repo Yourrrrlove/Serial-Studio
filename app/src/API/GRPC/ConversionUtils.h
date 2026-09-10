@@ -16,7 +16,7 @@
 #  include <QJsonObject>
 #  include <QJsonValue>
 
-#  include "DataModel/Frame.h"
+#  include "Core/DataModel/Frame.h"
 
 namespace API {
 namespace GRPC {

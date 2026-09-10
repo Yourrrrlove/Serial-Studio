@@ -23,11 +23,11 @@
 
 #include <QJsonDocument>
 
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
 #include "DataModel/Scripting/CFrameParser.h"
 #include "DataModel/Scripting/NativeTemplates/NativeTemplate.h"
 #include "DataModel/Scripting/ScriptTemplates.h"
-#include "SerialStudio.h"
 
 //--------------------------------------------------------------------------------------------------
 // Resource layout

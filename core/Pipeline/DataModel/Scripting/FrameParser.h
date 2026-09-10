@@ -28,9 +28,13 @@
 #include <QStringList>
 #include <unordered_map>
 
+#include "Core/ThirdParty/readerwriterqueue.h"
 #include "DataModel/Scripting/IScriptEngine.h"
 #include "DataModel/Scripting/ParserTemplateCatalog.h"
-#include "ThirdParty/readerwriterqueue.h"
+
+namespace Core::Bus {
+class MessageBus;
+}  // namespace Core::Bus
 
 class SessionContext;
 
@@ -63,7 +67,11 @@ signals:
 
 private:
   friend class ::SessionContext;
-  explicit FrameParser();
+
+  static void bindInstance(FrameParser* instance) noexcept { s_instance = instance; }
+
+  static FrameParser* s_instance;
+  explicit FrameParser(Core::Bus::MessageBus& bus);
   FrameParser(FrameParser&&)                 = delete;
   FrameParser(const FrameParser&)            = delete;
   FrameParser& operator=(FrameParser&&)      = delete;
@@ -131,6 +139,7 @@ private:
 
   static constexpr size_t kStatsMirrorSlots = 4;
 
+  Core::Bus::MessageBus& m_bus;
   bool m_hasLuaEngine;
   bool m_suppressMessageBoxes;
   mutable bool m_languagesDirty;

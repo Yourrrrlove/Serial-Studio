@@ -37,7 +37,6 @@
 #  include <QMetaObject>
 #  include <QTimer>
 
-#  include "API/CommandHandler.h"
 #  include "API/CommandRegistry.h"
 #  include "API/GRPC/ConversionUtils.h"
 #  include "API/GRPC/ProtoGenerator.h"
@@ -370,6 +369,14 @@ API::GRPC::GRPCServer::GRPCServer()
   , m_frameQueue(4096)
   , m_rawQueue(4096)
 {
+  connect(this,
+          &API::GRPC::GRPCServer::enabledChanged,
+          this,
+          &DataModel::IBlockSink::sinkActivityChanged);
+  connect(this,
+          &API::GRPC::GRPCServer::clientCountChanged,
+          this,
+          &DataModel::IBlockSink::sinkActivityChanged);
   connect(&m_apiServer, &API::Server::enabledChanged, this, [this]() {
     setEnabled(m_apiServer.enabled());
   });
@@ -418,6 +425,15 @@ API::GRPC::GRPCServer& API::GRPC::GRPCServer::instance()
 bool API::GRPC::GRPCServer::enabled() const noexcept
 {
   return m_enabled;
+}
+
+/**
+ * @brief The publisher's verdict for this sink: gRPC consumes blocks only while a client is
+ * connected.
+ */
+bool API::GRPC::GRPCServer::sinkActive() const noexcept
+{
+  return enabled() && clientCount() > 0;
 }
 
 /**
@@ -487,6 +503,29 @@ void API::GRPC::GRPCServer::hotpathTxData(const QByteArray& data)
     return;
 
   m_rawQueue.try_enqueue(RawPacket{data, std::chrono::steady_clock::now()});
+}
+
+/**
+ * @brief Raw-tap entry for device chunks (spec 0077).
+ */
+void API::GRPC::GRPCServer::onDeviceBytes(int deviceId, const IO::CapturedDataPtr& data)
+{
+  Q_UNUSED(deviceId);
+  if (!data)
+    return;
+
+  hotpathTxData(data->data);
+}
+
+/**
+ * @brief Raw-tap entry for injected payloads.
+ */
+void API::GRPC::GRPCServer::onInjectedBytes(const IO::CapturedDataPtr& data)
+{
+  if (!data)
+    return;
+
+  hotpathTxData(data->data);
 }
 
 /**
@@ -575,9 +614,6 @@ void API::GRPC::GRPCServer::startServer()
   const bool external = m_apiServer.externalConnections();
   const auto address  = external ? QStringLiteral("0.0.0.0:%1").arg(API_GRPC_PORT)
                                  : QStringLiteral("127.0.0.1:%1").arg(API_GRPC_PORT);
-
-  static auto& commandHandler = API::CommandHandler::instance();
-  (void)commandHandler;
 
   m_service = std::make_unique<SerialStudioServiceImpl>(this);
   grpc::ServerBuilder builder;

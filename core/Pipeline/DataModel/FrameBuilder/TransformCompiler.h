@@ -36,9 +36,9 @@ extern "C" {
 #include <QString>
 #include <vector>
 
+#include "Core/DataModel/Frame.h"
 #include "Core/HotpathOptimization.h"
 #include "DataModel/DataTable.h"
-#include "DataModel/Frame.h"
 #include "DataModel/Scripting/ExpressionTransform.h"
 #include "DataModel/Scripting/JsWatchdog.h"
 

@@ -25,7 +25,7 @@
 
 #include "AI/Logging.h"
 #include "AI/Redactor.h"
-#include "SerialStudio.h"
+#include "Core/SerialStudio.h"
 
 //--------------------------------------------------------------------------------------------------
 // Path helper & construction

@@ -29,11 +29,25 @@
 #include <QStringList>
 #include <vector>
 
-#include "DataModel/DataBlock.h"
-#include "DataModel/Frame.h"
-#include "Licensing/SimpleCrypt.h"
+#include "Core/Bus/Subscription.h"
+#include "Core/Crypto/SimpleCrypt.h"
+#include "Core/DataModel/DataBlock.h"
+#include "Core/DataModel/Frame.h"
 
-class SessionContext;
+class AppState;
+
+namespace Core::Bus {
+class MessageBus;
+}  // namespace Core::Bus
+
+namespace DataModel {
+class IDashboardFrames;
+class ProjectModel;
+}  // namespace DataModel
+
+namespace IO {
+class ConnectionManager;
+}  // namespace IO
 
 namespace API {
 
@@ -91,7 +105,11 @@ signals:
   void recentEndpointsChanged();
 
 public:
-  explicit MirrorSession(SessionContext& ctx);
+  MirrorSession(Core::Bus::MessageBus& bus,
+                DataModel::IDashboardFrames& dashboard,
+                IO::ConnectionManager& connectionManager,
+                DataModel::ProjectModel& projectModel,
+                AppState& appState);
   MirrorSession(MirrorSession&&)                 = delete;
   MirrorSession(const MirrorSession&)            = delete;
   MirrorSession& operator=(MirrorSession&&)      = delete;
@@ -167,8 +185,13 @@ private:
   [[nodiscard]] DataModel::Dataset* datasetAt(const std::size_t index);
   [[nodiscard]] DataModel::Frame buildSourceFrame(const int sourceId) const;
 
-  SessionContext& m_ctx;
+  Core::Bus::MessageBus& m_bus;
+  DataModel::IDashboardFrames& m_dashboard;
+  IO::ConnectionManager& m_connectionManager;
+  DataModel::ProjectModel& m_projectModel;
+  AppState& m_appState;
   MirrorClient* m_client;
+  Core::Bus::Subscription m_dataResetWatch;
 
   QSettings m_settings;
   mutable Licensing::SimpleCrypt m_simpleCrypt;

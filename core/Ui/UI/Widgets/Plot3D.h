@@ -28,10 +28,10 @@
 #include <QVector3D>
 #include <vector>
 
+#include "Core/TimerEvents.h"
 #include "DSP.h"
 #include "Misc/CommonFonts.h"
 #include "Misc/ThemeManager.h"
-#include "Misc/TimerEvents.h"
 #include "UI/Dashboard.h"
 #include "UI/Widgets/GpuStroke.h"
 #include "UI/Widgets/Plot3D/Plot3DNodes.h"

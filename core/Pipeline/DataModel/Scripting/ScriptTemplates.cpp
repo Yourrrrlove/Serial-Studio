@@ -27,7 +27,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-#include "Misc/Translator.h"
+#include "Core/Services.h"
+#include "Core/Translator.h"
 
 /**
  * @brief Maps a Misc::Translator::Language enum to its IETF locale key.
@@ -92,7 +93,7 @@ QString DataModel::readTextResource(const QString& path)
  */
 QString DataModel::localizedTemplateName(const QJsonObject& object, const char* translationContext)
 {
-  static auto& translator = Misc::Translator::instance();
+  auto& translator = Core::services().translator;
 
   QString fallback        = object.value(QStringLiteral("name")).toString();
   const auto translations = object.value(QStringLiteral("translations")).toObject();

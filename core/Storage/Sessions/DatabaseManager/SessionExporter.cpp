@@ -20,11 +20,11 @@
 #  include <QFileDialog>
 #  include <QVariantList>
 
+#  include "Core/Prompt/UserPrompt.h"
+#  include "Core/SerialStudio.h"
 #  include "Core/SSAssert.h"
+#  include "Core/WorkspaceManager.h"
 #  include "DataModel/ExportStructure.h"
-#  include "Misc/Utilities.h"
-#  include "Misc/WorkspaceManager.h"
-#  include "SerialStudio.h"
 #  include "Sessions/DatabaseWorker.h"
 
 //--------------------------------------------------------------------------------------------------
@@ -179,7 +179,7 @@ void Sessions::SessionExporter::onCsvFinished(const QString& outputPath,
   Q_EMIT csvFinished(outputPath, ok);
 
   if (ok)
-    Misc::Utilities::revealFile(outputPath);
+    Core::Prompt::revealFile(outputPath);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -355,10 +355,10 @@ void Sessions::SessionExporter::renderReportFromPayload(const ReportPayloadPtr& 
       Q_EMIT pdfProgressChanged();
     }
 
-    Misc::Utilities::showMessageBox(tr("Report Failed"),
-                                    payload->error.isEmpty() ? tr("Could not generate the report.")
-                                                             : payload->error,
-                                    QMessageBox::Warning);
+    Core::Prompt::showMessageBox(tr("Report Failed"),
+                                 payload->error.isEmpty() ? tr("Could not generate the report.")
+                                                          : payload->error,
+                                 Core::Prompt::Warning);
 
     Q_EMIT pdfFinished(QString(), false);
     m_pendingPdfActive = false;
@@ -391,12 +391,12 @@ void Sessions::SessionExporter::renderReportFromPayload(const ReportPayloadPtr& 
             Q_EMIT pdfFinished(outputPath, ok);
 
             if (ok) {
-              Misc::Utilities::revealFile(outputPath);
+              Core::Prompt::revealFile(outputPath);
             } else {
-              Misc::Utilities::showMessageBox(tr("Report Failed"),
-                                              error.isEmpty() ? tr("Could not generate the report.")
-                                                              : error,
-                                              QMessageBox::Warning);
+              Core::Prompt::showMessageBox(tr("Report Failed"),
+                                           error.isEmpty() ? tr("Could not generate the report.")
+                                                           : error,
+                                           Core::Prompt::Warning);
             }
 
             m_pendingPdfActive = false;

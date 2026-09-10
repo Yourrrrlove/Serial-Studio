@@ -28,7 +28,7 @@
 #include <QString>
 #include <QVariant>
 
-#include "IO/HAL_Driver.h"
+#include "Core/IO/HAL_Driver.h"
 
 namespace Test {
 

@@ -24,7 +24,7 @@
 #include <cstdint>
 #include <QByteArrayView>
 
-#include "IO/Drivers/OpcUaWire.h"
+#include "Protocols/OpcUa/OpcUaWire.h"
 
 using namespace IO::Drivers;
 

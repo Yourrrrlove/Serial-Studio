@@ -30,6 +30,12 @@ struct lua_State;
 
 namespace DataModel {
 
+class IDashboardControl;
+
+void setDashboardControl(IDashboardControl* control) noexcept;
+[[nodiscard]] IDashboardControl* dashboardControl() noexcept;
+[[nodiscard]] IDashboardControl& requireDashboardControl();
+
 /**
  * @brief QObject bridge that backs the JS dashboard globals. One per QJSEngine.
  */

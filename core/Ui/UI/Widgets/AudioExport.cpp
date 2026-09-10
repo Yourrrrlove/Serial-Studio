@@ -30,12 +30,16 @@
 #include <QFile>
 #include <QFileInfo>
 
+#include "API/HandlerContext.h"
+#include "Core/Bus/MessageBus.h"
+#include "Core/Bus/Messages.h"
+#include "Core/License.h"
+#include "Core/Services.h"
 #include "Core/SSAssert.h"
+#include "Core/WorkspaceManager.h"
 #include "CSV/Player.h"
 #include "IO/ConnectionManager.h"
-#include "Licensing/LemonSqueezy.h"
 #include "MDF4/Player.h"
-#include "Misc/WorkspaceManager.h"
 #include "Sessions/Player.h"
 
 //--------------------------------------------------------------------------------------------------
@@ -460,9 +464,12 @@ void Widgets::AudioExportWorker::finalizeSession(AudioSession& session)
  * @brief Constructs the singleton and starts the WAV-writer worker thread.
  */
 Widgets::AudioExport::AudioExport()
-  : DataModel::FrameConsumer<AudioExportItem>(
-      {.queueCapacity = 65536, .flushThreshold = 4096, .timerIntervalMs = 33})
+  : AudioExportBase({.queueCapacity = 65536, .flushThreshold = 4096, .timerIntervalMs = 33})
 {
+  connect(this,
+          &Widgets::AudioExport::activeSessionsChanged,
+          this,
+          &DataModel::IBlockSink::sinkActivityChanged);
   initializeWorker();
 
   auto* worker = static_cast<AudioExportWorker*>(m_worker);
@@ -512,6 +519,14 @@ bool Widgets::AudioExport::hasActiveSessions() const noexcept
 }
 
 /**
+ * @brief The publisher's verdict for this sink: a WAV session is recording.
+ */
+bool Widgets::AudioExport::sinkActive() const noexcept
+{
+  return hasActiveSessions();
+}
+
+/**
  * @brief Feeds one published block into the recording sessions matching its dataset uniqueIds.
  *        Runs on the pipeline thread, which is the single producer for every sink (spec 0055 D8),
  *        so this facade's queue keeps its single-producer invariant.
@@ -545,8 +560,8 @@ void Widgets::AudioExport::ingestBlock(const DataModel::DataBlockPtr& block)
 QString Widgets::AudioExport::audioPath(const QString& datasetTitle,
                                         const QString& projectTitle) const
 {
-  static auto& workspaceManager = Misc::WorkspaceManager::instance();
-  const auto base               = workspaceManager.path(QStringLiteral("Audio Recordings"));
+  auto& workspaceManager = Core::services().workspaceManager;
+  const auto base        = workspaceManager.path(QStringLiteral("Audio Recordings"));
   return QStringLiteral("%1/%2/%3")
     .arg(base,
          Misc::WorkspaceManager::sanitizeName(projectTitle),
@@ -642,35 +657,38 @@ void Widgets::AudioExport::onSessionOpenFailed(quint32 key)
  */
 void Widgets::AudioExport::setupExternalConnections()
 {
+  connect(&API::handlerContext().connectionManager,
+          &IO::ConnectionManager::connectedChanged,
+          this,
+          [this] {
+            if (!API::handlerContext().connectionManager.isConnected())
+              closeAllSessions();
+          });
+
   connect(
-    &IO::ConnectionManager::instance(), &IO::ConnectionManager::connectedChanged, this, [this] {
-      if (!IO::ConnectionManager::instance().isConnected())
+    &API::handlerContext().connectionManager, &IO::ConnectionManager::pausedChanged, this, [this] {
+      if (API::handlerContext().connectionManager.paused())
         closeAllSessions();
     });
 
-  connect(&IO::ConnectionManager::instance(), &IO::ConnectionManager::pausedChanged, this, [this] {
-    if (IO::ConnectionManager::instance().paused())
+  connect(&API::handlerContext().csvPlayer, &CSV::Player::openChanged, this, [this] {
+    if (API::handlerContext().csvPlayer.isOpen())
       closeAllSessions();
   });
 
-  connect(&CSV::Player::instance(), &CSV::Player::openChanged, this, [this] {
-    if (CSV::Player::instance().isOpen())
+  connect(&API::handlerContext().mdf4Player, &MDF4::Player::openChanged, this, [this] {
+    if (API::handlerContext().mdf4Player.isOpen())
       closeAllSessions();
   });
 
-  connect(&MDF4::Player::instance(), &MDF4::Player::openChanged, this, [this] {
-    if (MDF4::Player::instance().isOpen())
+  connect(&API::handlerContext().sessionsPlayer, &Sessions::Player::openChanged, this, [this] {
+    if (API::handlerContext().sessionsPlayer.isOpen())
       closeAllSessions();
   });
 
-  connect(&Sessions::Player::instance(), &Sessions::Player::openChanged, this, [this] {
-    if (Sessions::Player::instance().isOpen())
-      closeAllSessions();
-  });
-
-  connect(
-    &Licensing::LemonSqueezy::instance(), &Licensing::LemonSqueezy::activatedChanged, this, [this] {
-      if (!SerialStudio::activated())
+  m_licenseWatch = Core::services().bus.subscribe<Core::Bus::LicenseStateChanged>(
+    this, [this](const std::shared_ptr<const Core::Bus::LicenseStateChanged>& license) {
+      if (!license->activated)
         closeAllSessions();
     });
 }

@@ -351,4 +351,5 @@ end
 - [Output Controls](Output-Controls.md): Button/Slider/Toggle/Knob widgets and their `transmit()` function.
 - [Variables](Data-Tables.md): the shared blackboard behind `tableGet`/`tableSet`.
 - [API Reference](API-Reference.md): the full command catalog the SDK wraps, and the same surface over the network.
+- [Macros](Macros.md): the in-app terminal and script editor for running `apiCall` and the wrappers interactively, outside any project.
 - [Actions](Actions.md) and [Notifications](Notifications.md): what `actionFire()` and `notify*()` drive.

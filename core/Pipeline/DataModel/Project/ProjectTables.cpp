@@ -25,18 +25,18 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QInputDialog>
-#include <QMessageBox>
 #include <QTextStream>
 #include <QTimer>
 
+#include "Core/Prompt/UserPrompt.h"
+#include "Core/SerialStudio.h"
+#include "Core/Services.h"
+#include "Core/WorkspaceManager.h"
+#include "DataModel/Project/EntityKinds.h"
 #include "DataModel/Project/ProjectFolders.h"
 #include "DataModel/Project/ProjectHistory.h"
 #include "DataModel/Project/ProjectNaming.h"
-#include "DataModel/ProjectEditor.h"
 #include "DataModel/ProjectModel.h"
-#include "Misc/Utilities.h"
-#include "Misc/WorkspaceManager.h"
-#include "SerialStudio.h"
 
 //--------------------------------------------------------------------------------------------------
 // Construction & accessors
@@ -388,9 +388,8 @@ void DataModel::ProjectTables::promptAddTable()
     return;
 
   const QString added = addTable(name.trimmed(), -1);
-  QTimer::singleShot(0, &m_model, [added] {
-    static auto& projectEditor = DataModel::ProjectEditor::instance();
-    projectEditor.selectUserTable(added);
+  QTimer::singleShot(0, &m_model, [this, added] {
+    Q_EMIT m_model.editorSelectionRequested(DataModel::KindUserTable, -1, added);
   });
 }
 
@@ -496,14 +495,14 @@ void DataModel::ProjectTables::confirmDeleteTable(const QString& name)
           "This removes %1 variable(s) along with the table. This action cannot be undone.")
           .arg(registerCount);
 
-  const int choice = Misc::Utilities::showMessageBox(ProjectModel::tr("Delete \"%1\"?").arg(leaf),
-                                                     informative,
-                                                     QMessageBox::Warning,
-                                                     ProjectModel::tr("Delete Table"),
-                                                     QMessageBox::Yes | QMessageBox::Cancel,
-                                                     QMessageBox::Cancel);
+  const int choice = Core::Prompt::showMessageBox(ProjectModel::tr("Delete \"%1\"?").arg(leaf),
+                                                  informative,
+                                                  Core::Prompt::Warning,
+                                                  ProjectModel::tr("Delete Table"),
+                                                  Core::Prompt::Yes | Core::Prompt::Cancel,
+                                                  Core::Prompt::Cancel);
 
-  if (choice == QMessageBox::Yes)
+  if (choice == Core::Prompt::Yes)
     deleteTable(name);
 }
 
@@ -517,14 +516,14 @@ void DataModel::ProjectTables::confirmDeleteRegister(const QString& table,
     return;
 
   const int choice =
-    Misc::Utilities::showMessageBox(ProjectModel::tr("Delete \"%1\"?").arg(registerName),
-                                    ProjectModel::tr("This action cannot be undone."),
-                                    QMessageBox::Warning,
-                                    ProjectModel::tr("Delete Variable"),
-                                    QMessageBox::Yes | QMessageBox::Cancel,
-                                    QMessageBox::Cancel);
+    Core::Prompt::showMessageBox(ProjectModel::tr("Delete \"%1\"?").arg(registerName),
+                                 ProjectModel::tr("This action cannot be undone."),
+                                 Core::Prompt::Warning,
+                                 ProjectModel::tr("Delete Variable"),
+                                 Core::Prompt::Yes | Core::Prompt::Cancel,
+                                 Core::Prompt::Cancel);
 
-  if (choice == QMessageBox::Yes)
+  if (choice == Core::Prompt::Yes)
     deleteRegister(table, registerName);
 }
 
@@ -544,7 +543,7 @@ void DataModel::ProjectTables::exportTableToCsv(const QString& tableName)
 
   const auto it = m_tables.begin() + idx;
 
-  static auto& workspaceManager = Misc::WorkspaceManager::instance();
+  auto& workspaceManager = Core::services().workspaceManager;
 
   const auto path = QFileDialog::getSaveFileName(
     nullptr,
@@ -588,7 +587,7 @@ void DataModel::ProjectTables::importTableFromCsv(const QString& tableName)
 
   auto it = m_tables.begin() + idx;
 
-  static auto& workspaceManager = Misc::WorkspaceManager::instance();
+  auto& workspaceManager = Core::services().workspaceManager;
 
   const auto path = QFileDialog::getOpenFileName(nullptr,
                                                  ProjectModel::tr("Import Table"),

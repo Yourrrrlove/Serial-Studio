@@ -24,6 +24,7 @@
 #include <QJsonArray>
 
 #include "API/CommandRegistry.h"
+#include "API/HandlerContext.h"
 #include "API/SchemaBuilder.h"
 #include "IO/ConnectionManager.h"
 
@@ -172,8 +173,8 @@ API::CommandResponse API::Handlers::BluetoothLEHandler::startDiscovery(const QSt
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* ble                      = connectionManager.bluetoothLE();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  auto* ble               = connectionManager.bluetoothLE();
 
   if (!ble->operatingSystemSupported()) {
     return CommandResponse::makeError(
@@ -205,9 +206,9 @@ API::CommandResponse API::Handlers::BluetoothLEHandler::selectDevice(const QStri
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: deviceIndex"));
   }
 
-  const int deviceIndex          = params.value(QStringLiteral("deviceIndex")).toInt();
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* ble                      = connectionManager.bluetoothLE();
+  const int deviceIndex   = params.value(QStringLiteral("deviceIndex")).toInt();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  auto* ble               = connectionManager.bluetoothLE();
 
   if (deviceIndex < 0 || deviceIndex >= ble->deviceCount()) {
     return CommandResponse::makeError(id,
@@ -239,11 +240,11 @@ API::CommandResponse API::Handlers::BluetoothLEHandler::selectService(const QStr
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: serviceIndex"));
   }
 
-  const int serviceIndex         = params.value(QStringLiteral("serviceIndex")).toInt();
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* ble                      = connectionManager.connectedBluetoothLE();
-  const auto& serviceNames       = ble->serviceNames();
-  const int serviceCount         = serviceNames.count() - 1;
+  const int serviceIndex   = params.value(QStringLiteral("serviceIndex")).toInt();
+  auto& connectionManager  = API::handlerContext().connectionManager;
+  auto* ble                = connectionManager.connectedBluetoothLE();
+  const auto& serviceNames = ble->serviceNames();
+  const int serviceCount   = serviceNames.count() - 1;
 
   if (serviceIndex < 0 || serviceIndex >= serviceCount) {
     return CommandResponse::makeError(id,
@@ -274,9 +275,9 @@ API::CommandResponse API::Handlers::BluetoothLEHandler::selectServiceByUuid(
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: serviceUuid"));
   }
 
-  const QString uuid             = params.value(QStringLiteral("serviceUuid")).toString();
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* ble                      = connectionManager.connectedBluetoothLE();
+  const QString uuid      = params.value(QStringLiteral("serviceUuid")).toString();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  auto* ble               = connectionManager.connectedBluetoothLE();
 
   if (!ble->selectServiceByUuid(uuid)) {
     return CommandResponse::makeError(
@@ -305,7 +306,7 @@ API::CommandResponse API::Handlers::BluetoothLEHandler::setCharacteristicIndex(
   }
 
   const int characteristicIndex   = params.value(QStringLiteral("characteristicIndex")).toInt();
-  static auto& connectionManager  = IO::ConnectionManager::instance();
+  auto& connectionManager         = API::handlerContext().connectionManager;
   auto* ble                       = connectionManager.connectedBluetoothLE();
   const auto& characteristicNames = ble->characteristicNames();
   const int characteristicCount   = characteristicNames.count() - 1;
@@ -342,9 +343,9 @@ API::CommandResponse API::Handlers::BluetoothLEHandler::setNotifyCharacteristic(
       QStringLiteral("Missing required parameter: characteristicUuid"));
   }
 
-  const QString uuid             = params.value(QStringLiteral("characteristicUuid")).toString();
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* ble                      = connectionManager.connectedBluetoothLE();
+  const QString uuid      = params.value(QStringLiteral("characteristicUuid")).toString();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  auto* ble               = connectionManager.connectedBluetoothLE();
 
   if (!ble->setNotifyCharacteristicByUuid(uuid)) {
     return CommandResponse::makeError(
@@ -385,8 +386,8 @@ API::CommandResponse API::Handlers::BluetoothLEHandler::writeCharacteristic(
       id, ErrorCode::InvalidParam, QStringLiteral("Invalid base64 data"));
   }
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* ble                      = connectionManager.connectedBluetoothLE();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  auto* ble               = connectionManager.connectedBluetoothLE();
   if (!ble->isOpen()) {
     return CommandResponse::makeError(
       id, ErrorCode::ExecutionError, QStringLiteral("Not connected"));
@@ -418,9 +419,9 @@ API::CommandResponse API::Handlers::BluetoothLEHandler::getDeviceList(const QStr
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* ble                      = connectionManager.bluetoothLE();
-  const auto& deviceNames        = ble->deviceNames();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  auto* ble               = connectionManager.bluetoothLE();
+  const auto& deviceNames = ble->deviceNames();
 
   QJsonArray devices;
   for (int i = 1; i < deviceNames.count(); ++i) {
@@ -444,9 +445,9 @@ API::CommandResponse API::Handlers::BluetoothLEHandler::getServiceList(const QSt
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* ble                      = connectionManager.connectedBluetoothLE();
-  const auto& serviceNames       = ble->serviceNames();
+  auto& connectionManager  = API::handlerContext().connectionManager;
+  auto* ble                = connectionManager.connectedBluetoothLE();
+  const auto& serviceNames = ble->serviceNames();
 
   QJsonArray services;
   for (int i = 1; i < serviceNames.count(); ++i) {
@@ -469,7 +470,7 @@ API::CommandResponse API::Handlers::BluetoothLEHandler::getCharacteristicList(
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager  = IO::ConnectionManager::instance();
+  auto& connectionManager         = API::handlerContext().connectionManager;
   auto* ble                       = connectionManager.connectedBluetoothLE();
   const auto& characteristicNames = ble->characteristicNames();
 
@@ -495,8 +496,8 @@ API::CommandResponse API::Handlers::BluetoothLEHandler::getConfiguration(const Q
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* ble                      = connectionManager.connectedBluetoothLE();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  auto* ble               = connectionManager.connectedBluetoothLE();
 
   QJsonObject result;
 
@@ -525,8 +526,8 @@ API::CommandResponse API::Handlers::BluetoothLEHandler::getStatus(const QString&
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* ble                      = connectionManager.connectedBluetoothLE();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  auto* ble               = connectionManager.connectedBluetoothLE();
 
   QJsonObject result;
   result[QStringLiteral("operatingSystemSupported")] = ble->operatingSystemSupported();

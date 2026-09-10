@@ -27,7 +27,6 @@
 
 #include "IO/ConnectionManager.h"
 #include "IO/Drivers/BluetoothLE.h"
-#include "Misc/Utilities.h"
 
 //--------------------------------------------------------------------------------------------------
 // Well-known BLE UUID name resolution

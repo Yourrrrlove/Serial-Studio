@@ -23,8 +23,8 @@
 #include <QTest>
 #include <vector>
 
-#include "DataModel/DataBlock.h"
-#include "DataModel/FrameConsumer.h"
+#include "Core/DataModel/DataBlock.h"
+#include "Core/DataModel/FrameConsumer.h"
 
 // Source owns time (spec 0075 B1). CSV::ExportWorker::bufferBlock and MDF4::ExportWorker::
 // writeBlockSample both used ONE worker-wide monotonic clock for irregular blocks, so with two

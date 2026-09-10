@@ -21,9 +21,12 @@
 
 #include "DataModel/Scripting/NativeTemplates/TextNmea0183.h"
 
+#include <QJsonObject>
+#include <QList>
+
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
 #include "DataModel/Scripting/NativeTemplates/NativeTemplateSupport.h"
-#include "SerialStudio.h"
 
 using DataModel::INativeParser;
 using DataModel::INativeTemplate;

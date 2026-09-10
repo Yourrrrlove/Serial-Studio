@@ -36,16 +36,16 @@
 #include <QVariant>
 #include <QVector>
 
-#include "DataModel/Frame.h"
-#include "IO/Drivers/OpcUaWire.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/IO/HAL_Driver.h"
+#include "IO/Drivers/GeneratedProjectRequest.h"
 #include "IO/Drivers/PolledPlcWorkerBase.h"
-#include "IO/HAL_Driver.h"
+#include "Protocols/OpcUa/OpcUaWire.h"
 #include "Protocols/S7/IsoTsap.h"
 #include "Protocols/S7/S7Address.h"
 #include "Protocols/S7/S7Pdu.h"
 
 class QTimer;
-class AppState;
 class QTcpSocket;
 
 namespace DataModel {
@@ -212,7 +212,7 @@ public:
   [[nodiscard]] QJsonArray wireSchema() const;
   [[nodiscard]] QJsonObject statusJson() const;
   [[nodiscard]] QJsonObject buildProject() const;
-  [[nodiscard]] DataModel::ProjectModel* loadGeneratedProject();
+  [[nodiscard]] bool loadGeneratedProject();
 
   [[nodiscard]] Q_INVOKABLE QString variableInfo(const int index) const;
   [[nodiscard]] Q_INVOKABLE QString validateAddress(const QString& address) const;
@@ -247,8 +247,7 @@ private:
                                                      S7Address::Type type,
                                                      int index);
 
-  AppState& m_appState;
-  DataModel::ProjectModel& m_projectModel;
+  GeneratedProjectRequest m_generatedProject;
 
   bool m_open;
   bool m_connecting;

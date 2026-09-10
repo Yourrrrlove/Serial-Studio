@@ -19,7 +19,8 @@
 #include <QTextStream>
 
 #include "AI/Logging.h"
-#include "Misc/WorkspaceManager.h"
+#include "Core/Services.h"
+#include "Core/WorkspaceManager.h"
 
 //--------------------------------------------------------------------------------------------------
 // Construction
@@ -81,8 +82,8 @@ static QString displayPath(const QString& absolute, const QString& root)
  */
 QString AI::FileSandbox::workspaceRoot() const
 {
-  static auto& workspaceManager = Misc::WorkspaceManager::instance();
-  const auto base               = workspaceManager.path();
+  auto& workspaceManager = Core::services().workspaceManager;
+  const auto base        = workspaceManager.path();
   QDir dir(base);
   if (!dir.exists())
     dir.mkpath(QStringLiteral("."));
@@ -95,7 +96,7 @@ QString AI::FileSandbox::workspaceRoot() const
  */
 QString AI::FileSandbox::writeRoot() const
 {
-  static auto& workspaceManager = Misc::WorkspaceManager::instance();
+  auto& workspaceManager = Core::services().workspaceManager;
   return QFileInfo(workspaceManager.path(QStringLiteral("AI"))).canonicalFilePath();
 }
 

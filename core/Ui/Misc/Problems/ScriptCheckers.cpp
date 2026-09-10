@@ -25,6 +25,7 @@
 #include <QString>
 
 #include "DataModel/FrameBuilder.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
 #include "DataModel/Scripting/FrameParser.h"
 #include "Misc/ProblemCenter.h"
@@ -79,7 +80,7 @@ static const QString kScriptJumpDataset = QStringLiteral("dataset");
  */
 [[nodiscard]] static DataModel::ProjectModel& scriptProjectModel()
 {
-  static auto& model = DataModel::ProjectModel::instance();
+  auto& model = DataModel::pipelineModules().projectModel;
   return model;
 }
 
@@ -187,7 +188,7 @@ static void reportParserErrors(const DataModel::ScriptStat& stat, QList<Finding>
  */
 static void checkParserErrors(QList<Finding>& out)
 {
-  static auto& parser = DataModel::FrameParser::instance();
+  auto& parser = DataModel::pipelineModules().frameParser;
 
   const auto stats = parser.scriptStats();
   for (const auto& stat : stats) {
@@ -211,7 +212,7 @@ static void checkParserErrors(QList<Finding>& out)
  */
 static void checkTransformErrors(QList<Finding>& out)
 {
-  static auto& builder = DataModel::FrameBuilder::instance();
+  auto& builder = DataModel::pipelineModules().frameBuilder;
 
   const quint64 fails = builder.transformErrorCount();
   if (fails == 0)

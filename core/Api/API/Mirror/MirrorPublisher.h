@@ -31,17 +31,27 @@
 #include <vector>
 
 #include "API/Mirror/MirrorProtocol.h"
+#include "Core/Bus/Subscription.h"
 
 class QTcpSocket;
-class SessionContext;
+class AppState;
+
+namespace Core::Bus {
+class MessageBus;
+}  // namespace Core::Bus
+
+namespace DataModel {
+class IDashboardFrames;
+class ProjectModel;
+}  // namespace DataModel
 
 namespace API {
 
 /**
- * @brief Capture-side half of the remote dashboard mirror (spec 0040): wakes on
- *        UI::Dashboard::updated(), never on a per-frame path, and is wired to the dashboard
- *        only while a viewer is subscribed, so an unwatched instance runs no mirror code at
- *        all. One snapshot per display tick is fanned out to every due subscriber.
+ * @brief Capture-side half of the remote dashboard mirror (spec 0040): wakes on the
+ *        Core::Bus::DashboardUpdated tick, never on a per-frame path, and subscribes to the
+ *        dashboard topics only while a viewer is attached, so an unwatched instance runs no
+ *        mirror code at all. One snapshot per display tick is fanned out to every due subscriber.
  */
 class MirrorPublisher : public QObject {
   // clang-format off
@@ -53,7 +63,10 @@ signals:
   void payloadReady(QTcpSocket* socket, const QString& sessionId, const QByteArray& payload);
 
 public:
-  explicit MirrorPublisher(SessionContext& ctx);
+  MirrorPublisher(Core::Bus::MessageBus& bus,
+                  DataModel::IDashboardFrames& dashboard,
+                  DataModel::ProjectModel& projectModel,
+                  AppState& appState);
   MirrorPublisher(MirrorPublisher&&)                 = delete;
   MirrorPublisher(const MirrorPublisher&)            = delete;
   MirrorPublisher& operator=(MirrorPublisher&&)      = delete;
@@ -113,7 +126,10 @@ private:
   [[nodiscard]] bool due(const Subscriber& subscriber, const qint64 now) const;
   [[nodiscard]] QByteArray snapshotLine(const int precision);
 
-  SessionContext& m_ctx;
+  Core::Bus::MessageBus& m_bus;
+  DataModel::IDashboardFrames& m_dashboard;
+  DataModel::ProjectModel& m_projectModel;
+  AppState& m_appState;
 
   QSettings m_settings;
   quint64 m_epoch;
@@ -125,9 +141,9 @@ private:
   QTimer m_heartbeat;
   QJsonObject m_structure;
 
-  QMetaObject::Connection m_updatedLink;
-  QMetaObject::Connection m_widgetCountLink;
-  QMetaObject::Connection m_dataResetLink;
+  Core::Bus::Subscription m_updatedLink;
+  Core::Bus::Subscription m_widgetCountLink;
+  Core::Bus::Subscription m_dataResetLink;
 
   std::vector<qint64> m_tNs;
   std::vector<int> m_sourceIds;

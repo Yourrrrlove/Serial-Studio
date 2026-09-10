@@ -24,7 +24,7 @@
 #include <QDir>
 #include <QString>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
 
 namespace DataModel {
 

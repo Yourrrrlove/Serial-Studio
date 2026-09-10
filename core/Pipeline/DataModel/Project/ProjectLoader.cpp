@@ -22,17 +22,23 @@
 #include "DataModel/Project/ProjectLoader.h"
 
 #include <QApplication>
+#include <QDebug>
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QMap>
-#include <QMessageBox>
 #include <QRegularExpression>
 #include <QSet>
 #include <QTimer>
 
 #include "AppState.h"
+#include "Core/Bus/MessageBus.h"
+#include "Core/Bus/Messages.h"
+#include "Core/JsonValidator.h"
+#include "Core/Prompt/UserPrompt.h"
+#include "Core/Services.h"
+#include "Core/WorkspaceManager.h"
 #include "DataModel/NotificationCenter.h"
 #include "DataModel/Project/ProjectFolders.h"
 #include "DataModel/Project/ProjectPersistence.h"
@@ -42,11 +48,6 @@
 #include "DataModel/ProjectModel.h"
 #include "DataModel/Scripting/ControlScript.h"
 #include "DataModel/Scripting/FrameParser.h"
-#include "IO/ConnectionManager.h"
-#include "Misc/JsonValidator.h"
-#include "Misc/Utilities.h"
-#include "Misc/WorkspaceManager.h"
-#include "UI/Dashboard.h"
 
 namespace DataModel {
 
@@ -449,11 +450,11 @@ bool DataModel::ProjectLoader::migrateLegacySeparator(const QJsonObject& json)
         .arg(separator);
 
   if (!m_model.m_suppressMessageBoxes)
-    Misc::Utilities::showMessageBox(
+    Core::Prompt::showMessageBox(
       ProjectModel::tr("Legacy frame parser function updated"),
       ProjectModel::tr("Your project used a legacy frame parser function with a 'separator' "
                        "argument. It has been automatically migrated to the new format."),
-      QMessageBox::Information);
+      Core::Prompt::Information);
   else
     qWarning() << "[ProjectModel] Legacy frame parser function automatically migrated";
 
@@ -515,8 +516,8 @@ bool DataModel::ProjectLoader::openJsonFile(const QString& path)
 
   QString resolved = path;
   if (!QFileInfo::exists(resolved)) {
-    static auto& workspaceManager = Misc::WorkspaceManager::instance();
-    const QString remapped        = workspaceManager.remapLegacyPath(path);
+    auto& workspaceManager = Core::services().workspaceManager;
+    const QString remapped = workspaceManager.remapLegacyPath(path);
     if (remapped != path && QFileInfo::exists(remapped))
       resolved = remapped;
   }
@@ -538,8 +539,8 @@ bool DataModel::ProjectLoader::openJsonFile(const QString& path)
       if (m_model.m_suppressMessageBoxes)
         qWarning() << "[ProjectModel] JSON validation error:" << result.errorMessage;
       else
-        Misc::Utilities::showMessageBox(
-          ProjectModel::tr("JSON validation error"), result.errorMessage, QMessageBox::Critical);
+        Core::Prompt::showMessageBox(
+          ProjectModel::tr("JSON validation error"), result.errorMessage, Core::Prompt::Critical);
 
       return false;
     }
@@ -549,6 +550,67 @@ bool DataModel::ProjectLoader::openJsonFile(const QString& path)
   }
 
   return loadFromJsonDocument(document, resolved);
+}
+
+/**
+ * @brief Loads a project a driver generated (Modbus, OPC UA, S7, EtherNet/IP, IEC 104, Sparkplug)
+ *        as an unsaved ProjectFile-mode project. The mode switch happens here, before the load,
+ *        and is undone when the document is rejected: switching first and failing would leave the
+ *        application in ProjectFile with no project.
+ */
+bool DataModel::ProjectLoader::loadGeneratedProject(const QJsonDocument& document)
+{
+  auto& appState          = AppState::instance();
+  const auto previousMode = appState.operationMode();
+  appState.setOperationMode(SerialStudio::ProjectFile);
+  if (!loadFromJsonDocument(document, QString())) {
+    appState.setOperationMode(previousMode);
+    return false;
+  }
+
+  m_model.setModified(true);
+  return true;
+}
+
+/**
+ * @brief Serves the drivers' generated-project requests (spec 0077 T57) directly on this thread,
+ *        so the API and CLI generators read the verdict inside their publish.
+ */
+void DataModel::ProjectLoader::watchGeneratedProjectRequests()
+{
+  m_generatedProjectRequests = m_model.m_bus.subscribe<Core::Bus::LoadGeneratedProjectRequested>(
+    &m_model,
+    [this](const std::shared_ptr<const Core::Bus::LoadGeneratedProjectRequested>& request) {
+      serveGeneratedProject(*request);
+    },
+    Qt::DirectConnection);
+}
+
+/**
+ * @brief Loads the requested document and answers at once, unless a save dialog was asked for: the
+ *        reply then follows the dialog, carrying whether the user accepted it.
+ */
+void DataModel::ProjectLoader::serveGeneratedProject(
+  const Core::Bus::LoadGeneratedProjectRequested& request)
+{
+  const bool loaded = loadGeneratedProject(request.json);
+  if (!loaded || !request.saveWithDialog) {
+    m_model.m_bus.publish<Core::Bus::GeneratedProjectLoadFinished>(
+      request.requestId, loaded, loaded);
+    return;
+  }
+
+  const quint64 requestId = request.requestId;
+  QObject::connect(
+    &m_model,
+    &ProjectModel::saveDialogCompleted,
+    &m_model,
+    [this, requestId](bool accepted) {
+      m_model.m_bus.publish<Core::Bus::GeneratedProjectLoadFinished>(requestId, true, accepted);
+    },
+    Qt::SingleShotConnection);
+
+  (void)m_model.saveJsonFile(true);
 }
 
 /**
@@ -753,8 +815,9 @@ void DataModel::ProjectLoader::importProjectFromJson(const QJsonObject& project,
                 if (m_model.m_suppressMessageBoxes)
                   qWarning() << "[ProjectModel] Import save error:" << file.errorString();
                 else
-                  Misc::Utilities::showMessageBox(
-                    ProjectModel::tr("File open error"), file.errorString(), QMessageBox::Critical);
+                  Core::Prompt::showMessageBox(ProjectModel::tr("File open error"),
+                                               file.errorString(),
+                                               Core::Prompt::Critical);
 
                 Q_EMIT m_model.importCompleted(false, QString());
                 return;
@@ -867,15 +930,19 @@ void DataModel::ProjectLoader::loadProjectArrays(const QJsonObject& json,
 }
 
 /**
- * @brief Builds a default Source[0] from the UI driver state when JSON has no sources array.
+ * @brief Builds a default Source[0] from the active UI driver's retained bus type and settings
+ *        when JSON has no sources array (spec 0077: the driver facts arrive on the bus; a root
+ *        that retained none seeds the UART default with no settings).
  */
 void DataModel::ProjectLoader::seedDefaultSourceFromUi(const QString& legacyParserCode)
 {
+  const auto uiDriver = m_model.m_bus.latest<Core::Bus::ActiveUiDriverSettings>();
+
   DataModel::Source defaultSource;
-  defaultSource.sourceId              = 0;
-  defaultSource.title                 = ProjectModel::tr("Device A");
-  static auto& cm                     = IO::ConnectionManager::instance();
-  defaultSource.busType               = static_cast<int>(cm.busType());
+  defaultSource.sourceId = 0;
+  defaultSource.title    = ProjectModel::tr("Device A");
+  defaultSource.busType =
+    uiDriver ? uiDriver->busType : static_cast<int>(SerialStudio::BusType::UART);
   defaultSource.frameStart            = m_model.m_frameStartSequence;
   defaultSource.frameEnd              = m_model.m_frameEndSequence;
   defaultSource.checksumAlgorithm     = m_model.m_checksumAlgorithm;
@@ -885,18 +952,8 @@ void DataModel::ProjectLoader::seedDefaultSourceFromUi(const QString& legacyPars
   defaultSource.frameParserCode =
     legacyParserCode.isEmpty() ? FrameParser::defaultTemplateCode() : legacyParserCode;
 
-  IO::HAL_Driver* uiDriver = cm.uiDriverForBusType(cm.busType());
-  if (uiDriver) {
-    QJsonObject settings;
-    for (const auto& prop : uiDriver->driverProperties())
-      settings.insert(prop.key, QJsonValue::fromVariant(prop.value));
-
-    const auto deviceId = uiDriver->deviceIdentifier();
-    if (!deviceId.isEmpty())
-      settings.insert(QStringLiteral("deviceId"), deviceId);
-
-    defaultSource.connectionSettings = settings;
-  }
+  if (uiDriver)
+    defaultSource.connectionSettings = uiDriver->settings;
 
   m_model.m_sources.push_back(defaultSource);
 }
@@ -925,12 +982,12 @@ void DataModel::ProjectLoader::enforceGplSingleSource()
       action.sourceId = 0;
 
   if (!m_model.m_suppressMessageBoxes)
-    Misc::Utilities::showMessageBox(
+    Core::Prompt::showMessageBox(
       ProjectModel::tr("Multi-source projects require a Pro license"),
       ProjectModel::tr("This project contains multiple data sources. Only the first source "
                        "has been loaded. A Serial Studio Pro license is required to use "
                        "multi-source projects."),
-      QMessageBox::Information);
+      Core::Prompt::Information);
   else
     qWarning() << "[ProjectModel] Multi-source project truncated to 1 source (GPL build)";
 #endif
@@ -1128,13 +1185,11 @@ void DataModel::ProjectLoader::loadSinkConfigs(const QJsonObject& json)
 }
 
 /**
- * @brief Resolves the project point-count from JSON or legacy widgetSettings, syncing dashboard.
+ * @brief Resolves the project point-count from JSON or legacy widgetSettings; a document without
+ *        one keeps the count already in the model. The dashboard applies it on pointCountChanged.
  */
 void DataModel::ProjectLoader::loadPointCount(const QJsonObject& json)
 {
-  static auto& dashboard = UI::Dashboard::instance();
-
-  m_model.m_pointCount = dashboard.points();
   if (json.contains(Keys::PointCount)) {
     const int pts = json.value(Keys::PointCount).toInt();
     if (pts > 0)
@@ -1148,10 +1203,6 @@ void DataModel::ProjectLoader::loadPointCount(const QJsonObject& json)
 
     widgetSettings.remove(QStringLiteral("__pointCount__"));
   }
-
-  static auto& appState = AppState::instance();
-  if (appState.operationMode() == SerialStudio::ProjectFile)
-    dashboard.setPoints(m_model.m_pointCount);
 }
 
 /**
@@ -1159,18 +1210,11 @@ void DataModel::ProjectLoader::loadPointCount(const QJsonObject& json)
  */
 void DataModel::ProjectLoader::loadPlotTimeRange(const QJsonObject& json)
 {
-  static auto& dashboard = UI::Dashboard::instance();
-
-  m_model.m_plotTimeRange = dashboard.plotTimeRange();
   if (json.contains(Keys::PlotTimeRange)) {
     const double secs = SerialStudio::toDouble(json.value(Keys::PlotTimeRange));
     if (secs > 0)
       m_model.m_plotTimeRange = secs;
   }
-
-  static auto& appState = AppState::instance();
-  if (appState.operationMode() == SerialStudio::ProjectFile)
-    dashboard.setPlotTimeRange(m_model.m_plotTimeRange);
 }
 
 /**

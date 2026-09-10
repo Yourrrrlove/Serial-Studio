@@ -34,11 +34,58 @@ extern "C" {
 #include <QString>
 #include <stdexcept>
 
+#include "Core/IO/IDeviceWriter.h"
 #include "Core/SSAssert.h"
+#include "DataModel/IDashboardControl.h"
+#include "DataModel/Scripting/DashboardApi.h"
 #include "DataModel/Scripting/ScriptResult.h"
-#include "IO/ConnectionManager.h"
 #include "IO/PipelineHost.h"
-#include "UI/Dashboard.h"
+
+//--------------------------------------------------------------------------------------------------
+// Device writer binding (spec 0077 T64)
+//--------------------------------------------------------------------------------------------------
+
+static IO::IDeviceWriter* s_deviceWriter = nullptr;
+
+/**
+ * @brief Binds the outbound device path scripts, actions and the frame builder write through; the
+ *        composition root calls this once.
+ */
+void DataModel::setDeviceWriter(IO::IDeviceWriter* writer) noexcept
+{
+  s_deviceWriter = writer;
+}
+
+/**
+ * @brief Returns the bound device writer, or nullptr before the root binds one.
+ */
+IO::IDeviceWriter* DataModel::deviceWriter() noexcept
+{
+  return s_deviceWriter;
+}
+
+/**
+ * @brief Returns the bound device writer; a write reached before the root has bound one is a
+ *        composition defect, so the release fallback is a static writer that fails every write
+ *        and captures nothing, never a null dereference.
+ */
+IO::IDeviceWriter& DataModel::requireDeviceWriter()
+{
+  struct NullWriter final : IO::IDeviceWriter {
+    [[nodiscard]] qint64 writeDataToDevice(int, const QByteArray&) override { return -1; }
+
+    [[nodiscard]] qint64 writeAndArmReply(int, const QByteArray&) override { return -1; }
+
+    [[nodiscard]] QByteArray pollReplyBuffer(int) const override { return {}; }
+
+    void disarmReplyCapture(int) override {}
+  };
+
+  static NullWriter nullWriter;
+
+  SS_ASSERT(s_deviceWriter != nullptr, return nullWriter);
+  return *s_deviceWriter;
+}
 
 using namespace DataModel::ScriptResult;
 
@@ -65,8 +112,7 @@ static qint64 performDeviceWrite(int sourceId, const QByteArray& data, QString& 
   qint64 written = -1;
   IO::PipelineHost::runOnGuiThreadBlocking([&] {
     try {
-      static auto& ioManager = IO::ConnectionManager::instance();
-      written                = ioManager.writeDataToDevice(sourceId, data);
+      written = DataModel::requireDeviceWriter().writeDataToDevice(sourceId, data);
     } catch (const std::exception& e) {
       errorMsgOut = QString::fromUtf8(e.what());
     } catch (...) {
@@ -239,7 +285,7 @@ void DataModel::DeviceWriteApi::setJSDefaultSourceId(QJSEngine* js, int defaultS
  */
 static bool fireActionByPublicId(int actionId, QString& errorMsgOut)
 {
-  static auto& dashboard = UI::Dashboard::instance();
+  auto& dashboard = DataModel::requireDashboardControl();
 
   int idx = -1;
   IO::PipelineHost::runOnGuiThreadBlocking([&] {

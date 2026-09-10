@@ -24,7 +24,8 @@
 #include <QJsonObject>
 
 #include "API/SchemaBuilder.h"
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
 
 //--------------------------------------------------------------------------------------------------
@@ -83,7 +84,7 @@ API::CommandResponse API::Handlers::ProjectActionCommands::actionAdd(const QStri
 {
   Q_UNUSED(params)
 
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
   projectModel.addAction();
 
   QJsonObject result;
@@ -101,9 +102,9 @@ API::CommandResponse API::Handlers::ProjectActionCommands::actionDelete(const QS
     return CommandResponse::makeError(
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: actionId"));
 
-  const int actionId   = params.value(QStringLiteral("actionId")).toInt();
-  static auto& project = DataModel::ProjectModel::instance();
-  const auto& actions  = project.actions();
+  const int actionId  = params.value(QStringLiteral("actionId")).toInt();
+  auto& project       = DataModel::pipelineModules().projectModel;
+  const auto& actions = project.actions();
   if (actionId < 0 || static_cast<size_t>(actionId) >= actions.size())
     return CommandResponse::makeError(
       id, ErrorCode::InvalidParam, QStringLiteral("Action id not found: %1").arg(actionId));
@@ -126,9 +127,9 @@ API::CommandResponse API::Handlers::ProjectActionCommands::actionDuplicate(
     return CommandResponse::makeError(
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: actionId"));
 
-  const int actionId   = params.value(QStringLiteral("actionId")).toInt();
-  static auto& project = DataModel::ProjectModel::instance();
-  const auto& actions  = project.actions();
+  const int actionId  = params.value(QStringLiteral("actionId")).toInt();
+  auto& project       = DataModel::pipelineModules().projectModel;
+  const auto& actions = project.actions();
   if (actionId < 0 || static_cast<size_t>(actionId) >= actions.size())
     return CommandResponse::makeError(
       id, ErrorCode::InvalidParam, QStringLiteral("Action id not found: %1").arg(actionId));

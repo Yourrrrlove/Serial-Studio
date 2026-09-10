@@ -24,10 +24,10 @@
 #include <algorithm>
 #include <QInputDialog>
 #include <QMap>
-#include <QMessageBox>
 #include <QSet>
 
-#include "AppInfo.h"
+#include "Core/AppInfo.h"
+#include "Core/Prompt/UserPrompt.h"
 #include "Core/SSAssert.h"
 #include "DataModel/Project/ProjectFixedLayouts.h"
 #include "DataModel/Project/ProjectFolders.h"
@@ -36,7 +36,7 @@
 #include "DataModel/Project/ProjectPersistence.h"
 #include "DataModel/Project/ProjectWorkspaces.h"
 #include "DataModel/ProjectModel.h"
-#include "Misc/Utilities.h"
+#include "DataModel/WidgetResolution.h"
 
 namespace DataModel {
 
@@ -308,14 +308,14 @@ void DataModel::ProjectEntities::setDatasetEnabled(const int groupId,
 void DataModel::ProjectEntities::deleteCurrentGroup()
 {
   if (!m_model.m_suppressMessageBoxes) {
-    const auto ret = Misc::Utilities::showMessageBox(
+    const auto ret = Core::Prompt::showMessageBox(
       ProjectModel::tr("Do you want to delete group \"%1\"?").arg(m_model.m_selectedGroup.title),
       ProjectModel::tr("This action cannot be undone. Do you wish to proceed?"),
-      QMessageBox::Question,
+      Core::Prompt::Question,
       APP_NAME,
-      QMessageBox::Yes | QMessageBox::No);
+      Core::Prompt::Yes | Core::Prompt::No);
 
-    if (ret != QMessageBox::Yes)
+    if (ret != Core::Prompt::Yes)
       return;
   }
 
@@ -350,14 +350,14 @@ void DataModel::ProjectEntities::deleteCurrentGroup()
 void DataModel::ProjectEntities::deleteCurrentAction()
 {
   if (!m_model.m_suppressMessageBoxes) {
-    const auto ret = Misc::Utilities::showMessageBox(
+    const auto ret = Core::Prompt::showMessageBox(
       ProjectModel::tr("Do you want to delete action \"%1\"?").arg(m_model.m_selectedAction.title),
       ProjectModel::tr("This action cannot be undone. Do you wish to proceed?"),
-      QMessageBox::Question,
+      Core::Prompt::Question,
       APP_NAME,
-      QMessageBox::Yes | QMessageBox::No);
+      Core::Prompt::Yes | Core::Prompt::No);
 
-    if (ret != QMessageBox::Yes)
+    if (ret != Core::Prompt::Yes)
       return;
   }
 
@@ -384,15 +384,15 @@ void DataModel::ProjectEntities::deleteCurrentAction()
 void DataModel::ProjectEntities::deleteCurrentDataset()
 {
   if (!m_model.m_suppressMessageBoxes) {
-    const auto ret = Misc::Utilities::showMessageBox(
+    const auto ret = Core::Prompt::showMessageBox(
       ProjectModel::tr("Do you want to delete dataset \"%1\"?")
         .arg(m_model.m_selectedDataset.title),
       ProjectModel::tr("This action cannot be undone. Do you wish to proceed?"),
-      QMessageBox::Question,
+      Core::Prompt::Question,
       APP_NAME,
-      QMessageBox::Yes | QMessageBox::No);
+      Core::Prompt::Yes | Core::Prompt::No);
 
-    if (ret != QMessageBox::Yes)
+    if (ret != Core::Prompt::Yes)
       return;
   }
 
@@ -910,14 +910,14 @@ bool DataModel::ProjectEntities::confirmGroupWidgetChange(DataModel::Group& grp,
     return true;
   }
 
-  auto ret = Misc::Utilities::showMessageBox(
+  auto ret = Core::Prompt::showMessageBox(
     ProjectModel::tr("Are you sure you want to change the group-level widget?"),
     ProjectModel::tr("Existing datasets for this group are deleted"),
-    QMessageBox::Question,
+    Core::Prompt::Question,
     APP_NAME,
-    QMessageBox::Yes | QMessageBox::No);
+    Core::Prompt::Yes | Core::Prompt::No);
 
-  if (ret == QMessageBox::No)
+  if (ret == Core::Prompt::No)
     return false;
 
   grp.datasets.clear();

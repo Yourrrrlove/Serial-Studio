@@ -25,7 +25,7 @@
 #include <QString>
 #include <QTest>
 
-#include "Misc/JsonValidator.h"
+#include "Core/JsonValidator.h"
 
 // Every test function here is self-contained: no state is carried between slots, so Qt Test's
 // declaration-order execution is never load-bearing.

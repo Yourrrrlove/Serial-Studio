@@ -28,6 +28,10 @@
 class QThread;
 class AppState;
 
+namespace Core::Bus {
+class MessageBus;
+}  // namespace Core::Bus
+
 namespace Misc {
 class WorkspaceManager;
 }  // namespace Misc
@@ -141,6 +145,7 @@ private:
 
 public:
   [[nodiscard]] static DatabaseManager& instance();
+  void attachMessageBus(Core::Bus::MessageBus& bus);
 
   [[nodiscard]] bool isOpen() const;
   [[nodiscard]] bool busy() const;
@@ -266,6 +271,7 @@ private:
   Sessions::Player* m_player;
   DataModel::ProjectModel* m_projectModel;
   AppState* m_appState;
+  Core::Bus::MessageBus* m_bus;
 };
 
 }  // namespace Sessions

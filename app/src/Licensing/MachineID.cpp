@@ -28,7 +28,7 @@
 #include <QProcess>
 #include <QtCore/qendian.h>
 
-#include "SimpleCrypt.h"
+#include "Core/Crypto/SimpleCrypt.h"
 
 //--------------------------------------------------------------------------------------------------
 // Executable path resolution

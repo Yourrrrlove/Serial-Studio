@@ -23,6 +23,7 @@
 #include "API/Handlers/MDF4ExportHandler.h"
 
 #include "API/CommandRegistry.h"
+#include "API/HandlerContext.h"
 #include "MDF4/Export.h"
 
 //--------------------------------------------------------------------------------------------------
@@ -86,8 +87,8 @@ API::CommandResponse API::Handlers::MDF4ExportHandler::setEnabled(const QString&
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: enabled"));
   }
 
-  const bool enabled      = params.value(QStringLiteral("enabled")).toBool();
-  static auto& mdf4Export = MDF4::Export::instance();
+  const bool enabled = params.value(QStringLiteral("enabled")).toBool();
+  auto& mdf4Export   = API::handlerContext().mdf4Export;
   mdf4Export.setExportEnabled(enabled);
 
   QJsonObject result;
@@ -103,7 +104,7 @@ API::CommandResponse API::Handlers::MDF4ExportHandler::close(const QString& id,
 {
   Q_UNUSED(params)
 
-  static auto& mdf4Export = MDF4::Export::instance();
+  auto& mdf4Export = API::handlerContext().mdf4Export;
   mdf4Export.closeFile();
 
   QJsonObject result;
@@ -123,7 +124,7 @@ API::CommandResponse API::Handlers::MDF4ExportHandler::getStatus(const QString& 
 {
   Q_UNUSED(params)
 
-  static auto& mdf4Export = MDF4::Export::instance();
+  auto& mdf4Export = API::handlerContext().mdf4Export;
 
   QJsonObject result;
   result[QStringLiteral("enabled")] = mdf4Export.exportEnabled();

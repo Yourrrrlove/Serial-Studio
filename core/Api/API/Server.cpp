@@ -28,13 +28,15 @@
 #include <utility>
 
 #include "API/CommandHandler.h"
+#include "API/HandlerContext.h"
 #include "API/MCPHandler.h"
 #include "API/Mirror/MirrorPublisher.h"
 #include "API/Server/MirrorCommands.h"
+#include "Core/Prompt/UserPrompt.h"
 #include "Core/SSAssert.h"
 #include "DataModel/FrameBuilder.h"
+#include "DataModel/PipelineModules.h"
 #include "IO/ConnectionManager.h"
-#include "Misc/Utilities.h"
 
 // Monotonic counter for session IDs, since socket addresses can be reused.
 static QAtomicInteger<quintptr> s_nextSessionId{1};
@@ -71,6 +73,9 @@ API::Server::Server()
   , m_externalConnections(false)
   , m_anyStreamSubscriber(false)
 {
+  connect(this, &API::Server::enabledChanged, this, &DataModel::IBlockSink::sinkActivityChanged);
+  connect(
+    this, &API::Server::clientCountChanged, this, &DataModel::IBlockSink::sinkActivityChanged);
   connect(&m_auth, &ServerAuth::authTokenChanged, this, &Server::authTokenChanged);
 
   m_externalConnections = m_settings.value("API/ExternalConnections", false).toBool();
@@ -101,8 +106,6 @@ API::Server::Server()
   connect(&m_server, &QTcpServer::newConnection, this, &Server::acceptConnection);
   connect(&m_serverIpv6, &QTcpServer::newConnection, this, &Server::acceptConnection);
 
-  static auto& commandHandler = API::CommandHandler::instance();
-  (void)commandHandler;
   setEnabled(m_settings.value("API/Enabled", false).toBool());
 }
 
@@ -149,6 +152,15 @@ int API::Server::maxClients() noexcept
 bool API::Server::enabled() const noexcept
 {
   return m_enabled;
+}
+
+/**
+ * @brief The publisher's verdict for this sink: the TCP server consumes blocks only while a client
+ * is connected, because with none its worker drops every frame.
+ */
+bool API::Server::sinkActive() const noexcept
+{
+  return enabled() && clientCount() > 0;
 }
 
 /**
@@ -239,8 +251,8 @@ bool API::Server::startListening()
   m_server.setMaxPendingConnections(kMaxApiClients);
   const auto address = m_externalConnections ? QHostAddress::Any : QHostAddress::LocalHost;
   if (!m_server.listen(address, static_cast<quint16>(m_port))) {
-    Misc::Utilities::showMessageBox(
-      tr("Unable to start API TCP server"), m_server.errorString(), QMessageBox::Warning);
+    Core::Prompt::showMessageBox(
+      tr("Unable to start API TCP server"), m_server.errorString(), Core::Prompt::Warning);
     m_server.close();
     return false;
   }
@@ -329,18 +341,18 @@ void API::Server::setExternalConnections(const bool enabled)
     return;
 
   if (enabled) {
-    const int result = Misc::Utilities::showMessageBox(
+    const int result = Core::Prompt::showMessageBox(
       tr("Allow External API Connections?"),
       tr("Exposing the API server to external hosts allows other devices on your "
          "network to connect to Serial Studio on port 7777.\n\n"
          "Only enable this on trusted networks. "
          "Untrusted clients may read live data or send commands to your device."),
-      QMessageBox::Warning,
+      Core::Prompt::Warning,
       QString(),
-      QMessageBox::Yes | QMessageBox::No,
-      QMessageBox::No);
+      Core::Prompt::Yes | Core::Prompt::No,
+      Core::Prompt::No);
 
-    if (result == QMessageBox::No) {
+    if (result == Core::Prompt::No) {
       m_externalConnections = false;
       m_settings.setValue("API/ExternalConnections", false);
       Q_EMIT externalConnectionsChanged();
@@ -465,6 +477,27 @@ void API::Server::hotpathTxData(const QByteArray& data)
 }
 
 /**
+ * @brief Raw-tap entry for device chunks (spec 0077).
+ */
+void API::Server::onDeviceBytes(int deviceId, const IO::CapturedDataPtr& data)
+{
+  Q_UNUSED(deviceId);
+  SS_ASSERT(data != nullptr, return);
+
+  hotpathTxData(data->data);
+}
+
+/**
+ * @brief Raw-tap entry for payloads injected by a player, a script or the API itself.
+ */
+void API::Server::onInjectedBytes(const IO::CapturedDataPtr& data)
+{
+  SS_ASSERT(data != nullptr, return);
+
+  hotpathTxData(data->data);
+}
+
+/**
  * @brief Adopts the frame structure the pipeline publishes on every layout change. The wire keeps
  *        its per-frame shape (spec 0055 D5), and a block carries values only, so the worker needs
  *        this to rebuild the frame it serializes.
@@ -474,7 +507,7 @@ void API::Server::setupExternalConnections()
   SS_ASSERT(m_worker != nullptr, return);
 
   auto* worker = static_cast<ServerWorker*>(m_worker);
-  connect(&DataModel::FrameBuilder::instance(),
+  connect(&DataModel::pipelineModules().frameBuilder,
           &DataModel::FrameBuilder::structurePublished,
           worker,
           &ServerWorker::setTemplateFrame,
@@ -593,7 +626,7 @@ void API::Server::disconnectClient(QTcpSocket* socket,
  */
 bool API::Server::deviceConnected() const
 {
-  static auto& manager = IO::ConnectionManager::instance();
+  auto& manager = API::handlerContext().connectionManager;
   return manager.isConnected() || manager.isConnecting();
 }
 
@@ -602,7 +635,7 @@ bool API::Server::deviceConnected() const
  */
 qint64 API::Server::writeToDevice(const QByteArray& data)
 {
-  static auto& manager = IO::ConnectionManager::instance();
+  auto& manager = API::handlerContext().connectionManager;
   return manager.writeData(data);
 }
 
@@ -982,8 +1015,8 @@ void API::Server::acceptConnection()
   auto* socket = listener->nextPendingConnection();
   if (!socket) {
     if (enabled())
-      Misc::Utilities::showMessageBox(
-        tr("API server"), tr("Invalid pending connection"), QMessageBox::Critical);
+      Core::Prompt::showMessageBox(
+        tr("API server"), tr("Invalid pending connection"), Core::Prompt::Critical);
 
     return;
   }

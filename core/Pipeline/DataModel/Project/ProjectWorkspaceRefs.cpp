@@ -22,10 +22,14 @@
 #include "DataModel/Project/ProjectWorkspaceRefs.h"
 
 #include <algorithm>
+#include <QList>
 #include <QPair>
 
+#include "Core/DataModel/FrameSupport.h"
+#include "Core/License.h"
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
-#include "SerialStudio.h"
+#include "DataModel/WidgetResolution.h"
 
 namespace DataModel::WorkspaceRefs {
 
@@ -205,7 +209,7 @@ QMap<int, int> widgetTypeCountsForGroup(const Group& group)
     return counts;
 
   auto groupKey = SerialStudio::getDashboardWidget(group);
-  if (groupKey == SerialStudio::DashboardPlot3D && !SerialStudio::activated())
+  if (groupKey == SerialStudio::DashboardPlot3D && !Core::License::activated())
     groupKey = SerialStudio::DashboardMultiPlot;
 
   const bool isEmptyOutputPanel =

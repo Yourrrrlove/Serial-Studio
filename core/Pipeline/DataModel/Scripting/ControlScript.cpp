@@ -27,17 +27,14 @@
 #include <QJSValue>
 
 #include "AppState.h"
-#include "CSV/Player.h"
+#include "Core/Bus/MessageBus.h"
+#include "Core/Bus/Messages.h"
+#include "Core/SerialStudio.h"
+#include "Core/Services.h"
+#include "Core/SSAssert.h"
 #include "DataModel/Scripting/ControlScriptWorker.h"
 #include "DataModel/Scripting/JsWatchdog.h"
 #include "DataModel/Scripting/ScriptApiCall.h"
-#include "IO/ConnectionManager.h"
-#include "MDF4/Player.h"
-#include "SerialStudio.h"
-
-#ifdef BUILD_COMMERCIAL
-#  include "Sessions/Player.h"
-#endif
 
 //--------------------------------------------------------------------------------------------------
 // Constants
@@ -61,6 +58,8 @@ DataModel::ControlScript::ControlScript()
   , m_running(false)
   , m_shouldRun(false)
   , m_shutdown(false)
+  , m_playerOpen(false)
+  , m_playerOpenMask{}
   , m_worker(nullptr)
   , m_marshaller(nullptr)
 {
@@ -82,27 +81,37 @@ void DataModel::ControlScript::setupExternalConnections()
 {
   m_ready = true;
 
-  connect(&IO::ConnectionManager::instance(),
-          &IO::ConnectionManager::connectedChanged,
-          this,
-          &ControlScript::onConnectedChanged);
+  auto* bus = &Core::services().bus;
+  SS_ASSERT(bus != nullptr, return);
+
   connect(&AppState::instance(),
           &AppState::operationModeChanged,
           this,
           &ControlScript::onConnectedChanged);
+  m_linkState = bus->subscribe<Core::Bus::ConnectionStateChanged>(
+    this, [this](const std::shared_ptr<const Core::Bus::ConnectionStateChanged>&) {
+      onConnectedChanged();
+    });
+  m_connectHook = bus->subscribe<Core::Bus::ConnectionAboutToOpen>(
+    this,
+    [this](const std::shared_ptr<const Core::Bus::ConnectionAboutToOpen>&) { runOnConnect(); },
+    Qt::DirectConnection);
 
-  connect(
-    &CSV::Player::instance(), &CSV::Player::openChanged, this, &ControlScript::onConnectedChanged);
-  connect(&MDF4::Player::instance(),
-          &MDF4::Player::openChanged,
-          this,
-          &ControlScript::onConnectedChanged);
-#ifdef BUILD_COMMERCIAL
-  connect(&Sessions::Player::instance(),
-          &Sessions::Player::openChanged,
-          this,
-          &ControlScript::onConnectedChanged);
-#endif
+  const auto applyPlayer = [this](const Core::Bus::ReplayPlayerStateChanged& state) {
+    const auto slot = static_cast<size_t>(state.playerId);
+    SS_ASSERT(slot < m_playerOpenMask.size(), return);
+    m_playerOpenMask[slot] = state.open;
+    m_playerOpen           = m_playerOpenMask[0] || m_playerOpenMask[1] || m_playerOpenMask[2];
+  };
+  m_playerState = bus->subscribe<Core::Bus::ReplayPlayerStateChanged>(
+    this,
+    [this, applyPlayer](const std::shared_ptr<const Core::Bus::ReplayPlayerStateChanged>& state) {
+      applyPlayer(*state);
+      onConnectedChanged();
+    });
+  m_playerOpenMask.fill(false);
+  if (const auto last = bus->latest<Core::Bus::ReplayPlayerStateChanged>())
+    applyPlayer(*last);
 
   onConnectedChanged();
 }
@@ -203,15 +212,15 @@ void DataModel::ControlScript::setCode(const QString& code)
 }
 
 /**
- * @brief Runs the script's optional onConnect() hook synchronously BEFORE the connection opens,
- *        so a control script can launch a server (TCP/Modbus) that Serial Studio then connects
- *        to as a client. Uses a throwaway GUI-thread engine where apiCall dispatches inline, so
- *        there is no deadlock with the connect path that called this.
+ * @brief Runs the script's optional onConnect() hook synchronously BEFORE the connection opens
+ *        (inside the connection manager's ConnectionAboutToOpen publish, spec 0077), so a script
+ *        can launch a server Serial Studio then connects to. Uses a throwaway GUI-thread engine
+ *        where apiCall dispatches inline, so there is no deadlock with the connect path.
  */
 void DataModel::ControlScript::runOnConnect()
 {
   static auto& appState = AppState::instance();
-  if (m_shutdown || m_code.trimmed().isEmpty() || SerialStudio::isAnyPlayerOpen()
+  if (m_shutdown || m_code.trimmed().isEmpty() || m_playerOpen
       || appState.operationMode() != SerialStudio::ProjectFile)
     return;
 
@@ -251,12 +260,14 @@ void DataModel::ControlScript::runOnConnect()
  */
 bool DataModel::ControlScript::shouldRun() const
 {
-  if (!m_ready || m_shutdown || SerialStudio::isAnyPlayerOpen())
+  if (!m_ready || m_shutdown || m_playerOpen)
     return false;
 
-  static auto& ioManager = IO::ConnectionManager::instance();
-  static auto& appState  = AppState::instance();
-  return ioManager.isConnected() && appState.operationMode() == SerialStudio::ProjectFile;
+  static auto& appState = AppState::instance();
+  const auto* bus       = &Core::services().bus;
+  const auto link       = bus ? bus->latest<Core::Bus::ConnectionStateChanged>() : nullptr;
+  const bool connected  = link && link->connected;
+  return connected && appState.operationMode() == SerialStudio::ProjectFile;
 }
 
 /**

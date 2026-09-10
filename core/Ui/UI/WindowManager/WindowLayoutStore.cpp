@@ -21,15 +21,16 @@
 
 #include "UI/WindowManager/WindowLayoutStore.h"
 
+#include <QHash>
 #include <QJsonArray>
 #include <QPair>
 #include <QQuickItem>
 #include <QSet>
 
+#include "Core/LayoutPatterns.h"
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
-#include "SerialStudio.h"
 #include "UI/Dashboard.h"
-#include "UI/LayoutPatterns.h"
 #include "UI/WindowManager/WindowGeometry.h"
 
 //--------------------------------------------------------------------------------------------------

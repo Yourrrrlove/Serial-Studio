@@ -24,7 +24,8 @@
 #include <QJsonObject>
 
 #include "API/SchemaBuilder.h"
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
 
 //--------------------------------------------------------------------------------------------------
@@ -92,10 +93,10 @@ API::CommandResponse API::Handlers::ProjectPainterCommands::painterSetCode(
     return CommandResponse::makeError(
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: code"));
 
-  const int groupId    = params.value(QStringLiteral("groupId")).toInt();
-  const QString code   = params.value(QStringLiteral("code")).toString();
-  static auto& project = DataModel::ProjectModel::instance();
-  const auto& groups   = project.groups();
+  const int groupId  = params.value(QStringLiteral("groupId")).toInt();
+  const QString code = params.value(QStringLiteral("code")).toString();
+  auto& project      = DataModel::pipelineModules().projectModel;
+  const auto& groups = project.groups();
 
   if (groupId < 0 || static_cast<size_t>(groupId) >= groups.size())
     return CommandResponse::makeError(
@@ -122,7 +123,7 @@ API::CommandResponse API::Handlers::ProjectPainterCommands::painterGetCode(
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: groupId"));
 
   const int groupId  = params.value(QStringLiteral("groupId")).toInt();
-  static auto& model = DataModel::ProjectModel::instance();
+  auto& model        = DataModel::pipelineModules().projectModel;
   const auto& groups = model.groups();
   if (groupId < 0 || static_cast<size_t>(groupId) >= groups.size())
     return CommandResponse::makeError(

@@ -26,6 +26,7 @@
 
 #include "API/CommandRegistry.h"
 #include "API/SchemaBuilder.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
 #include "DataModel/Scripting/ControlScript.h"
 #include "DataModel/Scripting/ScriptDryRun.h"
@@ -110,7 +111,7 @@ API::CommandResponse API::Handlers::ControlScriptHandler::getScript(const QStrin
 {
   Q_UNUSED(params)
 
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
 
   QJsonObject result;
   result[QStringLiteral("code")] = projectModel.controlScriptCode();
@@ -128,11 +129,11 @@ API::CommandResponse API::Handlers::ControlScriptHandler::setScript(const QStrin
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: code"));
   }
 
-  const QString code        = params.value(QStringLiteral("code")).toString();
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  const QString code = params.value(QStringLiteral("code")).toString();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
   projectModel.setControlScriptCode(code);
 
-  static auto& controlScript = DataModel::ControlScript::instance();
+  auto& controlScript = DataModel::pipelineModules().controlScript;
   QJsonObject result;
   result[QStringLiteral("running")] = controlScript.running();
   return CommandResponse::makeSuccess(id, result);
@@ -146,7 +147,7 @@ API::CommandResponse API::Handlers::ControlScriptHandler::getStatus(const QStrin
 {
   Q_UNUSED(params)
 
-  static auto& controlScript = DataModel::ControlScript::instance();
+  auto& controlScript = DataModel::pipelineModules().controlScript;
 
   QJsonObject result;
   result[QStringLiteral("running")] = controlScript.running();

@@ -33,9 +33,9 @@
 # removed from the executable's HEADERS list, or moc would run twice and the link would fail on
 # duplicate staticMetaObject symbols.
 #
-# This is a partition of the old monolith, not a clean layer: it still reaches sideways into
-# Devices, Storage, Api and Ui and upward into app/src. The include roots and the sibling links
-# below spell that debt out; scripts/layer-verify.py ratchets it down per directed edge.
+# A strict layer since spec 0077: it includes only itself and Core and Protocols, and the include
+# roots and links below say exactly that. scripts/layer-verify.py fails on an include, an
+# include root or a link outside that graph.
 #
 #---------------------------------------------------------------------------------------------------
 
@@ -43,8 +43,10 @@ qt_add_library(
   SerialStudioPipeline STATIC
 
   Platform/AppPlatform.cpp
+  AppState.cpp
   IO/PipelineHost.cpp
   IO/StreamWorker.cpp
+  IO/StreamWorkerPool.cpp
   IO/FrameReader.cpp
   DataModel/Scripting/ControlScript.cpp
   DataModel/Scripting/ControlScriptWorker.cpp
@@ -102,24 +104,12 @@ qt_add_library(
   DataModel/Scripting/NativeTemplates/TextYamlData.cpp
   DataModel/Scripting/NativeTemplates/MultiFrameBatchedSensor.cpp
   DataModel/Scripting/NativeTemplates/MultiFrameTimeSeries2d.cpp
-  DataModel/Editors/JsCodeEditor.cpp
-  DataModel/Editors/EmbeddedCodeEditor.cpp
-  DataModel/Editors/EmbeddedCodeEditorItem.cpp
   DataModel/Editors/EditorFormatting.cpp
   DataModel/Editors/ScriptTemplateCatalog.cpp
-  DataModel/Editors/ControlScriptEditor.cpp
-  DataModel/Editors/MacroEditor.cpp
-  DataModel/Editors/SerialStudioCompleter.cpp
-  DataModel/Editors/FrameParserModel.cpp
   DataModel/Editors/CodeFormatter.cpp
-  DataModel/Editors/ExpressionHighlighter.cpp
-  DataModel/Editors/OutputCodeEditor.cpp
   DataModel/ProjectModel.cpp
   DataModel/Project/ProjectHistory.cpp
   DataModel/Project/PropertyHooks.cpp
-  DataModel/Project/PropertyValidators.cpp
-  DataModel/Generated/DatasetSerialization.cpp
-  DataModel/Generated/DatasetForm.cpp
   DataModel/Project/ProjectPersistence.cpp
   DataModel/Project/ProjectPresentation.cpp
   DataModel/Project/ProjectLoader.cpp
@@ -132,16 +122,7 @@ qt_add_library(
   DataModel/Project/ProjectEntities.cpp
   DataModel/Project/ProjectOutputWidgets.cpp
   DataModel/Project/ProjectBulkOps.cpp
-  DataModel/Project/ProjectNavHistory.cpp
-  DataModel/ProjectEditor.cpp
-  DataModel/Project/ProjectEditorWiring.cpp
-  DataModel/Project/ProjectEditorTree.cpp
-  DataModel/Project/ProjectEditorMqtt.cpp
-  DataModel/Project/ProjectEditorForms.cpp
-  DataModel/Project/ProjectEditorCommit.cpp
-  DataModel/Project/ProjectEditorMultiSelect.cpp
-  DataModel/Project/ProjectEditorSelection.cpp
-  DataModel/Project/ProjectEditorSummaries.cpp
+  DataModel/Project/WorkspaceKeys.cpp
   DataModel/Importers/ProtoImporter.cpp
   DataModel/Importers/ProtoLexer.cpp
   DataModel/Importers/ProtoParser.cpp
@@ -150,6 +131,7 @@ qt_add_library(
   DataModel/ReplayPlaybackEngine.cpp
   DataModel/FrameBuilder/BlockPublisher.cpp
   DataModel/FrameBuilder/BlockStager.cpp
+  DataModel/FrameBuilder/ExternalWiring.cpp
   DataModel/FrameBuilder/ReplayIngest.cpp
   DataModel/FrameBuilder/LatestFrameTap.cpp
   DataModel/FrameBuilder/QuickPlotBuilder.cpp
@@ -157,17 +139,18 @@ qt_add_library(
   DataModel/FrameBuilder/TableScriptBridge.cpp
   DataModel/FrameBuilder/TransformCompiler.cpp
   DataModel/FramePoolPolicy.cpp
-  DataModel/Frame.cpp
-  DataModel/FrameConsumer.cpp
+  Misc/PasswordHash.cpp
+  DataModel/TextCodec.cpp
+  DataModel/ActionBytes.cpp
+  DataModel/WidgetResolution.cpp
   DataModel/DataTable.cpp
   DataModel/RowFilterProxy.cpp
-  DataModel/Editors/DatasetTransformEditor.cpp
   DataModel/NotificationCenter.cpp
-  DataModel/Dialogs/TransmitTestDialog.cpp
   Platform/AppPlatform.h
-  IO/FrameConfig.h
+  AppState.h
   IO/PipelineHost.h
   IO/StreamWorker.h
+  IO/StreamWorkerPool.h
   IO/FrameReader.h
   DataModel/Scripting/FrameParser.h
   DataModel/Scripting/ParserTemplateCatalog.h
@@ -193,6 +176,11 @@ qt_add_library(
   DataModel/Scripting/ExpressionTransform.h
   DataModel/Scripting/DashboardApi.h
   DataModel/Scripting/DeviceWriteApi.h
+  DataModel/IDashboardControl.h
+  DataModel/IDashboardFrames.h
+  DataModel/PipelineModules.h
+  DataModel/PipelineModules.cpp
+  DataModel/IReplayPlotSink.h
   DataModel/Scripting/ScriptApiCall.h
   DataModel/Scripting/ScriptTemplates.h
   DataModel/Scripting/CFrameParser.h
@@ -223,18 +211,9 @@ qt_add_library(
   DataModel/Scripting/NativeTemplates/TextYamlData.h
   DataModel/Scripting/NativeTemplates/MultiFrameBatchedSensor.h
   DataModel/Scripting/NativeTemplates/MultiFrameTimeSeries2d.h
-  DataModel/Editors/JsCodeEditor.h
-  DataModel/Editors/EmbeddedCodeEditor.h
-  DataModel/Editors/EmbeddedCodeEditorItem.h
   DataModel/Editors/EditorFormatting.h
   DataModel/Editors/ScriptTemplateCatalog.h
-  DataModel/Editors/ControlScriptEditor.h
-  DataModel/Editors/MacroEditor.h
-  DataModel/Editors/SerialStudioCompleter.h
-  DataModel/Editors/ExpressionHighlighter.h
-  DataModel/Editors/FrameParserModel.h
   DataModel/Editors/CodeFormatter.h
-  DataModel/Editors/OutputCodeEditor.h
   DataModel/ProjectModel.h
   DataModel/Project/ProjectHistory.h
   DataModel/Project/PropertyHooks.h
@@ -251,21 +230,21 @@ qt_add_library(
   DataModel/Project/ProjectEntities.h
   DataModel/Project/ProjectOutputWidgets.h
   DataModel/Project/ProjectBulkOps.h
-  DataModel/Project/ProjectNavHistory.h
   DataModel/Project/ProjectNaming.h
-  DataModel/Project/ProjectEditorIcons.h
-  DataModel/ProjectEditor.h
-  DataModel/Project/ProjectEditorItemIds.h
+  DataModel/Project/WorkspaceKeys.h
+  DataModel/Project/EntityKinds.h
   DataModel/Importers/ProtoImporter.h
   DataModel/Importers/ProtoLexer.h
   DataModel/Importers/ProtoParser.h
-  DataModel/DataBlock.h
-  DataModel/Frame.h
-  DataModel/FrameKeys.h
+  Misc/PasswordHash.h
+  DataModel/TextCodec.h
+  DataModel/ActionBytes.h
+  DataModel/WidgetResolution.h
   DataModel/FrameBuilder.h
   DataModel/RepublishGate.h
   DataModel/FrameBuilder/BlockPublisher.h
   DataModel/FrameBuilder/BlockStager.h
+  DataModel/FrameBuilder/ExternalWiring.h
   DataModel/FrameBuilder/ReplayIngest.h
   DataModel/FrameBuilder/LatestFrameTap.h
   DataModel/FrameBuilder/QuickPlotBuilder.h
@@ -273,15 +252,11 @@ qt_add_library(
   DataModel/FrameBuilder/TableScriptBridge.h
   DataModel/FrameBuilder/TransformCompiler.h
   DataModel/FramePoolPolicy.h
-  DataModel/FrameConsumer.h
   DataModel/DataTable.h
   DataModel/RowFilterProxy.h
-  DataModel/ExportSchema.h
   DataModel/ExportStructure.h
   DataModel/ReplayPlaybackEngine.h
-  DataModel/Editors/DatasetTransformEditor.h
   DataModel/NotificationCenter.h
-  DataModel/Dialogs/TransmitTestDialog.h
   DSP.h
   DSPDownsample.h
 )
@@ -289,21 +264,19 @@ qt_add_library(
 add_library(SerialStudio::Pipeline ALIAS SerialStudioPipeline)
 
 #---------------------------------------------------------------------------------------------------
-# Pro importers and the Canvas Widget editor
+# Pro importers
 #---------------------------------------------------------------------------------------------------
 
 if(BUILD_COMMERCIAL)
   target_sources(
     SerialStudioPipeline PRIVATE
 
-    DataModel/Editors/PainterCodeEditor.h
     DataModel/Importers/AxisTicks.h
     DataModel/Importers/ImporterCommon.h
     DataModel/Importers/DBCImporter.h
     DataModel/Importers/DBCMultiplexing.h
     DataModel/Importers/ModbusRegisterMap.h
     DataModel/Importers/ModbusMapImporter.h
-    DataModel/Editors/PainterCodeEditor.cpp
     DataModel/Importers/DBCImporter.cpp
     DataModel/Importers/DBCMultiplexing.cpp
     DataModel/Importers/ModbusRegisterMap.cpp
@@ -312,13 +285,13 @@ if(BUILD_COMMERCIAL)
 endif()
 
 #---------------------------------------------------------------------------------------------------
-# Include roots -- the transitional debt
+# Include roots -- the layer graph
 #---------------------------------------------------------------------------------------------------
 #
-# Every partition directory is an include root and so is app/src, which is what keeps every
-# #include line in the moved tree byte-identical. It is deliberate debt, not a layering statement:
-# scripts/layer-verify.py counts the upward and sideways includes per directed edge against a
-# checked-in baseline and fails on growth, and each follow-up spec drives one edge to zero.
+# This partition keeps its own relative include root plus the roots of the layers below it that
+# it may include (spec 0077). Nothing from app/src and nothing sideways: scripts/layer-verify.py
+# fails on an include outside the graph and on a root or a link this list does not justify. The
+# commercial token's generated guards header arrives through SerialStudio::Core.
 #
 #---------------------------------------------------------------------------------------------------
 
@@ -326,18 +299,7 @@ target_include_directories(
   SerialStudioPipeline PUBLIC
 
   ${CMAKE_SOURCE_DIR}/core/Pipeline
-  ${CMAKE_SOURCE_DIR}/core/Devices
-  ${CMAKE_SOURCE_DIR}/core/Storage
-  ${CMAKE_SOURCE_DIR}/core/Api
-  ${CMAKE_SOURCE_DIR}/core/Ui
-  ${CMAKE_SOURCE_DIR}/app/src
 )
-
-# FrameBuilder.cpp and NotificationCenter.cpp gate their Pro entry points on
-# Licensing/CommercialToken.h, which the generated guards header backs.
-if(BUILD_COMMERCIAL AND LICENSE_GUARDS_INCLUDE_DIR)
-  target_include_directories(SerialStudioPipeline PRIVATE ${LICENSE_GUARDS_INCLUDE_DIR})
-endif()
 
 # luajit is the Lua parser and transform engine; QCodeEditor backs every embedded script editor
 # under DataModel/Editors/.
@@ -353,13 +315,6 @@ target_link_libraries(
   QCodeEditor
 )
 
-#
-# QuickPlotBuilder.cpp includes IO/Drivers/Audio.h under BUILD_COMMERCIAL, which pulls
-# ThirdParty/miniaudio.h: the MA_* layout switches must match the executable's miniaudio.cpp.
-#
-if(BUILD_COMMERCIAL)
-  ss_apply_miniaudio_definitions(SerialStudioPipeline)
-endif()
 
 if(MSVC)
   target_compile_options(SerialStudioPipeline PRIVATE /W4)

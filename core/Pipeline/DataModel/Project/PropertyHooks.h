@@ -27,7 +27,8 @@
 #include <QStringList>
 #include <QVariant>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/DataModel/PropertyValidators.h"
 
 // Must be complete: the MSVC ABI picks a pointer-to-member's layout from the inheritance model.
 #include "DataModel/ProjectModel.h"
@@ -206,10 +207,6 @@ private:
 [[nodiscard]] bool aliasInUseByOtherDataset(const ProjectModel& pm,
                                             const QString& alias,
                                             int selfUniqueId);
-[[nodiscard]] bool isValidColor(const QString& color);
-[[nodiscard]] bool isValidDatasetIndex(int index);
-[[nodiscard]] bool isValidFftWindow(int window);
-[[nodiscard]] bool isValidTransformLanguage(int language);
 
 //--------------------------------------------------------------------------------------------------
 // Row visibility and enablement predicates

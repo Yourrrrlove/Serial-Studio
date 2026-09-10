@@ -25,8 +25,9 @@
 #include <QString>
 #include <QVariantList>
 
+#include "API/ICheckpointStore.h"
+
 class QTimer;
-class SessionContext;
 
 namespace DataModel {
 class ProjectModel;
@@ -38,7 +39,9 @@ namespace Misc {
  * @brief Rolling project snapshot manager. Writes .ssproj copies wrapped with a versioned
  *        `_backupMeta` object so future builds can refuse incompatible snapshots.
  */
-class BackupManager : public QObject {
+class BackupManager
+  : public QObject
+  , public API::ICheckpointStore {
   Q_OBJECT
 
 signals:
@@ -46,7 +49,7 @@ signals:
   void restored(const QString& path);
 
 public:
-  explicit BackupManager(SessionContext& ctx);
+  explicit BackupManager(DataModel::ProjectModel& projectModel);
   BackupManager(BackupManager&&)                 = delete;
   BackupManager(const BackupManager&)            = delete;
   BackupManager& operator=(BackupManager&&)      = delete;
@@ -57,10 +60,10 @@ public:
 
   void setupExternalConnections();
 
-  Q_INVOKABLE [[nodiscard]] QString snapshot(const QString& label = QString());
-  Q_INVOKABLE [[nodiscard]] bool restore(const QString& path);
-  Q_INVOKABLE [[nodiscard]] QVariantList list(int limit = 50) const;
-  Q_INVOKABLE [[nodiscard]] QString backupDirectory() const;
+  Q_INVOKABLE [[nodiscard]] QString snapshot(const QString& label = QString()) override;
+  Q_INVOKABLE [[nodiscard]] bool restore(const QString& path) override;
+  Q_INVOKABLE [[nodiscard]] QVariantList list(int limit = 50) const override;
+  Q_INVOKABLE [[nodiscard]] QString backupDirectory() const override;
   Q_INVOKABLE [[nodiscard]] QVariantMap summarize(const QString& path) const;
   Q_INVOKABLE [[nodiscard]] QVariantMap currentSummary() const;
 
@@ -81,7 +84,6 @@ private:
   void enforceRetention(const QString& dir);
   void seedDedupFromNewest(const QString& dir);
 
-  SessionContext& m_ctx;
   bool m_enabled;
   QString m_lastSnapshotPath;
   QByteArray m_lastContentHash;

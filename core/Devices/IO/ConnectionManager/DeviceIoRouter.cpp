@@ -21,95 +21,79 @@
 
 #include "IO/ConnectionManager/DeviceIoRouter.h"
 
-#include "API/Server.h"
-#include "AppState.h"
-#include "Console/Handler.h"
+#include "Core/IO/HAL_Driver.h"
+#include "Core/IO/IIngestBinder.h"
+#include "Core/IO/IRawByteTap.h"
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
-#include "DataModel/FrameBuilder.h"
 #include "IO/ConnectionManager/ReplyCapture.h"
 #include "IO/DeviceManager.h"
 #include "IO/FileTransmission.h"
-#include "IO/HAL_Driver.h"
-#include "SerialStudio.h"
-
-#ifdef BUILD_COMMERCIAL
-#  include "MQTT/Publisher.h"
-#  include "Sessions/Export.h"
-#endif
-
-#ifdef ENABLE_GRPC
-#  include "API/GRPC/GRPCServer.h"
-#endif
 
 static const QByteArray kDefaultStart = QByteArray("/*");
 static const QByteArray kDefaultEnd   = QByteArray("*/");
 
 /**
- * @brief Binds the collaborators the payload and write paths reach; the console, API and gRPC
- *        pointers are bound BY REFERENCE because the composition root fills them after this.
+ * @brief Binds the collaborators the payload and write paths reach; the file-transmission pointer
+ *        is bound BY REFERENCE because the composition root fills it after this.
  */
-IO::DeviceIoRouter::DeviceIoRouter(AppState& appState,
-                                   DataModel::FrameBuilder& frameBuilder,
+IO::DeviceIoRouter::DeviceIoRouter(const SerialStudio::OperationMode& operationMode,
+                                   IIngestBinder& binder,
                                    ReplyCapture& replyCapture,
                                    const DeviceTable& devices,
                                    const std::atomic<bool>& paused,
-                                   Console::Handler* const& console,
-                                   API::Server* const& apiServer,
-                                   FileTransmission* const& fileTransmission
-#ifdef BUILD_COMMERCIAL
-                                   ,
-                                   Sessions::Export* const& sessionExport,
-                                   MQTT::Publisher* const& mqttPublisher
-#endif
-#ifdef ENABLE_GRPC
-                                   ,
-                                   API::GRPC::GRPCServer* const& grpcServer
-#endif
-                                   )
+                                   FileTransmission* const& fileTransmission)
   : m_startSequence(kDefaultStart)
   , m_finishSequence(kDefaultEnd)
-  , m_appState(appState)
-  , m_frameBuilder(frameBuilder)
+  , m_operationMode(operationMode)
+  , m_binder(binder)
   , m_replyCapture(replyCapture)
   , m_devices(devices)
   , m_paused(paused)
-  , m_console(console)
-  , m_apiServer(apiServer)
   , m_fileTransmission(fileTransmission)
-#ifdef BUILD_COMMERCIAL
-  , m_sessionExport(sessionExport)
-  , m_mqttPublisher(mqttPublisher)
-#endif
-#ifdef ENABLE_GRPC
-  , m_grpcServer(grpcServer)
-#endif
+  , m_tapCount(0)
+  , m_taps{}
 {}
+
+/**
+ * @brief Adopts the raw-byte observers the root resolved, in the order they are to see each chunk.
+ *        Bound once, before the first device opens; a null entry is skipped, an overflow is
+ *        truncated and reported rather than grown, because the per-chunk loop is fixed-bound.
+ */
+void IO::DeviceIoRouter::bindRawTaps(std::span<IRawByteTap* const> taps)
+{
+  SS_ASSERT_LOG(m_tapCount == 0);
+  SS_ASSERT_LOG(taps.size() <= kMaxRawTaps);
+
+  m_tapCount = 0;
+  m_taps.fill(nullptr);
+  for (auto* tap : taps) {
+    if (!tap || m_tapCount >= kMaxRawTaps)
+      continue;
+
+    m_taps[m_tapCount++] = tap;
+  }
+}
 
 //--------------------------------------------------------------------------------------------------
 // Inbound payloads
 //--------------------------------------------------------------------------------------------------
 
 /**
- * @brief Feeds one payload to the read-only observers: the API tap, the console, and gRPC when
- *        the build has it. Never the recording sinks, which see blocks and not bytes.
+ * @brief Feeds one injected payload to the taps that observe that lane (the API servers and the
+ *        console). Never the recording sinks, which see blocks and not bytes.
  */
-void IO::DeviceIoRouter::tapObservers(const QByteArray& bytes)
+void IO::DeviceIoRouter::tapInjectedBytes(const CapturedDataPtr& data)
 {
-  SS_ASSERT(m_apiServer != nullptr, return);
-  SS_ASSERT(m_console != nullptr, return);
+  SS_ASSERT(data != nullptr, return);
 
-  m_apiServer->hotpathTxData(bytes);
-  m_console->hotpathRxData(bytes);
-
-#ifdef ENABLE_GRPC
-  if (m_grpcServer)
-    m_grpcServer->hotpathTxData(bytes);
-#endif
+  for (std::size_t i = 0; i < m_tapCount; ++i)
+    m_taps[i]->onInjectedBytes(data);
 }
 
 /**
- * @brief Forwards raw bytes from device @p deviceId to the console, the API server and the
- *        recording taps, and feeds the reply capture while it is armed.
+ * @brief Forwards raw bytes from device @p deviceId to every bound tap and to the file-transfer
+ *        facade while a transfer runs, and feeds the reply capture while it is armed.
  */
 void IO::DeviceIoRouter::onRawDataReceived(int deviceId, const CapturedDataPtr& data)
 {
@@ -123,29 +107,17 @@ void IO::DeviceIoRouter::onRawDataReceived(int deviceId, const CapturedDataPtr& 
   if (m_replyCapture.armed()) [[unlikely]]
     m_replyCapture.record(deviceId, data->data);
 
-  SS_ASSERT(m_console != nullptr && m_apiServer != nullptr && m_fileTransmission != nullptr,
-            return);
-
-  m_apiServer->hotpathTxData(data->data);
-  m_console->hotpathRxDeviceData(deviceId, data->data);
-
-  if (m_fileTransmission->active()) [[unlikely]]
+  if (m_fileTransmission && m_fileTransmission->active()) [[unlikely]]
     m_fileTransmission->onRawDataReceived(data->data);
 
-#ifdef BUILD_COMMERCIAL
-  m_sessionExport->hotpathTxRawBytes(deviceId, data);
-  m_mqttPublisher->hotpathTxRawBytes(deviceId, data);
-#endif
-
-#ifdef ENABLE_GRPC
-  m_grpcServer->hotpathTxData(data->data);
-#endif
+  for (std::size_t i = 0; i < m_tapCount; ++i)
+    m_taps[i]->onDeviceBytes(deviceId, data);
 }
 
 /**
- * @brief Forwards a stream-lane source's terminal-only bytes from device @p deviceId to the
- *        console. The typed sample blocks already fed the dashboard, the exports and the API,
- *        so this text stops at the terminal and nothing is recorded twice.
+ * @brief Forwards a stream-lane source's terminal-only bytes from device @p deviceId to the taps
+ *        that show text (the console). The typed sample blocks already fed the dashboard, the
+ *        exports and the API, so this text stops at the terminal and nothing is recorded twice.
  */
 void IO::DeviceIoRouter::onConsoleDataReceived(int deviceId, const CapturedDataPtr& data)
 {
@@ -155,35 +127,22 @@ void IO::DeviceIoRouter::onConsoleDataReceived(int deviceId, const CapturedDataP
   if (m_paused)
     return;
 
-  SS_ASSERT(m_console != nullptr, return);
-
-  m_console->hotpathRxDeviceData(deviceId, data->data);
+  for (std::size_t i = 0; i < m_tapCount; ++i)
+    m_taps[i]->onConsoleBytes(deviceId, data);
 }
 
 /**
- * @brief Feeds a pre-built payload into the frame pipeline. The builder call marshals to the
- *        pipeline thread (queued; command-rate, never per frame) while the console/API taps
- *        stay on this thread.
+ * @brief Feeds a pre-built payload into the frame pipeline through the binder (queued to the
+ *        pipeline thread; command-rate, never per frame) while the taps see it on this thread.
  */
 void IO::DeviceIoRouter::processPayload(const QByteArray& payload)
 {
   if (payload.isEmpty())
     return;
 
-  SS_ASSERT(m_console != nullptr && m_apiServer != nullptr, return);
-
-  auto* frameBuilder = &m_frameBuilder;
-
   const auto captured = makeCapturedData(payload);
-  tapObservers(captured->data);
-
-  const bool projectMode = (m_appState.operationMode() == SerialStudio::ProjectFile);
-  frameBuilder->invokeOnBuilderThread([frameBuilder, captured, projectMode] {
-    if (projectMode)
-      frameBuilder->hotpathRxSourceFrame(0, captured);
-    else
-      frameBuilder->hotpathRxFrame(captured);
-  });
+  tapInjectedBytes(captured);
+  m_binder.injectPayload(0, captured);
 }
 
 /**
@@ -197,19 +156,13 @@ void IO::DeviceIoRouter::processMultiSourcePayload(const QByteArray& fullPayload
   if (fullPayload.isEmpty())
     return;
 
-  SS_ASSERT(m_console != nullptr && m_apiServer != nullptr, return);
-
-  auto* frameBuilder = &m_frameBuilder;
-
   const auto captured = makeCapturedData(fullPayload);
-  tapObservers(captured->data);
+  tapInjectedBytes(captured);
 
   for (auto it = sourcePayloads.constBegin(); it != sourcePayloads.constEnd(); ++it) {
     const int sourceId  = it.key();
     const auto srcChunk = makeCapturedData(it.value(), captured->timestamp);
-    frameBuilder->invokeOnBuilderThread([frameBuilder, sourceId, srcChunk] {
-      frameBuilder->hotpathRxSourceFrame(sourceId, srcChunk);
-    });
+    m_binder.injectPayload(sourceId, srcChunk);
   }
 }
 
@@ -235,8 +188,8 @@ qint64 IO::DeviceIoRouter::writeToDevice(int deviceId, const QByteArray& data)
     auto writtenData          = data;
     const qint64 boundedBytes = qMin<qint64>(bytes, writtenData.size());
     writtenData.chop(writtenData.length() - boundedBytes);
-    if (m_console)
-      m_console->displaySentData(deviceId, writtenData);
+    for (std::size_t i = 0; i < m_tapCount; ++i)
+      m_taps[i]->onSentBytes(deviceId, writtenData);
   }
 
   return bytes;

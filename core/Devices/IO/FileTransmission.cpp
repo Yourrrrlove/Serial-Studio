@@ -26,9 +26,10 @@
 #include <QFileInfo>
 #include <QTime>
 
+#include "Core/Services.h"
 #include "Core/SSAssert.h"
+#include "Core/Translator.h"
 #include "IO/ConnectionManager.h"
-#include "Misc/Translator.h"
 #include "Protocols/FileTransfer/XMODEM.h"
 #include "Protocols/FileTransfer/YMODEM.h"
 #include "Protocols/FileTransfer/ZMODEM.h"
@@ -464,7 +465,7 @@ void IO::FileTransmission::beginTransmission()
 void IO::FileTransmission::setupExternalConnections()
 {
   m_connectionManager = &IO::ConnectionManager::instance();
-  auto& translator    = Misc::Translator::instance();
+  auto& translator    = Core::services().translator;
 
   connect(m_connectionManager,
           &IO::ConnectionManager::connectedChanged,

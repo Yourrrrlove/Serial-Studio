@@ -3317,6 +3317,13 @@ jobs:
       run: python3 scripts/code-verify.py --dup-census --check
 
     #
+    # Spec 0077: every Core::Bus topic has a publisher and a subscriber, no token names a topic
+    # Messages.h does not declare, and no bus token sits in a hotpath translation unit
+    #
+    - name: '🔒 Verify bus topics'
+      run: python3 scripts/code-verify.py --bus-census --check
+
+    #
     # The tooling's own tests: 8000+ lines of source-rewriting Python and a 3600-line workflow
     # had zero coverage until spec 0075, so a rule regression rewrote files silently and CI
     # drift was invisible
@@ -3857,6 +3864,153 @@ jobs:
     #
     - name: '🧪 QML instantiation self-test (GPL build)'
       run: ./build/gpl3/app/serial-studio-gpl3 --headless --selftest-suite qml
+
+#---------------------------------------------------------------------------------------------------
+# Per-library build (spec 0077)
+#---------------------------------------------------------------------------------------------------
+#
+# Not in upload's needs: this job proves the layering, it does not produce a package. It mirrors
+# build-gpl3's toolchain and Qt-cache steps (restore-only; build-linux owns the save half).
+#
+  build-core-libraries:
+    runs-on: ubuntu-24.04
+    name: '🧱 Core Libraries Build Alone'
+    permissions:
+      contents: read
+    env:
+      QT_QPA_PLATFORM: offscreen
+    steps:
+    - name: '🧰 Checkout'
+      uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+    - name: '⚙️ Install dependencies'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          clang \
+          lld \
+          ninja-build \
+          libcups2-dev \
+          libnss3 \
+          libegl1 \
+          libgl1-mesa-dev \
+          libasound2-dev \
+          libudev-dev \
+          libsecret-1-dev \
+          libzstd-dev \
+          zlib1g-dev \
+          libexpat1-dev \
+          libminizip-dev \
+          libopus-dev \
+          libxcb1 \
+          libxcb-cursor0 \
+          libxcb-cursor-dev \
+          libxcb-glx0 \
+          libxcb-icccm4 \
+          libxcb-image0 \
+          libxcb-image0-dev \
+          libxcb-keysyms1 \
+          libxcb-randr0 \
+          libxcb-render0 \
+          libxcb-render-util0 \
+          libxcb-shape0 \
+          libxcb-shm0 \
+          libxcb-sync1 \
+          libxcb-util0-dev \
+          libxcb-util1 \
+          libxcb-xfixes0 \
+          libxcb-xinerama0 \
+          libxcb-xkb-dev \
+          libxcb-xtest0 \
+          libxkbcommon-dev \
+          libxkbcommon-x11-0 \
+          libxkbcommon-x11-dev \
+          libpulse-dev \
+          libgstreamer1.0-0 \
+          libgstreamer-plugins-base1.0-0
+
+    #
+    # Restore-only: build-linux owns the save half of this entry, so two jobs never race to
+    # write it
+    #
+    - name: '⚙️ Restore Qt Cache'
+      id: qt_cache
+      uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+      with:
+        path: |
+          ${{github.workspace}}/Qt-${{env.QT_VERSION_LINUX}}-${{runner.os}}-x64
+          ~/.qt-license
+        key: qt-${{runner.os}}-${{env.QT_VERSION_LINUX}}-x64
+
+    - name: '⚙️ Install Qt (cache miss)'
+      shell: bash
+      if: steps.qt_cache.outputs.cache-hit != 'true'
+      env:
+        QT_VERSION: ${{env.QT_VERSION_LINUX}}
+        QT_ARCH: x64
+        QT_USERNAME: ${{secrets.QT_USERNAME}}
+        QT_PASSWORD: ${{secrets.QT_PASSWORD}}
+        QT_OUTPUT_DIR: ${{github.workspace}}/Qt-${{env.QT_VERSION_LINUX}}-${{runner.os}}-x64
+      run: |
+        chmod +x ./scripts/install-qt.sh
+        ./scripts/install-qt.sh
+
+    - name: '⚙️ Add Qt to PATH'
+      shell: bash
+      env:
+        QT_VERSION: ${{env.QT_VERSION_LINUX}}
+        QT_OUTPUT_DIR: ${{github.workspace}}/Qt-${{env.QT_VERSION_LINUX}}-${{runner.os}}-x64
+      run: |
+        export QT_BIN_PATH="${QT_OUTPUT_DIR}/${QT_VERSION}/gcc_64/bin"
+        export QT_LIBEXEC_PATH="${QT_OUTPUT_DIR}/${QT_VERSION}/gcc_64/libexec"
+        export CMAKE_PREFIX_PATH="${QT_OUTPUT_DIR}/${QT_VERSION}/gcc_64/lib/cmake"
+
+        echo "$QT_BIN_PATH" >> $GITHUB_PATH
+        echo "$QT_LIBEXEC_PATH" >> $GITHUB_PATH
+        echo "CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH" >> $GITHUB_ENV
+
+    - name: '⚙️ Install CMake'
+      uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
+      with:
+        useLocalCache: true
+
+    #
+    # Spec 0077 AC2: the seven static libraries under core/ configure and build one at a time, with
+    # no application and no test target in the graph, in dependency order. A library that reaches
+    # a layer above it, or app/src, fails here before anything links it into the executable
+    #
+    - name: '🚧 Configure the library tier'
+      run: |
+        cmake -G Ninja -B build/core-libs \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DBUILD_GPL3=ON \
+          -DENABLE_GRPC=OFF \
+          -DWITH_WEBENGINE=OFF \
+          -DSS_USE_MIMALLOC=OFF \
+          -DUSE_SYSTEM_ZLIB=ON \
+          -DUSE_SYSTEM_EXPAT=ON
+
+    - name: '🧱 Build SerialStudioCore'
+      run: cmake --build build/core-libs --target SerialStudioCore
+
+    - name: '🧱 Build SerialStudioProtocols'
+      run: cmake --build build/core-libs --target SerialStudioProtocols
+
+    - name: '🧱 Build SerialStudioPipeline'
+      run: cmake --build build/core-libs --target SerialStudioPipeline
+
+    - name: '🧱 Build SerialStudioDevices'
+      run: cmake --build build/core-libs --target SerialStudioDevices
+
+    - name: '🧱 Build SerialStudioStorage'
+      run: cmake --build build/core-libs --target SerialStudioStorage
+
+    - name: '🧱 Build SerialStudioApi'
+      run: cmake --build build/core-libs --target SerialStudioApi
+
+    - name: '🧱 Build SerialStudioUi'
+      run: cmake --build build/core-libs --target SerialStudioUi
 
 #---------------------------------------------------------------------------------------------------
 # Integration tests

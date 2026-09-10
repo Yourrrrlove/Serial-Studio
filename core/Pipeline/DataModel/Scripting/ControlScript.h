@@ -21,9 +21,12 @@
 
 #pragma once
 
+#include <array>
 #include <QObject>
 #include <QString>
 #include <QThread>
+
+#include "Core/Bus/Subscription.h"
 
 namespace DataModel {
 
@@ -86,9 +89,14 @@ private:
   bool m_running;
   bool m_shouldRun;
   bool m_shutdown;
+  bool m_playerOpen;
+  std::array<bool, 3> m_playerOpenMask;
   QThread m_thread;
   ControlScriptWorker* m_worker;
   ControlApiMarshaller* m_marshaller;
+  Core::Bus::Subscription m_linkState;
+  Core::Bus::Subscription m_playerState;
+  Core::Bus::Subscription m_connectHook;
 };
 
 }  // namespace DataModel

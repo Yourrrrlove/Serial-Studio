@@ -26,6 +26,12 @@
 #include <QJsonObject>
 #include <QString>
 
+#include "Core/Bus/Subscription.h"
+
+namespace Core::Bus {
+struct LoadGeneratedProjectRequested;
+}  // namespace Core::Bus
+
 namespace DataModel {
 
 class ProjectModel;
@@ -59,6 +65,8 @@ public:
   [[nodiscard]] bool lastOpenReloaded() const noexcept { return m_lastOpenReloaded; }
 
   [[nodiscard]] bool loadFromJsonDocument(const QJsonDocument& document, const QString& sourcePath);
+  [[nodiscard]] bool loadGeneratedProject(const QJsonDocument& document);
+  void watchGeneratedProjectRequests();
   void importProjectFromJson(const QJsonObject& project, const QString& suggestedFileName);
 
   [[nodiscard]] bool applyHistorySnapshot(const QByteArray& state);
@@ -94,10 +102,12 @@ private:
   void migrateLegacyDashboardLayout(const QJsonObject& json);
   [[nodiscard]] bool migrateLegacySeparator(const QJsonObject& json);
   void persistLegacyMigration();
+  void serveGeneratedProject(const Core::Bus::LoadGeneratedProjectRequested& request);
 
 private:
   ProjectModel& m_model;
   bool m_lastOpenReloaded;
+  Core::Bus::Subscription m_generatedProjectRequests;
 };
 
 }  // namespace DataModel

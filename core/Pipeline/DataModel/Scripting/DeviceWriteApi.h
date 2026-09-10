@@ -28,7 +28,15 @@
 class QJSEngine;
 struct lua_State;
 
+namespace IO {
+class IDeviceWriter;
+}  // namespace IO
+
 namespace DataModel {
+
+void setDeviceWriter(IO::IDeviceWriter* writer) noexcept;
+[[nodiscard]] IO::IDeviceWriter* deviceWriter() noexcept;
+[[nodiscard]] IO::IDeviceWriter& requireDeviceWriter();
 
 /**
  * @brief QObject bridge that backs the JS deviceWrite() global. One per QJSEngine.

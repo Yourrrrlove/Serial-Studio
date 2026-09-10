@@ -27,9 +27,9 @@
 #  include <QtDebug>
 #  include <QVariantMap>
 
+#  include "Core/SerialStudio.h"
 #  include "Core/SSAssert.h"
 #  include "DSP.h"
-#  include "SerialStudio.h"
 #  include "Sessions/BlockReader.h"
 
 //--------------------------------------------------------------------------------------------------

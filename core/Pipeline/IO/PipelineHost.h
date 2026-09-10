@@ -27,15 +27,24 @@
 #include <QEventLoop>
 #include <QMutex>
 #include <QObject>
+#include <QPointer>
 #include <QThread>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
+#include <vector>
 
+#include "Core/DataModel/DataBlock.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/IO/IIngestBinder.h"
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
-#include "DataModel/DataBlock.h"
-#include "DataModel/Frame.h"
-#include "SerialStudio.h"
-#include "ThirdParty/readerwriterqueue.h"
+#include "Core/ThirdParty/readerwriterqueue.h"
+#include "IO/FrameReader.h"
+
+namespace Core::Bus {
+class MessageBus;
+}  // namespace Core::Bus
 
 class SessionContext;
 
@@ -46,7 +55,9 @@ class FrameParser;
 
 namespace IO {
 
-class FrameReader;
+class IRawFrameTap;
+class StreamWorker;
+class StreamWorkerPool;
 
 /**
  * @brief Refcounted state for one runOnObjectThread dispatch, so the queued lambda owns what it
@@ -107,11 +118,13 @@ private:
 
 /**
  * @brief Owner of the frame-processing thread (spec 0051 M3): FrameReaders, FrameParser engines
- *        and FrameBuilder execute here, off the GUI thread. Routes extracted frames into
- *        FrameBuilder (relocated from ConnectionManager::onFrameReady) and carries the finished
- *        pooled frames back to the GUI through an SPSC ring drained on the UI display tick.
+ *        and FrameBuilder execute here, off the GUI thread. Implements the ingest binder the device
+ *        layer talks to (spec 0077): attach() creates, configures and adopts a driver's reader, the
+ *        dense-lane workers live in the pool it owns, and frames route into FrameBuilder from here.
  */
-class PipelineHost : public QObject {
+class PipelineHost
+  : public QObject
+  , public IIngestBinder {
   Q_OBJECT
 
 signals:
@@ -119,7 +132,11 @@ signals:
 
 private:
   friend class ::SessionContext;
-  explicit PipelineHost();
+
+  static void bindInstance(PipelineHost* instance) noexcept { s_instance = instance; }
+
+  static PipelineHost* s_instance;
+  explicit PipelineHost(Core::Bus::MessageBus& bus);
   PipelineHost(PipelineHost&&)                 = delete;
   PipelineHost(const PipelineHost&)            = delete;
   PipelineHost& operator=(PipelineHost&&)      = delete;
@@ -136,6 +153,25 @@ public:
   [[nodiscard]] SerialStudio::OperationMode operationMode() const noexcept;
   [[nodiscard]] quint64 dashboardDropCount() const noexcept;
   [[nodiscard]] int dashboardRingCapacity() const noexcept;
+  [[nodiscard]] const std::vector<std::unique_ptr<StreamWorker>>& streamWorkers() const noexcept;
+
+  void refreshLinkMirror(bool connected, bool paused) noexcept;
+  void refreshOperationModeMirror(int mode) noexcept;
+  void setRawFrameTap(IRawFrameTap* tap) noexcept;
+  void bindFrameBuilder(DataModel::FrameBuilder& frameBuilder);
+
+  void attach(int deviceId, HAL_Driver* driver, const FrameConfig& config) override;
+  void reconfigure(int deviceId, const FrameConfig& config) override;
+  void detach(int deviceId) override;
+  void rebuildStreams(const std::vector<StreamAttachment>& sources,
+                      bool paused,
+                      bool connected) override;
+  void setStreamPaused(bool paused) override;
+  void publishStreamTemplates() override;
+  void detachStreams() override;
+  void injectPayload(int sourceId, const CapturedDataPtr& payload) override;
+  void resetQuickPlotHeaders() override;
+  [[nodiscard]] LinkStats linkStats() const override;
 
   void registerFrameReader(int deviceId, FrameReader* reader);
   void registerIngestThread();
@@ -239,16 +275,29 @@ public:
   static constexpr int kBlockRingSize = 32;
 
 private:
+  /**
+   * @brief One attached device: the driver whose chunks feed the reader, the reader itself (owned
+   *        here, living on the processing thread) and the feed connection retired with it.
+   */
+  struct ReaderSlot {
+    HAL_Driver* driver = nullptr;
+    QPointer<FrameReader> reader;
+    QMetaObject::Connection feed;
+  };
+
   void routeFrames(int deviceId, FrameReader* reader);
+  void retireReader(ReaderSlot& slot);
 
 private:
   // Structure snapshots are published on layout change only, never at frame or block rate
   static constexpr int kStructureRingSize = 32;
 
+  Core::Bus::MessageBus& m_bus;
   std::unique_ptr<QThread> m_thread;
   bool m_abandoned;
   DataModel::FrameBuilder* m_frameBuilder;
   DataModel::FrameParser* m_frameParser;
+  std::atomic<IRawFrameTap*> m_rawFrameTap;
   alignas(64) std::atomic<bool> m_paused;
   alignas(64) std::atomic<bool> m_connected;
   alignas(64) std::atomic<int> m_operationMode;
@@ -258,6 +307,10 @@ private:
   alignas(64) quint64 m_displayDrops;
   moodycamel::ReaderWriterQueue<DataModel::DataBlockPtr> m_dashboardRing;
   moodycamel::ReaderWriterQueue<DataModel::StructureSnapshotPtr> m_structureRing;
+  std::unordered_map<int, ReaderSlot> m_readers;
+
+  // Binds m_operationMode above; a pointer keeps the workers' script headers out of this header
+  std::unique_ptr<StreamWorkerPool> m_streamPool;
 };
 
 }  // namespace IO

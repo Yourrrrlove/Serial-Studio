@@ -93,6 +93,12 @@
             "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/canary-check.py\"",
             "timeout": 15,
             "statusMessage": "Checking context canary"
+          },
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/claim-check.py\"",
+            "timeout": 15,
+            "statusMessage": "Checking done-claim evidence"
           }
         ]
       }

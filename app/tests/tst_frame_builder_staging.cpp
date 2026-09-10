@@ -23,7 +23,7 @@
 #include <QTest>
 #include <vector>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
 #include "DataModel/FrameBuilder/BlockStager.h"
 
 // Block staging is the frame lane's producer: cap and epoch flushes, the mask split, the

@@ -27,12 +27,14 @@
 #include <QStringList>
 #include <vector>
 
-#include "API/EnumLabels.h"
 #include "API/Handlers/ProjectApiSupport.h"
 #include "API/SchemaBuilder.h"
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/EnumLabels.h"
+#include "Core/SerialStudio.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
-#include "SerialStudio.h"
+#include "DataModel/WidgetResolution.h"
 
 using namespace API::Handlers::ProjectApiSupport;
 
@@ -253,8 +255,8 @@ static QString groupsListSummary(const std::vector<DataModel::Group>& groups,
 API::CommandResponse API::Handlers::ProjectListCommands::groupsList(const QString& id,
                                                                     const QJsonObject& params)
 {
-  static auto& projectModel = DataModel::ProjectModel::instance();
-  const auto& groups        = projectModel.groups();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
+  const auto& groups = projectModel.groups();
 
   const int total   = static_cast<int>(groups.size());
   const auto window = applyWindow(total,
@@ -340,8 +342,8 @@ API::CommandResponse API::Handlers::ProjectListCommands::groupsList(const QStrin
 API::CommandResponse API::Handlers::ProjectListCommands::datasetsList(const QString& id,
                                                                       const QJsonObject& params)
 {
-  static auto& projectModel = DataModel::ProjectModel::instance();
-  const auto& groups        = projectModel.groups();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
+  const auto& groups = projectModel.groups();
 
   int total_datasets = 0;
   for (const auto& group : groups)
@@ -437,8 +439,8 @@ API::CommandResponse API::Handlers::ProjectListCommands::datasetGetByTitle(
     return CommandResponse::makeError(
       id, ErrorCode::InvalidParam, QStringLiteral("title cannot be empty"));
 
-  static auto& projectModel = DataModel::ProjectModel::instance();
-  const auto& groups        = projectModel.groups();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
+  const auto& groups = projectModel.groups();
 
   QJsonArray matches;
   for (const auto& group : groups) {
@@ -497,7 +499,7 @@ API::CommandResponse API::Handlers::ProjectListCommands::datasetGetByPath(const 
   const QString groupTitle   = segments.size() == 3 ? segments.at(1) : segments.at(0);
   const QString datasetTitle = segments.last();
 
-  static const auto& pm = DataModel::ProjectModel::instance();
+  static const auto& pm = DataModel::pipelineModules().projectModel;
   const auto& sources   = pm.sources();
   const auto& groups    = pm.groups();
 
@@ -577,7 +579,7 @@ API::CommandResponse API::Handlers::ProjectListCommands::datasetMove(const QStri
   const DataModel::Group* matchGroup     = match.group;
   const DataModel::Dataset* matchDataset = match.dataset;
 
-  static auto& pm = DataModel::ProjectModel::instance();
+  auto& pm = DataModel::pipelineModules().projectModel;
 
   const int datasetUniqueId = matchDataset->uniqueId;
   const int oldPosition     = matchDataset->datasetId;
@@ -655,7 +657,7 @@ API::CommandResponse API::Handlers::ProjectListCommands::groupMove(const QString
   const int newPosition = params.value(QStringLiteral("newPosition")).toInt();
   const bool isDryRun   = params.value(QStringLiteral("dryRun")).toBool(false);
 
-  static auto& pm    = DataModel::ProjectModel::instance();
+  auto& pm           = DataModel::pipelineModules().projectModel;
   const auto& groups = pm.groups();
   if (groupId < 0 || groupId >= static_cast<int>(groups.size()))
     return CommandResponse::makeError(
@@ -719,8 +721,8 @@ API::CommandResponse API::Handlers::ProjectListCommands::groupMove(const QString
 API::CommandResponse API::Handlers::ProjectListCommands::datasetGetExecutionOrder(
   const QString& id, const QJsonObject& params)
 {
-  static auto& projectModel = DataModel::ProjectModel::instance();
-  const auto& groups        = projectModel.groups();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
+  const auto& groups = projectModel.groups();
 
   int total = 0;
   for (const auto& group : groups)
@@ -775,8 +777,8 @@ API::CommandResponse API::Handlers::ProjectListCommands::actionsList(const QStri
 {
   Q_UNUSED(params)
 
-  static auto& projectModel = DataModel::ProjectModel::instance();
-  const auto& actions       = projectModel.actions();
+  auto& projectModel  = DataModel::pipelineModules().projectModel;
+  const auto& actions = projectModel.actions();
 
   QJsonArray actions_array;
   for (const auto& action : actions) {

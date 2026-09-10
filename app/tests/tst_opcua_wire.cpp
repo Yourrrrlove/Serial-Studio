@@ -25,7 +25,7 @@
 #include <QTest>
 
 #include "DataModel/Scripting/NativeTemplates/NativeTemplate.h"
-#include "IO/Drivers/OpcUaWire.h"
+#include "Protocols/OpcUa/OpcUaWire.h"
 
 using namespace IO::Drivers::OpcUaWire;
 

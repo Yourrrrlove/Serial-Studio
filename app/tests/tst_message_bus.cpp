@@ -21,10 +21,13 @@
 
 #include <atomic>
 #include <memory>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QObject>
 #include <QString>
 #include <QTest>
 #include <QThread>
+#include <vector>
 
 #include "Core/Bus/MessageBus.h"
 #include "Core/Bus/Messages.h"
@@ -73,6 +76,8 @@ private slots:
 
   void aHandlerMayPublishAnotherTopic();
   void blockingQueuedIsDowngradedToQueued();
+
+  void everyVocabularyTopicComposesByBracedInit();
 };
 
 /**
@@ -294,6 +299,57 @@ void MessageBusTests::blockingQueuedIsDowngradedToQueued()
   QCOMPARE(deliveries, 0);
   QTRY_COMPARE(deliveries, 1);
   QVERIFY(subscription.isActive());
+}
+
+/**
+ * @brief Every topic in Messages.h stays a plain aggregate that publish<T>(args...) can brace-init
+ *        in field order; a topic that grows a constructor or reorders a field fails here first.
+ */
+void MessageBusTests::everyVocabularyTopicComposesByBracedInit()
+{
+  Core::Bus::MessageBus bus;
+  bus.publishState<Core::Bus::ConnectionStateChanged>(0, true, false, false, 0);
+  bus.publishState<Core::Bus::ProjectLoaded>(QString(), QString());
+  bus.publishState<Core::Bus::ProjectModified>(false);
+  bus.publish<Core::Bus::NotificationRaised>(1, QString(), QString(), QString(), QString());
+  bus.publish<Core::Bus::NotificationClearRequested>(QString());
+  bus.publish<Core::Bus::NotificationResolved>(QString(), QString(), QString());
+  bus.publish<Core::Bus::NotificationPosted>(qint64(0), 0, QString(), QString(), QString());
+  bus.publishState<Core::Bus::DashboardStructureChanged>(1);
+  bus.publish<Core::Bus::RecordingSessionBoundary>(true, false);
+  bus.publish<Core::Bus::SettingsChanged>(QString());
+  bus.publishState<Core::Bus::LicenseStateChanged>(false, 0, false);
+  bus.publishState<Core::Bus::OperationModeChanged>(0);
+  bus.publishState<Core::Bus::FrameConfigChanged>(IO::FrameConfig());
+  bus.publishState<Core::Bus::DeviceCatalogChanged>(1);
+  bus.publishState<Core::Bus::ReplayPlayerStateChanged>(0, false);
+  bus.publishState<Core::Bus::AudioCaptureFormat>(0, 48000, true);
+  bus.publishState<Core::Bus::WidgetExtensionCatalog>(QVector<Core::Bus::WidgetExtensionEntry>());
+  bus.publishState<Core::Bus::DashboardViewState>(QString());
+  bus.publish<Core::Bus::DashboardViewStateRestoreRequested>(QString());
+  bus.publish<Core::Bus::DashboardViewStateClearRequested>(0);
+  bus.publish<Core::Bus::DisconnectRequested>(0);
+  bus.publish<Core::Bus::DeviceOpenAttempted>(0, true, QString());
+  bus.publish<Core::Bus::ModbusRegisterGroupsLoaded>(QJsonDocument());
+  bus.publish<Core::Bus::LoadGeneratedProjectRequested>(QJsonDocument(), true, quint64(1));
+  bus.publish<Core::Bus::GeneratedProjectLoadFinished>(quint64(1), true, true);
+  bus.publish<Core::Bus::Source0ConnectionSettingsChanged>(0, QJsonObject(), true, false);
+  bus.publishState<Core::Bus::ProjectStructureSnapshot>(std::vector<DataModel::Source>(),
+                                                        std::vector<DataModel::Group>(),
+                                                        QString(),
+                                                        false,
+                                                        0,
+                                                        0,
+                                                        -1,
+                                                        quint64(1));
+  bus.publish<Core::Bus::ConnectionAboutToOpen>(0);
+  bus.publishState<Core::Bus::ActiveUiDriverSettings>(0, QJsonObject());
+  bus.publish<Core::Bus::SourceSettingsCaptureRequested>(0, 0);
+  bus.publish<Core::Bus::SourceConnectionSettingsCaptured>(0, QJsonObject());
+  bus.publish<Core::Bus::SourceSettingsRestoreRequested>(0);
+  QVERIFY(Core::Bus::allocateRequestId() < Core::Bus::allocateRequestId());
+  QVERIFY(bus.latest<Core::Bus::OperationModeChanged>() != nullptr);
+  QCOMPARE(bus.latest<Core::Bus::AudioCaptureFormat>()->sampleRate, 48000);
 }
 
 QTEST_GUILESS_MAIN(MessageBusTests)

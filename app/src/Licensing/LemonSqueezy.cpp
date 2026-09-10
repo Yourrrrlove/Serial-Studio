@@ -26,8 +26,8 @@
 #include <QDesktopServices>
 #include <QNetworkReply>
 
-#include "AppInfo.h"
-#include "Licensing/CommercialToken.h"
+#include "Core/AppInfo.h"
+#include "Core/Licensing/CommercialToken.h"
 #include "Licensing/MachineID.h"
 #include "Licensing/MonotonicClock.h"
 #include "Licensing/OfflineLicense.h"

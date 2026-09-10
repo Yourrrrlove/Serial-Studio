@@ -27,7 +27,7 @@
 #include <QVariantMap>
 #include <QVector>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
 #include "UI/Dashboard.h"
 
 namespace Widgets {

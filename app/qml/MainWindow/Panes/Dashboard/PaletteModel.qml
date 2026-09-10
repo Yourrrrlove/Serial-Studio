@@ -207,11 +207,11 @@ QtObject {
 
       let ws = []
       root.flattenWorkspaces(tree, "", ws)
-      ws = ws.filter(n => SerialStudio.searchMatches(q, n.text))
+      ws = ws.filter(n => SerialStudioHelpers.searchMatches(q, n.text))
 
       let folders = []
       root.flattenFolders(tree, "", folders)
-      folders = folders.filter(n => SerialStudio.searchMatches(q, n.text))
+      folders = folders.filter(n => SerialStudioHelpers.searchMatches(q, n.text))
 
       let groups = []
       let widgets = []

@@ -24,12 +24,14 @@
 #include <QJsonArray>
 #include <QJsonObject>
 
+#include "API/CommandRegistry.h"
 #include "API/Handlers/ProjectApiSupport.h"
 #include "API/SchemaBuilder.h"
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/SerialStudio.h"
+#include "Core/SSAssert.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
-#include "Misc/BackupManager.h"
-#include "SerialStudio.h"
 
 using namespace API::Handlers::ProjectApiSupport;
 
@@ -148,8 +150,8 @@ API::CommandResponse API::Handlers::ProjectGroupCommands::groupAdd(const QString
         .arg(static_cast<int>(SerialStudio::BarPanel)));
   }
 
-  const auto widget         = static_cast<SerialStudio::GroupWidget>(widget_type);
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  const auto widget  = static_cast<SerialStudio::GroupWidget>(widget_type);
+  auto& projectModel = DataModel::pipelineModules().projectModel;
   projectModel.addGroup(title, widget);
 
   QJsonObject result;
@@ -168,9 +170,9 @@ API::CommandResponse API::Handlers::ProjectGroupCommands::groupDelete(const QStr
     return CommandResponse::makeError(
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: groupId"));
 
-  const int groupId    = params.value(QStringLiteral("groupId")).toInt();
-  static auto& project = DataModel::ProjectModel::instance();
-  const auto& groups   = project.groups();
+  const int groupId  = params.value(QStringLiteral("groupId")).toInt();
+  auto& project      = DataModel::pipelineModules().projectModel;
+  const auto& groups = project.groups();
   if (groupId < 0 || static_cast<size_t>(groupId) >= groups.size())
     return CommandResponse::makeError(
       id, ErrorCode::InvalidParam, QStringLiteral("Group id not found: %1").arg(groupId));
@@ -210,9 +212,12 @@ API::CommandResponse API::Handlers::ProjectGroupCommands::groupDelete(const QStr
   QString backupPath;
   qint64 preEpoch = 0;
   if (!isDryRun) {
-    static auto& backupManager = Misc::BackupManager::instance();
-    backupPath                 = backupManager.snapshot(QStringLiteral("pre-groupDelete"));
-    preEpoch                   = captureProjectEpoch();
+    auto* checkpoints = API::CommandRegistry::instance().checkpointStore();
+    SS_ASSERT_LOG(checkpoints != nullptr);
+    if (checkpoints != nullptr)
+      backupPath = checkpoints->snapshot(QStringLiteral("pre-groupDelete"));
+
+    preEpoch = captureProjectEpoch();
     project.deleteGroup(groupId);
   }
 
@@ -261,9 +266,9 @@ API::CommandResponse API::Handlers::ProjectGroupCommands::groupDuplicate(const Q
     return CommandResponse::makeError(
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: groupId"));
 
-  const int groupId    = params.value(QStringLiteral("groupId")).toInt();
-  static auto& project = DataModel::ProjectModel::instance();
-  const auto& groups   = project.groups();
+  const int groupId  = params.value(QStringLiteral("groupId")).toInt();
+  auto& project      = DataModel::pipelineModules().projectModel;
+  const auto& groups = project.groups();
   if (groupId < 0 || static_cast<size_t>(groupId) >= groups.size())
     return CommandResponse::makeError(
       id, ErrorCode::InvalidParam, QStringLiteral("Group id not found: %1").arg(groupId));

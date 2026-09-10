@@ -25,7 +25,7 @@
 #include <QVariantList>
 #include <vector>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
 
 namespace DataModel {
 

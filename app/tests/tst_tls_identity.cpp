@@ -23,7 +23,7 @@
 #include <QTemporaryDir>
 #include <QTest>
 
-#include "MQTT/TlsIdentity.h"
+#include "Protocols/Tls/TlsIdentity.h"
 
 // Throwaway self-signed RSA-2048 identity generated for this suite only (CN=serial-studio-test,
 // valid to 2036). The encrypted variant is the same key under AES-128 with passphrase "test1234".

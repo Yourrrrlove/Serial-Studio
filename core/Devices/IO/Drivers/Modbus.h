@@ -32,11 +32,11 @@
 #include <QString>
 #include <QTimer>
 
+#include "Core/Bus/Subscription.h"
+#include "Core/IO/HAL_Driver.h"
 #include "IO/AsyncTcpDial.h"
+#include "IO/Drivers/GeneratedProjectRequest.h"
 #include "IO/Drivers/Modbus/ModbusRegisterGroups.h"
-#include "IO/HAL_Driver.h"
-
-class AppState;
 
 namespace DataModel {
 class ProjectModel;
@@ -197,6 +197,7 @@ public slots:
 
 private slots:
   void onReadReady();
+  void applyImportedRegisterGroups(const QJsonDocument& groups);
   void pollRegisters();
   void pollNextGroup();
   void refreshSerialPorts();
@@ -218,8 +219,7 @@ private:
   void appendTcpProperties(QList<IO::DriverProperty>& props) const;
   void appendRtuProperties(QList<IO::DriverProperty>& props) const;
 
-  AppState& m_appState;
-  DataModel::ProjectModel& m_projectModel;
+  GeneratedProjectRequest m_generatedProject;
 
   bool m_connecting;
   QString m_dialTarget;
@@ -244,6 +244,7 @@ private:
 
   QSettings m_settings;
   ModbusRegisterGroups m_registerGroups;
+  Core::Bus::Subscription m_registerGroupImport;
 };
 }  // namespace Drivers
 }  // namespace IO

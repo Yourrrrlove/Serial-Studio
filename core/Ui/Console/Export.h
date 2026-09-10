@@ -28,7 +28,12 @@
 #include <QTextStream>
 #include <unordered_map>
 
-#include "DataModel/FrameConsumer.h"
+#include "Core/Bus/Subscription.h"
+#include "Core/DataModel/FrameConsumer.h"
+
+namespace Core::Bus {
+class MessageBus;
+}  // namespace Core::Bus
 
 namespace Console {
 
@@ -122,6 +127,7 @@ private:
 
 public:
   [[nodiscard]] static Export& instance();
+  void attachMessageBus(Core::Bus::MessageBus& bus);
 
   [[nodiscard]] bool isOpen() const;
   [[nodiscard]] bool exportEnabled() const;
@@ -149,5 +155,7 @@ private:
   std::atomic<bool> m_isOpen;
   std::atomic<bool> m_exportEnabled;
   bool m_persistSettings;
+  Core::Bus::MessageBus* m_bus;
+  Core::Bus::Subscription m_licenseWatch;
 };
 }  // namespace Console

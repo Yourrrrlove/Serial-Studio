@@ -29,18 +29,18 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QJsonArray>
+#include <QList>
 #include <QSet>
 #include <QStandardPaths>
 #include <QStringList>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/Prompt/UserPrompt.h"
+#include "Core/SerialStudio.h"
 #include "DataModel/Importers/AxisTicks.h"
 #include "DataModel/Importers/DBCMultiplexing.h"
 #include "DataModel/Importers/ImporterCommon.h"
 #include "DataModel/ProjectModel.h"
-#include "Misc/Utilities.h"
-#include "SerialStudio.h"
-#include "SessionContext.h"
 
 //--------------------------------------------------------------------------------------------------
 // Constructor & singleton access
@@ -49,8 +49,8 @@
 /**
  * @brief Constructs a DBC importer bound to one session.
  */
-DataModel::DBCImporter::DBCImporter(SessionContext& ctx)
-  : m_ctx(ctx), m_skippedExtendedMuxSignals(0)
+DataModel::DBCImporter::DBCImporter(ProjectModel& projectModel)
+  : m_projectModel(projectModel), m_skippedExtendedMuxSignals(0)
 {}
 
 /**
@@ -58,7 +58,7 @@ DataModel::DBCImporter::DBCImporter(SessionContext& ctx)
  */
 DataModel::DBCImporter& DataModel::DBCImporter::instance()
 {
-  static DBCImporter instance(SessionContext::current());
+  static DBCImporter instance(DataModel::ProjectModel::instance());
   return instance;
 }
 
@@ -155,20 +155,20 @@ void DataModel::DBCImporter::showPreview(const QString& filePath)
 {
   QCanDbcFileParser parser;
   if (!parser.parse(filePath)) {
-    Misc::Utilities::showMessageBox(tr("Failed to parse DBC file: %1").arg(parser.errorString()),
-                                    tr("Verify the file format and try again."),
-                                    QMessageBox::Critical,
-                                    tr("DBC Import Error"));
+    Core::Prompt::showMessageBox(tr("Failed to parse DBC file: %1").arg(parser.errorString()),
+                                 tr("Verify the file format and try again."),
+                                 Core::Prompt::Critical,
+                                 tr("DBC Import Error"));
     return;
   }
 
   m_messages          = parser.messageDescriptions();
   m_valueDescriptions = parser.messageValueDescriptions();
   if (m_messages.isEmpty()) {
-    Misc::Utilities::showMessageBox(
+    Core::Prompt::showMessageBox(
       tr("DBC file contains no messages"),
       tr("The selected file does not contain any CAN message definitions."),
-      QMessageBox::Warning,
+      Core::Prompt::Warning,
       tr("DBC Import Warning"));
     return;
   }
@@ -204,7 +204,7 @@ void DataModel::DBCImporter::confirmImport()
   const int signalCount   = countTotalSignals(m_messages);
   const int skippedExtMux = m_skippedExtendedMuxSignals;
 
-  auto& pm = m_ctx.projectModel();
+  auto& pm = m_projectModel;
   QObject::connect(
     &pm,
     &ProjectModel::importCompleted,
@@ -219,12 +219,12 @@ void DataModel::DBCImporter::confirmImport()
                      "value outside the integer range, or a circular SG_MUL_VAL_ chain.")
                     .arg(skippedExtMux);
 
-      Misc::Utilities::showMessageBox(
+      Core::Prompt::showMessageBox(
         tr("Successfully imported DBC file with %1 messages and %2 signals.")
           .arg(messageCount)
           .arg(signalCount),
         detail,
-        QMessageBox::Information,
+        Core::Prompt::Information,
         tr("DBC Import Complete"));
     },
     Qt::SingleShotConnection);
@@ -663,7 +663,7 @@ QString DataModel::DBCImporter::generateMessageSpec(const QCanMessageDescription
 
   QString out  = heading + QLatin1Char('\n');
   out         += QStringLiteral("  [0x%1] = {\n    table = %2,\n    signals = {\n")
-                   .arg(hex, luaQuote(tableNameFor(message)));
+           .arg(hex, luaQuote(tableNameFor(message)));
 
   for (const auto& entry : entries)
     out += signalSpecLine(entry, rootSelector);

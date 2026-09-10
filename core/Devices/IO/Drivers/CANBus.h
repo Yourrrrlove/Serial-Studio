@@ -34,7 +34,7 @@
 #include <QTimer>
 #include <QVariantMap>
 
-#include "IO/HAL_Driver.h"
+#include "Core/IO/HAL_Driver.h"
 #include "Protocols/CAN/CanReassembly.h"
 
 namespace IO {

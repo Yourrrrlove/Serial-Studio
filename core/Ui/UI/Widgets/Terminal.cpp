@@ -28,16 +28,20 @@
 #include <QKeySequence>
 #include <QPainter>
 
+#include "API/HandlerContext.h"
 #include "Console/Handler.h"
+#include "Console/WelcomeText.h"
+#include "Core/Bus/MessageBus.h"
+#include "Core/Bus/Messages.h"
+#include "Core/Services.h"
 #include "Core/SSAssert.h"
+#include "Core/TimerEvents.h"
+#include "Core/Translator.h"
 #include "IO/ConnectionManager.h"
 #include "Misc/ThemeManager.h"
-#include "Misc/TimerEvents.h"
-#include "Misc/Translator.h"
 #include "UI/Widgets/Terminal/Vt100Keymap.h"
 
 #ifdef BUILD_COMMERCIAL
-#  include "Licensing/LemonSqueezy.h"
 #endif
 
 //--------------------------------------------------------------------------------------------------
@@ -51,12 +55,9 @@ Widgets::Terminal::Terminal(QQuickItem* parent)
   : QQuickPaintedItem(parent)
   , m_consoleHandler(Console::Handler::instance())
   , m_themeManager(Misc::ThemeManager::instance())
-  , m_connectionManager(IO::ConnectionManager::instance())
-#ifdef BUILD_COMMERCIAL
-  , m_lemonSqueezy(Licensing::LemonSqueezy::instance())
-#endif
-  , m_translator(Misc::Translator::instance())
-  , m_timerEvents(Misc::TimerEvents::instance())
+  , m_connectionManager(API::handlerContext().connectionManager)
+  , m_translator(Core::services().translator)
+  , m_timerEvents(Core::services().timerEvents)
   , m_cWidth(0)
   , m_cHeight(0)
   , m_borderX(0)
@@ -124,12 +125,9 @@ Widgets::Terminal::Terminal(QQuickItem* parent)
     }
   });
 
-#ifdef BUILD_COMMERCIAL
-  connect(&m_lemonSqueezy,
-          &Licensing::LemonSqueezy::activatedChanged,
-          this,
-          &Widgets::Terminal::loadWelcomeGuide);
-#endif
+  m_licenseWatch = Core::services().bus.subscribe<Core::Bus::LicenseStateChanged>(
+    this,
+    [this](const std::shared_ptr<const Core::Bus::LicenseStateChanged>&) { loadWelcomeGuide(); });
 
   connect(&m_translator, &Misc::Translator::languageChanged, this, [this] { loadWelcomeGuide(); });
 
@@ -1450,7 +1448,7 @@ void Widgets::Terminal::loadWelcomeGuide()
   clear();
   setAutoscroll(false);
   append(logo);
-  append(m_translator.welcomeConsoleText());
+  append(Console::welcomeConsoleText(m_translator.language()));
 
   auto key = QKeySequence(QStringLiteral("Ctrl+K")).toString(QKeySequence::NativeText);
 #ifdef Q_OS_MAC

@@ -21,74 +21,40 @@
 
 #pragma once
 
+#include <array>
+#include <cstddef>
+
+#include "Core/DataModel/DataBlock.h"
+#include "Core/DataModel/IBlockSink.h"
 #include "Core/HotpathOptimization.h"
-#include "DataModel/DataBlock.h"
 
 namespace IO {
 class PipelineHost;
 }  // namespace IO
 
-namespace CSV {
-class Export;
-}  // namespace CSV
-
-namespace MDF4 {
-class Export;
-}  // namespace MDF4
-
-namespace API {
-class Server;
-
-namespace GRPC {
-class GRPCServer;
-}  // namespace GRPC
-}  // namespace API
-
-#ifdef BUILD_COMMERCIAL
-namespace Sessions {
-class Export;
-}  // namespace Sessions
-
-namespace MQTT {
-class Publisher;
-}  // namespace MQTT
-
-namespace Widgets {
-class AudioExport;
-}  // namespace Widgets
-
-namespace InfluxDB {
-class Export;
-}  // namespace InfluxDB
-#endif
-
 namespace DataModel {
 
 /**
  * @brief The publish fan-out of the frame builder (spec 0075, A6/R12.8): the dashboard hop, the
- *        cached any-async-sink flag and the ONE trimmed copy every recording sink shares. Runs on
+ *        cached any-async-sink flag and the ONE trimmed copy every recording sink shares. Sinks are
+ *        bound by interface (spec 0077), so this translation unit names none of them; it runs on
  *        the pipeline thread only, which is what makes it the single producer for every sink.
  */
 class BlockPublisher {
 public:
   /**
-   * @brief Every sink a finished block reaches. The composition root resolves them once, in
-   *        FrameBuilder::setupExternalConnections(), and binds them here.
+   * @brief Every sink a finished block reaches. The composition root resolves them once and binds
+   *        them here; the two read-only observers are also named by slot because the masked lane
+   *        (replay, synthetic refresh) reaches them and nothing else.
    */
   struct Sinks {
+    static constexpr std::size_t kMaxSinks = 8;
+
     IO::PipelineHost* pipeline = nullptr;
-    API::Server* server        = nullptr;
-    CSV::Export* csv           = nullptr;
-    MDF4::Export* mdf4         = nullptr;
-#ifdef BUILD_COMMERCIAL
-    Sessions::Export* sessions  = nullptr;
-    MQTT::Publisher* mqtt       = nullptr;
-    Widgets::AudioExport* audio = nullptr;
-    InfluxDB::Export* influx    = nullptr;
-#endif
-#ifdef ENABLE_GRPC
-    API::GRPC::GRPCServer* grpc = nullptr;
-#endif
+    std::size_t sinkCount      = 0;
+    std::array<IBlockSink*, kMaxSinks> sinks{};
+    IBlockSink* server = nullptr;
+    IBlockSink* grpc   = nullptr;
   };
 
   explicit BlockPublisher(const bool& maskSinks);
@@ -102,7 +68,9 @@ public:
   void refreshSinkFlag();
   void publish(const DataBlockPtr& block);
 
+  [[nodiscard]] bool bound() const noexcept;
   [[nodiscard]] bool anyAsyncSink() const noexcept;
+  [[nodiscard]] const Sinks& sinks() const noexcept;
 
 private:
   [[nodiscard]] bool observedByReadOnly() const;

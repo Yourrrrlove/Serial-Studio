@@ -31,10 +31,12 @@
 #include <QSet>
 #include <QString>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
 #include "DataModel/Importers/DBCMultiplexing.h"
 
-class SessionContext;
+namespace DataModel {
+class ProjectModel;
+}  // namespace DataModel
 
 namespace DataModel {
 /**
@@ -60,7 +62,7 @@ signals:
   void dbcFileNameChanged();
 
 public:
-  explicit DBCImporter(SessionContext& ctx);
+  explicit DBCImporter(ProjectModel& projectModel);
   DBCImporter(DBCImporter&&)                 = delete;
   DBCImporter(const DBCImporter&)            = delete;
   DBCImporter& operator=(DBCImporter&&)      = delete;
@@ -122,7 +124,7 @@ private:
   [[nodiscard]] int countTotalSignals(const QList<QCanMessageDescription>& messages) const;
 
 private:
-  SessionContext& m_ctx;
+  ProjectModel& m_projectModel;
   QString m_dbcFilePath;
   QHash<quint32, QString> m_tableNames;
   QList<QCanMessageDescription> m_messages;

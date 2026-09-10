@@ -37,7 +37,10 @@
 #include <QVariant>
 #include <utility>
 
-#include "DataModel/Frame.h"
+#include "Core/Crypto/CredentialVault.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/IO/HAL_Driver.h"
+#include "IO/Drivers/GeneratedProjectRequest.h"
 #include "IO/Drivers/OpcUa/OpcUaBrowser.h"
 #include "IO/Drivers/OpcUa/OpcUaCertificateStore.h"
 #include "IO/Drivers/OpcUa/OpcUaEndpointSelection.h"
@@ -46,9 +49,7 @@
 #include "IO/Drivers/OpcUaSecurity.h"
 #include "IO/Drivers/OpcUaSession.h"
 #include "IO/Drivers/OpcUaTypes.h"
-#include "IO/Drivers/OpcUaWire.h"
-#include "IO/HAL_Driver.h"
-#include "MQTT/CredentialVault.h"
+#include "Protocols/OpcUa/OpcUaWire.h"
 
 namespace IO {
 namespace Drivers {
@@ -309,7 +310,7 @@ public:
   [[nodiscard]] QJsonArray wireSchema() const;
   [[nodiscard]] QJsonObject statusJson() const;
   [[nodiscard]] QJsonObject buildProject() const;
-  [[nodiscard]] DataModel::ProjectModel* loadGeneratedProject();
+  [[nodiscard]] bool loadGeneratedProject();
 
   [[nodiscard]] OpcUaTagModel* tagModel() { return m_browser.tagModel(); }
 
@@ -458,6 +459,7 @@ private:
   OpcUaSubscriptions m_subscriptions;
   OpcUaBrowser m_browser;
   ::MQTT::CredentialVault m_vault;
+  GeneratedProjectRequest m_generatedProject;
   QSettings m_settings;
 };
 

@@ -134,7 +134,7 @@ def test_widget_display_commands_are_tiered_and_documented():
     assert "project.dashboard.setWidgetTitle" in confirm
     assert "project.dashboard.setWidgetFreezeTitle" in confirm
 
-    handler = read_text("core/Api/API/Handlers/DashboardHandler.cpp")
+    handler = read_text("core/Ui/ApiHandlers/DashboardHandler.cpp")
     docs = read_text("doc/help/API-Reference.md")
     for name in (
         "project.dashboard.setWidgetTitle",

@@ -117,26 +117,26 @@ SPDX-License-Identifier = "GPL-3.0-or-later OR LicenseRef-SerialStudio-Commercia
 # ------------------------------------------------------------------------------------------------
 
 [[annotations]]
-path = ["app/src/ThirdParty/miniaudio.h", "app/src/ThirdParty/miniaudio.cpp"]
+path = ["core/Devices/ThirdParty/miniaudio.h", "core/Devices/ThirdParty/miniaudio.cpp"]
 SPDX-FileCopyrightText = "2025 David Reid"
 SPDX-License-Identifier = "MIT-0 OR Unlicense"
 
 [[annotations]]
-path = ["app/src/ThirdParty/fast_float.h"]
+path = ["core/Core/ThirdParty/fast_float.h"]
 SPDX-FileCopyrightText = "2021 The fast_float authors"
 SPDX-License-Identifier = "Apache-2.0 OR MIT OR BSL-1.0"
 
 [[annotations]]
 path = [
-  "app/src/ThirdParty/readerwriterqueue.h",
-  "app/src/ThirdParty/readerwritercircularbuffer.h",
+  "core/Core/ThirdParty/readerwriterqueue.h",
+  "core/Core/ThirdParty/readerwritercircularbuffer.h",
 ]
 SPDX-FileCopyrightText = "2013-2020 Cameron Desrochers"
 SPDX-License-Identifier = "BSD-2-Clause"
 
 # atomicops.h embeds Jeff Preshing's semaphore under its own zlib license, quoted in the file.
 [[annotations]]
-path = ["app/src/ThirdParty/atomicops.h"]
+path = ["core/Core/ThirdParty/atomicops.h"]
 SPDX-FileCopyrightText = ["2013-2016 Cameron Desrochers", "2015 Jeff Preshing"]
 SPDX-License-Identifier = "BSD-2-Clause AND Zlib"
 

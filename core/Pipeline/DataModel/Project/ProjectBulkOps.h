@@ -30,7 +30,7 @@ class ProjectModel;
 
 /**
  * @brief Tree item kinds the delete ordering below distinguishes, mirroring the numeric values of
- *        ProjectEditor::ItemKind. ProjectBulkOps.cpp static_asserts every one against the enum, so
+ *        DataModel::EntityKind. ProjectBulkOps.cpp static_asserts every one against the enum, so
  *        the mirror cannot drift; it exists so the ordering rule stays header-inline (and unit
  *        testable) without pulling the editor's Qt Quick and QCodeEditor headers.
  */

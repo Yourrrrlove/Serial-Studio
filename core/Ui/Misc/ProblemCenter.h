@@ -31,6 +31,10 @@
 #include <QVariantList>
 #include <vector>
 
+namespace Core::Bus {
+class MessageBus;
+}  // namespace Core::Bus
+
 namespace DataModel {
 class NotificationCenter;
 }  // namespace DataModel
@@ -123,6 +127,7 @@ private:
 
 public:
   [[nodiscard]] static ProblemCenter& instance();
+  void attachMessageBus(Core::Bus::MessageBus& bus);
 
   [[nodiscard]] int infoCount() const noexcept;
   [[nodiscard]] int errorCount() const noexcept;
@@ -179,6 +184,7 @@ private:
   std::vector<QList<Finding>> m_checkerFindings;
 
   DataModel::NotificationCenter* m_notifications;
+  Core::Bus::MessageBus* m_bus;
 };
 
 }  // namespace Misc

@@ -44,7 +44,7 @@ Widgets.Pane {
     if (q.length === 0)
       return contents
 
-    return contents.filter((r) => SerialStudio.searchMatches(q, String(r.title)))
+    return contents.filter((r) => SerialStudioHelpers.searchMatches(q, String(r.title)))
   }
 
   title: folderName.length > 0 ? folderName : qsTr("Folder")

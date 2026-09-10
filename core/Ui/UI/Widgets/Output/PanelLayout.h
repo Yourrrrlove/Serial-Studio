@@ -12,7 +12,7 @@
 #include <QSizeF>
 #include <QVector>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
 
 namespace Widgets {
 namespace Output {

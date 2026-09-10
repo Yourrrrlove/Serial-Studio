@@ -21,7 +21,7 @@
 
 #include "UI/Widgets/Gauge.h"
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
 #include "DSP.h"
 #include "UI/Dashboard.h"
 

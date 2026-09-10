@@ -120,6 +120,12 @@
             }
         },
         "required": [
+        ],
+        "x-pathParams": [
+            {
+                "allowMissing": false,
+                "name": "path"
+            }
         ]
     },
     {
@@ -631,6 +637,12 @@
         },
         "required": [
             "filePath"
+        ],
+        "x-pathParams": [
+            {
+                "allowMissing": false,
+                "name": "filePath"
+            }
         ]
     },
     {
@@ -2204,6 +2216,12 @@
         },
         "required": [
             "path"
+        ],
+        "x-pathParams": [
+            {
+                "allowMissing": true,
+                "name": "path"
+            }
         ]
     },
     {
@@ -2432,6 +2450,16 @@
         "required": [
             "certificate",
             "key"
+        ],
+        "x-pathParams": [
+            {
+                "allowMissing": false,
+                "name": "certificate"
+            },
+            {
+                "allowMissing": false,
+                "name": "key"
+            }
         ]
     },
     {
@@ -2516,6 +2544,12 @@
         },
         "required": [
             "executable"
+        ],
+        "x-pathParams": [
+            {
+                "allowMissing": false,
+                "name": "executable"
+            }
         ]
     },
     {
@@ -2542,6 +2576,12 @@
         },
         "required": [
             "pipePath"
+        ],
+        "x-pathParams": [
+            {
+                "allowMissing": true,
+                "name": "pipePath"
+            }
         ]
     },
     {
@@ -2555,6 +2595,12 @@
         },
         "required": [
             "workingDir"
+        ],
+        "x-pathParams": [
+            {
+                "allowMissing": true,
+                "name": "workingDir"
+            }
         ]
     },
     {
@@ -2964,6 +3010,12 @@
         },
         "required": [
             "path"
+        ],
+        "x-pathParams": [
+            {
+                "allowMissing": false,
+                "name": "path"
+            }
         ]
     },
     {
@@ -3083,6 +3135,12 @@
         },
         "required": [
             "filePath"
+        ],
+        "x-pathParams": [
+            {
+                "allowMissing": false,
+                "name": "filePath"
+            }
         ]
     },
     {
@@ -5018,7 +5076,7 @@
         ]
     },
     {
-        "description": "Open a .ssproj or .json project file. Replaces the current project. Auto-switches operationMode to ProjectFile if it was QuickPlot or ConsoleOnly. Path must be absolute. Pass dryRun:true to read the file and return wouldDiscard + wouldApply summaries without loading.",
+        "description": "Open a .ssproj or .json project file. Replaces the current project. Auto-switches operationMode to ProjectFile if it was QuickPlot or ConsoleOnly. Path must be absolute. Pass dryRun:true to read the file and return wouldDiscard + wouldApply summaries without loading. Re-opening the project that is already loaded is a no-op that keeps unsaved edits: the reply reports reloaded:false for it.",
         "name": "project.open",
         "properties": {
             "dryRun": {
@@ -5032,6 +5090,12 @@
         },
         "required": [
             "filePath"
+        ],
+        "x-pathParams": [
+            {
+                "allowMissing": false,
+                "name": "filePath"
+            }
         ]
     },
     {
@@ -5198,7 +5262,7 @@
         ]
     },
     {
-        "description": "Write the current project to disk. Note: the AI runtime auto-saves after every successful mutating tool call within ~1 second, so you do NOT need to call this explicitly when editing. Call it ONLY when the user explicitly says \"save\" or wants a different file path -- in which case pass {filePath: \"/abs/path\"} for headless save-as.",
+        "description": "Write the current project to disk. The AI runtime does NOT write the project file: a successful mutating tool call takes a checkpoint, not a save. Call this when the user asks to save, or pass {filePath: \"/abs/path\"} for a headless save-as.",
         "name": "project.save",
         "properties": {
             "askPath": {
@@ -5211,6 +5275,12 @@
             }
         },
         "required": [
+        ],
+        "x-pathParams": [
+            {
+                "allowMissing": true,
+                "name": "filePath"
+            }
         ]
     },
     {
@@ -5250,7 +5320,7 @@
         ]
     },
     {
-        "description": "Rename the project (only the in-app title). Does not move or rename the .ssproj file on disk; auto-save still writes to the existing file path. To save to a different file, use project.save{filePath}.",
+        "description": "Rename the project (only the in-app title). Does not move or rename the .ssproj file on disk; the title reaches disk on the next save. To save to a different file, use project.save{filePath}.",
         "name": "project.setTitle",
         "properties": {
             "title": {
@@ -5922,6 +5992,12 @@
         },
         "required": [
             "filePath"
+        ],
+        "x-pathParams": [
+            {
+                "allowMissing": true,
+                "name": "filePath"
+            }
         ]
     },
     {
@@ -5946,6 +6022,12 @@
             }
         },
         "required": [
+        ],
+        "x-pathParams": [
+            {
+                "allowMissing": false,
+                "name": "projectPath"
+            }
         ]
     },
     {

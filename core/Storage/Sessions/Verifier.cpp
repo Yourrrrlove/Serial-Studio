@@ -25,18 +25,23 @@
 #  include <QSqlError>
 #  include <QSqlQuery>
 #  include <QSqlRecord>
+#  include <QVariant>
 
-#  include "AppInfo.h"
 #  include "AppState.h"
+#  include "Core/AppInfo.h"
+#  include "Core/Bus/MessageBus.h"
+#  include "Core/Bus/Messages.h"
+#  include "Core/DataModel/Frame.h"
+#  include "Core/IO/FrameConfigBuilder.h"
+#  include "Core/IO/HAL_Driver.h"
+#  include "Core/License.h"
+#  include "Core/SerialStudio.h"
 #  include "Core/SSAssert.h"
-#  include "DataModel/Frame.h"
 #  include "DataModel/FrameBuilder.h"
+#  include "DataModel/PipelineModules.h"
 #  include "DataModel/ProjectModel.h"
 #  include "DataModel/Scripting/FrameParser.h"
-#  include "IO/ConnectionManager.h"
 #  include "IO/FrameReader.h"
-#  include "IO/HAL_Driver.h"
-#  include "SerialStudio.h"
 #  include "Sessions/BlockReader.h"
 #  include "Sessions/DatabaseManager.h"
 #  include "Sessions/Export.h"
@@ -77,8 +82,9 @@ static QVariant fieldOr(const QSqlQuery& query, const char* column)
 /**
  * @brief Stores the options; all work happens in run().
  */
-Sessions::Verifier::Verifier(const Options& options)
-  : m_options(options)
+Sessions::Verifier::Verifier(const Options& options, Core::Bus::MessageBus& bus)
+  : m_bus(bus)
+  , m_options(options)
   , m_sessionId(-1)
   , m_framesDropped(-1)
   , m_overflowBytes(-1)
@@ -217,13 +223,13 @@ int Sessions::Verifier::fail(const QString& code,
 {
   m_verdict = QStringLiteral("error");
   m_report  = QJsonObject{
-    {  QStringLiteral("verdict"),        m_verdict},
-    {    QStringLiteral("error"),           reason},
-    {QStringLiteral("errorCode"),             code},
-    {    QStringLiteral("stage"),            stage},
-    {     QStringLiteral("hint"),             hint},
-    {  QStringLiteral("archive"), m_options.dbPath},
-    {QStringLiteral("sessionId"),      m_sessionId}
+     {  QStringLiteral("verdict"),        m_verdict},
+     {    QStringLiteral("error"),           reason},
+     {QStringLiteral("errorCode"),             code},
+     {    QStringLiteral("stage"),            stage},
+     {     QStringLiteral("hint"),             hint},
+     {  QStringLiteral("archive"), m_options.dbPath},
+     {QStringLiteral("sessionId"),      m_sessionId}
   };
   appendVerificationRecord();
   cleanupRegenerated();
@@ -431,7 +437,7 @@ void Sessions::Verifier::classifySession()
   m_controlScriptSeen      = obj.value(QStringLiteral("controlScript")).toBool();
   const bool transformsFed = obj.value(QStringLiteral("transformsPresent")).toBool()
                           && obj.value(QStringLiteral("tablesPresent")).toBool();
-  m_finalsVerifiable       = !transformsFed;
+  m_finalsVerifiable = !transformsFed;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -455,19 +461,19 @@ QString Sessions::Verifier::reparseSession(const QString& projectJson,
   if (!doc.isObject())
     return QStringLiteral("stored-project-invalid");
 
-  static auto& appState = AppState::instance();
+  auto& appState = DataModel::pipelineModules().appState;
   appState.setOperationMode(SerialStudio::ProjectFile);
 
-  static auto& project = DataModel::ProjectModel::instance();
+  auto& project = DataModel::pipelineModules().projectModel;
   project.setSuppressMessageBoxes(true);
   if (!project.loadFromJsonDocument(doc))
     return QStringLiteral("stored-project-rejected");
 
-  static auto& parser = DataModel::FrameParser::instance();
+  auto& parser = DataModel::pipelineModules().frameParser;
   parser.setSuppressMessageBoxes(true);
   parser.readCode();
 
-  static auto& builder = DataModel::FrameBuilder::instance();
+  auto& builder = DataModel::pipelineModules().frameBuilder;
   builder.syncFromProjectModel();
   builder.setParseBudgetEnabled(false);
   builder.resetFrameCounters();
@@ -477,7 +483,7 @@ QString Sessions::Verifier::reparseSession(const QString& projectJson,
   QFile::remove(m_regenPath);
   DatabaseManager::setDbPathOverride(m_regenPath);
 
-  if (!SerialStudio::activated())
+  if (!Core::License::activated())
     return QStringLiteral("export-not-licensed");
 
   static auto& exporter = Sessions::Export::instance();
@@ -519,7 +525,7 @@ bool Sessions::Verifier::feedArchivedBytes(bool injectTimestamps)
   if (!rows.exec())
     return false;
 
-  static auto& builder  = DataModel::FrameBuilder::instance();
+  auto& builder         = DataModel::pipelineModules().frameBuilder;
   static auto& exporter = Sessions::Export::instance();
 
   m_firstFrameChunk = -1;
@@ -587,8 +593,12 @@ IO::FrameReader& Sessions::Verifier::readerForDevice(int deviceId)
   if (it != m_readers.end())
     return *it->second;
 
-  static auto& manager = IO::ConnectionManager::instance();
-  const auto config    = manager.buildFrameConfig(deviceId);
+  const auto project = m_bus.latest<Core::Bus::ProjectStructureSnapshot>();
+  SS_ASSERT_LOG(project != nullptr);
+  const Core::Bus::ProjectStructureSnapshot empty{};
+  auto& appState    = DataModel::pipelineModules().appState;
+  const auto config = IO::FrameConfigBuilder::build(
+    project ? *project : empty, appState.operationMode(), appState.frameConfig(), deviceId);
 
   auto reader = std::make_unique<IO::FrameReader>();
   reader->setOperationMode(config.operationMode);
@@ -744,17 +754,17 @@ QJsonObject Sessions::Verifier::diffDataset(QSqlDatabase& regen,
 
     const bool parseStage = !rawMatch;
     firstMismatch         = QJsonObject{
-      {                    QStringLiteral("row"),                                                                row},
-      {    QStringLiteral("recordedTimestampNs"),                                                      a.timestampNs},
-      {                  QStringLiteral("stage"), parseStage ? QStringLiteral("parse") : QStringLiteral("transform")},
-      {            QStringLiteral("recordedRaw"),                                                        a.rawString},
-      {         QStringLiteral("regeneratedRaw"),                                                        b.rawString},
-      {     QStringLiteral("recordedRawNumeric"),                                                       a.rawNumeric},
-      {  QStringLiteral("regeneratedRawNumeric"),                                                       b.rawNumeric},
-      {          QStringLiteral("recordedFinal"),                                                      a.finalString},
-      {       QStringLiteral("regeneratedFinal"),                                                      b.finalString},
-      {   QStringLiteral("recordedFinalNumeric"),                                                     a.finalNumeric},
-      {QStringLiteral("regeneratedFinalNumeric"),                                                     b.finalNumeric}
+              {                    QStringLiteral("row"),                                                                row},
+              {    QStringLiteral("recordedTimestampNs"),                                                      a.timestampNs},
+              {                  QStringLiteral("stage"), parseStage ? QStringLiteral("parse") : QStringLiteral("transform")},
+              {            QStringLiteral("recordedRaw"),                                                        a.rawString},
+              {         QStringLiteral("regeneratedRaw"),                                                        b.rawString},
+              {     QStringLiteral("recordedRawNumeric"),                                                       a.rawNumeric},
+              {  QStringLiteral("regeneratedRawNumeric"),                                                       b.rawNumeric},
+              {          QStringLiteral("recordedFinal"),                                                      a.finalString},
+              {       QStringLiteral("regeneratedFinal"),                                                      b.finalString},
+              {   QStringLiteral("recordedFinalNumeric"),                                                     a.finalNumeric},
+              {QStringLiteral("regeneratedFinalNumeric"),                                                     b.finalNumeric}
     };
   }
 

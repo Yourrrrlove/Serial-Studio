@@ -25,21 +25,19 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QLoggingCategory>
-#include <QMessageBox>
 #include <QSet>
 #include <QUrl>
 
-#include "API/EnumLabels.h"
-#include "AppState.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/EnumLabels.h"
+#include "Core/Prompt/UserPrompt.h"
+#include "Core/SerialStudio.h"
+#include "Core/Services.h"
 #include "Core/SSAssert.h"
-#include "DataModel/Frame.h"
-#include "DataModel/ProjectModel.h"
+#include "Core/Translator.h"
 #include "IO/ConnectionManager.h"
 #include "IO/Drivers/OpcUa/OpcUaEndpointSelection.h"
 #include "IO/Drivers/OpcUa/OpcUaProjectBuilder.h"
-#include "Misc/Translator.h"
-#include "Misc/Utilities.h"
-#include "SerialStudio.h"
 
 Q_LOGGING_CATEGORY(lcOpcUa, "serialstudio.io.opcua")
 
@@ -82,6 +80,7 @@ IO::Drivers::OpcUa::OpcUa()
   , m_subscriptions(*this, this)
   , m_browser(*this, this)
   , m_vault(QStringLiteral("opcua"))
+  , m_generatedProject(this)
 {
   loadSettings();
 
@@ -126,7 +125,7 @@ IO::Drivers::OpcUa::OpcUa()
  */
 void IO::Drivers::OpcUa::setupExternalConnections()
 {
-  connect(&Misc::Translator::instance(),
+  connect(&Core::services().translator,
           &Misc::Translator::languageChanged,
           this,
           &IO::Drivers::OpcUa::languageChanged);
@@ -280,8 +279,7 @@ void IO::Drivers::OpcUa::doClose()
 /**
  * @brief Disconnects every signal from a session and retires it; the pointer is nulled so a late
  *        callback can never reach a freed object. The subscription engine listens to the same
- *        session, so it is released here too. The session's own close() is what stops the iterate
- *        pump before the open62541 client is destroyed.
+ *        session, so it goes too; the session's own close() stops the iterate pump first.
  */
 void IO::Drivers::OpcUa::teardownSession(OpcUaSession*& session)
 {
@@ -315,8 +313,7 @@ bool IO::Drivers::OpcUa::configurationOk() const noexcept
 /**
  * @brief Starts the async dial: a fresh session and the 15 s last-resort timer. With a discovered
  *        endpoint selected it dials at once; otherwise it discovers first and dials the endpoint
- *        chosen in onEndpointsFinished(), because a synthetic description carries no user
- *        identity tokens and the server refuses it. One verdict either way.
+ *        onEndpointsFinished() picks (a synthetic description carries no user identity tokens).
  */
 bool IO::Drivers::OpcUa::open(const QIODevice::OpenMode mode)
 {
@@ -454,9 +451,8 @@ QString IO::Drivers::OpcUa::selectedEndpointUrl() const
 
 /**
  * @brief The endpoint actually dialed: the discovered row carrying the URL the user typed, since
- *        servers advertise their own hostname (S7, Kepware, B&R) which rarely resolves from the
- *        engineering laptop. With no row selected the CONFIGURED policy and mode are used;
- *        falling back to None there would dial unencrypted whenever Discover was not pressed.
+ *        servers advertise their own hostname, which rarely resolves from the engineering laptop.
+ *        With no row selected the CONFIGURED policy and mode are used, never a None fallback.
  */
 IO::Drivers::OpcUaTypes::Endpoint IO::Drivers::OpcUa::dialEndpoint() const
 {
@@ -724,22 +720,18 @@ void IO::Drivers::OpcUa::onBrowseFailed(const QString& reason)
  * @brief Builds the project and loads it into the editor (no save dialog); the API path.
  *        Returns the model on success so callers hold no singleton of their own.
  */
-DataModel::ProjectModel* IO::Drivers::OpcUa::loadGeneratedProject()
+bool IO::Drivers::OpcUa::loadGeneratedProject()
 {
   if (m_tags.isEmpty())
-    return nullptr;
+    return false;
 
-  static auto& pm       = DataModel::ProjectModel::instance();
-  static auto& appState = AppState::instance();
-  appState.setOperationMode(SerialStudio::ProjectFile);
-  if (!pm.loadFromJsonDocument(QJsonDocument(buildProject()), QString())) {
+  if (!m_generatedProject.load(messageBus(), QJsonDocument(buildProject()))) {
     logDriverError(tr("Failed to load generated project"),
                    tr("The generated project JSON could not be loaded."));
-    return nullptr;
+    return false;
   }
 
-  pm.setModified(true);
-  return &pm;
+  return true;
 }
 
 /**
@@ -748,39 +740,36 @@ DataModel::ProjectModel* IO::Drivers::OpcUa::loadGeneratedProject()
 void IO::Drivers::OpcUa::generateProject()
 {
   if (m_tags.isEmpty()) {
-    Misc::Utilities::showMessageBox(tr("No tags selected"),
-                                    tr("Browse the server and select at least one tag before "
-                                       "generating a project."),
-                                    QMessageBox::Warning,
-                                    tr("OPC UA Project Generator"));
+    Core::Prompt::showMessageBox(tr("No tags selected"),
+                                 tr("Browse the server and select at least one tag before "
+                                    "generating a project."),
+                                 Core::Prompt::Warning,
+                                 tr("OPC UA Project Generator"));
     return;
   }
 
-  auto* pm = loadGeneratedProject();
-  if (!pm)
-    return;
-
-  const int groupCount = buildProject().value(Keys::Groups).toArray().size();
+  const auto project   = buildProject();
+  const int groupCount = project.value(Keys::Groups).toArray().size();
   const int datasets   = wireSchema().size();
-  QObject::connect(
-    pm,
-    &DataModel::ProjectModel::saveDialogCompleted,
-    this,
-    [groupCount, datasets](bool accepted) {
+  m_generatedProject.loadAndSave(
+    messageBus(), QJsonDocument(project), [this, groupCount, datasets](bool loaded, bool accepted) {
+      if (!loaded) {
+        logDriverError(tr("Failed to load generated project"),
+                       tr("The generated project JSON could not be loaded."));
+        return;
+      }
+
       if (!accepted)
         return;
 
-      Misc::Utilities::showMessageBox(
+      Core::Prompt::showMessageBox(
         tr("Successfully generated project with %1 groups and %2 datasets.")
           .arg(groupCount)
           .arg(datasets),
         tr("The project editor is now open for customization."),
-        QMessageBox::Information,
+        Core::Prompt::Information,
         tr("OPC UA Project Generator"));
-    },
-    Qt::SingleShotConnection);
-
-  (void)pm->saveJsonFile(true);
+    });
 }
 
 /**
@@ -1067,9 +1056,8 @@ void IO::Drivers::OpcUa::setEndpointIndex(const int index)
 
 /**
  * @brief Adopts an endpoint selection and republishes everything derived from it. The security
- *        posture of a connection follows the SELECTED endpoint, so credentialsExposed goes stale
- *        (banner shown on an encrypted channel, hidden on a clear one) whenever a selection
- *        moves without securityChanged.
+ *        posture follows the SELECTED endpoint, so credentialsExposed goes stale whenever a
+ *        selection moves without securityChanged.
  */
 void IO::Drivers::OpcUa::publishEndpointSelection(const int index)
 {
@@ -1444,10 +1432,9 @@ bool IO::Drivers::OpcUa::exportCertificate(const QString& path)
 }
 
 /**
- * @brief Accepts the server certificate the last attempt was refused over. The refusal was seen by
- *        whichever instance owns the live session, so the decision is taken against ITS pending
- *        certificate; this does NOT retry, a trust decision followed by a connect is a new attempt
- *        with its own single verdict.
+ * @brief Accepts the server certificate the last attempt was refused over, taken against the
+ *        pending certificate of whichever instance owns the live session. It does NOT retry: a
+ *        trust decision followed by a connect is a new attempt with its own single verdict.
  */
 bool IO::Drivers::OpcUa::trustServerCertificate(const QString& fingerprint)
 {
@@ -1496,6 +1483,7 @@ QList<IO::DriverProperty> IO::Drivers::OpcUa::driverProperties() const
   user.label = tr("Username");
   user.type  = IO::DriverProperty::Text;
   user.value = m_username;
+  user.showWhen(QStringLiteral("authMode"), {1});
   props.append(user);
 
   IO::DriverProperty pass;
@@ -1503,6 +1491,7 @@ QList<IO::DriverProperty> IO::Drivers::OpcUa::driverProperties() const
   pass.label = tr("Password");
   pass.type  = IO::DriverProperty::Password;
   pass.value = m_password;
+  pass.showWhen(QStringLiteral("authMode"), {1});
   props.append(pass);
 
   IO::DriverProperty interval;
@@ -1528,6 +1517,7 @@ QList<IO::DriverProperty> IO::Drivers::OpcUa::driverProperties() const
   mode.type    = IO::DriverProperty::ComboBox;
   mode.value   = m_securityMode;
   mode.options = securityModeList();
+  mode.showWhen(QStringLiteral("securityPolicy"), {1, 2, 3, 4, 5});
   props.append(mode);
 
   IO::DriverProperty userCert;
@@ -1535,6 +1525,7 @@ QList<IO::DriverProperty> IO::Drivers::OpcUa::driverProperties() const
   userCert.label = tr("User Certificate");
   userCert.type  = IO::DriverProperty::Text;
   userCert.value = m_userCertificatePath;
+  userCert.showWhen(QStringLiteral("authMode"), {2});
   props.append(userCert);
 
   IO::DriverProperty userKey;
@@ -1542,6 +1533,7 @@ QList<IO::DriverProperty> IO::Drivers::OpcUa::driverProperties() const
   userKey.label = tr("User Private Key");
   userKey.type  = IO::DriverProperty::Text;
   userKey.value = m_userKeyPath;
+  userKey.showWhen(QStringLiteral("authMode"), {2});
   props.append(userKey);
 
   IO::DriverProperty tags;

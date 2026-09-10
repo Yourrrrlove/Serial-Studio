@@ -27,13 +27,18 @@
 #include <QDebug>
 #include <QJsonArray>
 
+#include "API/HandlerContext.h"
 #include "API/Server.h"
-#include "AppInfo.h"
 #include "AppState.h"
+#include "Core/AppInfo.h"
+#include "Core/Bus/MessageBus.h"
+#include "Core/Bus/Messages.h"
+#include "Core/Runtime.h"
+#include "Core/Services.h"
 #include "Core/SSAssert.h"
+#include "DataModel/IDashboardFrames.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
-#include "SessionContext.h"
-#include "UI/Dashboard.h"
 
 //--------------------------------------------------------------------------------------------------
 // Constants
@@ -105,8 +110,18 @@ static API::Mirror::SnapshotValue snapshotValue(const DataModel::Dataset& datase
  * @brief Constructs the publisher. Nothing is wired here: the dashboard, epoch, and heartbeat
  *        links are made only while at least one viewer is subscribed.
  */
-API::MirrorPublisher::MirrorPublisher(SessionContext& ctx)
-  : m_ctx(ctx), m_epoch(1), m_seq(0), m_structureValid(false), m_lastSnapshot(0)
+API::MirrorPublisher::MirrorPublisher(Core::Bus::MessageBus& bus,
+                                      DataModel::IDashboardFrames& dashboard,
+                                      DataModel::ProjectModel& projectModel,
+                                      AppState& appState)
+  : m_bus(bus)
+  , m_dashboard(dashboard)
+  , m_projectModel(projectModel)
+  , m_appState(appState)
+  , m_epoch(1)
+  , m_seq(0)
+  , m_structureValid(false)
+  , m_lastSnapshot(0)
 {
   m_clock.start();
   m_heartbeat.setInterval(Mirror::kHeartbeatIntervalMs);
@@ -118,7 +133,10 @@ API::MirrorPublisher::MirrorPublisher(SessionContext& ctx)
  */
 API::MirrorPublisher& API::MirrorPublisher::instance()
 {
-  static MirrorPublisher singleton(SessionContext::current());
+  static MirrorPublisher singleton(Core::services().bus,
+                                   API::handlerContext().dashboard,
+                                   DataModel::pipelineModules().projectModel,
+                                   DataModel::pipelineModules().appState);
   return singleton;
 }
 
@@ -273,15 +291,18 @@ void API::MirrorPublisher::clearSubscribers()
 void API::MirrorPublisher::activate()
 {
   SS_ASSERT(!m_subscribers.isEmpty(), return);
-  SS_ASSERT_LOG(!m_updatedLink);
+  SS_ASSERT_LOG(!m_updatedLink.isActive());
 
-  auto* dashboard = &m_ctx.dashboard();
-  m_updatedLink =
-    connect(dashboard, &UI::Dashboard::updated, this, &MirrorPublisher::onDashboardUpdated);
-  m_widgetCountLink = connect(
-    dashboard, &UI::Dashboard::widgetCountChanged, this, &MirrorPublisher::onStructureChanged);
-  m_dataResetLink =
-    connect(dashboard, &UI::Dashboard::dataReset, this, &MirrorPublisher::onStructureChanged);
+  m_updatedLink = m_bus.subscribe<Core::Bus::DashboardUpdated>(
+    this,
+    [this](const std::shared_ptr<const Core::Bus::DashboardUpdated>&) { onDashboardUpdated(); });
+  m_widgetCountLink = m_bus.subscribe<Core::Bus::DashboardStructureChanged>(
+    this, [this](const std::shared_ptr<const Core::Bus::DashboardStructureChanged>&) {
+      onStructureChanged();
+    });
+  m_dataResetLink = m_bus.subscribe<Core::Bus::DashboardDataReset>(
+    this,
+    [this](const std::shared_ptr<const Core::Bus::DashboardDataReset>&) { onStructureChanged(); });
 
   invalidateStructure();
   m_lastSnapshot = m_clock.elapsed();
@@ -294,16 +315,12 @@ void API::MirrorPublisher::activate()
 void API::MirrorPublisher::deactivate()
 {
   SS_ASSERT(m_subscribers.isEmpty(), return);
-  SS_ASSERT_LOG(m_heartbeat.isActive() || !m_updatedLink);
+  SS_ASSERT_LOG(m_heartbeat.isActive() || !m_updatedLink.isActive());
 
   m_heartbeat.stop();
-  disconnect(m_updatedLink);
-  disconnect(m_widgetCountLink);
-  disconnect(m_dataResetLink);
-
-  m_updatedLink     = QMetaObject::Connection();
-  m_widgetCountLink = QMetaObject::Connection();
-  m_dataResetLink   = QMetaObject::Connection();
+  m_updatedLink     = Core::Bus::Subscription();
+  m_widgetCountLink = Core::Bus::Subscription();
+  m_dataResetLink   = Core::Bus::Subscription();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -351,7 +368,7 @@ void API::MirrorPublisher::ensureStructure()
  */
 void API::MirrorPublisher::rebuildStructure()
 {
-  auto& dashboard   = m_ctx.dashboard();
+  auto& dashboard   = m_dashboard;
   const auto& frame = dashboard.rawFrame();
 
   m_datasets.clear();
@@ -376,8 +393,8 @@ void API::MirrorPublisher::rebuildStructure()
   m_structure = Mirror::encodeStructure(m_epoch,
                                         m_datasets,
                                         m_sourceIds,
-                                        m_ctx.projectModel().serializeToJson(),
-                                        static_cast<int>(m_ctx.appState().operationMode()),
+                                        m_projectModel.serializeToJson(),
+                                        static_cast<int>(m_appState.operationMode()),
                                         dashboard.plotTimeRange(),
                                         dashboard.frozen(),
                                         QDateTime::currentMSecsSinceEpoch());
@@ -444,11 +461,10 @@ QJsonObject API::MirrorPublisher::info()
   QJsonObject result;
   result.insert(QStringLiteral("wireVersion"), Mirror::kWireVersion);
   result.insert(QStringLiteral("appVersion"), QStringLiteral(APP_VERSION));
-  result.insert(QStringLiteral("sessionId"), QString::number(m_ctx.sessionId()));
+  result.insert(QStringLiteral("sessionId"), QString::number(Core::Runtime::sessionId()));
   result.insert(QStringLiteral("epoch"), static_cast<qint64>(m_epoch));
   result.insert(QStringLiteral("layoutHash"), m_layoutHash);
-  result.insert(QStringLiteral("operationMode"),
-                static_cast<int>(m_ctx.appState().operationMode()));
+  result.insert(QStringLiteral("operationMode"), static_cast<int>(m_appState.operationMode()));
   result.insert(QStringLiteral("datasetCount"), static_cast<int>(m_datasets.size()));
   result.insert(QStringLiteral("sourceIds"), sources);
   result.insert(QStringLiteral("viewersAllowed"), viewersAllowed());
@@ -516,7 +532,7 @@ void API::MirrorPublisher::publishStructure(Subscriber& subscriber)
  */
 bool API::MirrorPublisher::collectValues()
 {
-  const auto& frame = m_ctx.dashboard().rawFrame();
+  const auto& frame = m_dashboard.rawFrame();
 
   m_values.clear();
   m_values.reserve(m_datasets.size());

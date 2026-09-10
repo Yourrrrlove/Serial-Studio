@@ -178,7 +178,7 @@ Widgets.SmartWindow {
             return art
         }
 
-        return SerialStudio.dashboardWidgetIcon(dashboardWidget.widgetType)
+        return SerialStudioHelpers.dashboardWidgetIcon(dashboardWidget.widgetType)
       }
 
       //

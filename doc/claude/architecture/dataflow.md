@@ -308,11 +308,10 @@ increments; nothing on it emits, allocates, locks, or calls into `Misc::ProblemC
   `m_lastTransformError` / `m_lastTransformDatasetUniqueId` are assigned **only when the failing
   dataset differs from the last recorded one**, so a dataset that throws every frame allocates
   the message once rather than per frame (`noteTransformError`, `SS_COLD`).
-- **Reading them.** `DeviceManager::frameReader()` exposes the reader; `ConnectionManager::
-  linkStats()` forwards to `IO::DeviceTableQuery::linkStats()`, which sums the per-device counters
-  into an `IO::LinkStats` POD — the struct now lives in
-  `core/Devices/IO/ConnectionManager/DeviceTableQuery.h`, not in `ConnectionManager.h`. It is called
-  from the 1 Hz tick only — no caching, no signal, no call site on the frame path. Script health
+- **Reading them.** `IO::PipelineHost` owns the readers (spec 0077); `ConnectionManager::
+  linkStats()` forwards to `IO::IIngestBinder::linkStats()`, which the host answers by summing the
+  per-device counters into an `IO::LinkStats` POD — the struct lives in
+  `core/Core/IO/LinkStats.h`. It is called from the 1 Hz tick only — no caching, no signal, no call site on the frame path. Script health
   comes from `FrameParser::scriptStats()` (per-source engine counters) and `FrameBuilder::
   parsedFrameCount()`. The stream lane's own timeout counter (`StreamWorker::
   transformTimeoutCount()`) is pulled the same way: a JS transform that overruns its budget

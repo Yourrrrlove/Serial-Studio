@@ -23,8 +23,8 @@
 
 #include <QVariantMap>
 
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
-#include "SerialStudio.h"
 #include "UI/Taskbar/TaskbarModel.h"
 
 //--------------------------------------------------------------------------------------------------

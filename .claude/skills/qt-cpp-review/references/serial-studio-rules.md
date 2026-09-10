@@ -23,7 +23,8 @@ sinks`. A violation here causes silent frame drops, not a compile error.
   `sourceStructureChanged -> rebuildDevices` (queued there lets a stale `m_devices[0]` survive
   into Connect).
 - **SS-HOT-3**: No allocation and no block copy on the dashboard path. The Dashboard block
-  comes from `FrameBuilder::claimBlockSlot()` (the slot pool), never a direct
+  comes from the pooled block slots (`DataModel::BlockStager` on the frame lane,
+  `StreamProcessor::claimBlockSlot()` on the stream lane), never a direct
   `make_shared<DataModel::DataBlock>`. The async-sink fan-out makes exactly
   one detached `clone_block_trimmed` copy, gated on a sink being enabled — that is the intentional
   slow-export path and is not a finding.
@@ -113,6 +114,6 @@ These were real bugs; treat a re-sighting as a high-confidence finding:
   inserted a default-constructed entry (since fixed: access goes through
   `ensureSourceFrame(sourceId)`, which uses `find()` + explicit `insert()`). Flag any
   reintroduced `m_sourceFrames[...]` operator[] read.
-- `DeviceManager::killFrameReader` — `clear()` before `wait()` was a use-after-free.
+- The reader teardown (now `PipelineHost::retireReader`) — `clear()` before `wait()` was a use-after-free.
 - ProjectEditor disconnect — `disconnect(nullptr)` disconnected ALL slots, not the one lambda.
 - SourceHandler API — a bounds check assumed contiguous IDs after deletes.

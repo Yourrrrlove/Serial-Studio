@@ -27,9 +27,10 @@
 #include <QSet>
 
 #include "API/PathPolicy.h"
+#include "Core/SSAssert.h"
 #include "DataModel/FrameBuilder.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
-#include "Misc/BackupManager.h"
 
 //--------------------------------------------------------------------------------------------------
 // Closest-match suggestion helpers
@@ -96,6 +97,27 @@ API::CommandRegistry& API::CommandRegistry::instance()
 {
   static CommandRegistry singleton;
   return singleton;
+}
+
+/**
+ * @brief Constructs an empty registry with no checkpoint store bound.
+ */
+API::CommandRegistry::CommandRegistry() : m_checkpoints(nullptr) {}
+
+/**
+ * @brief Binds the store that snapshots the project before a destructive command.
+ */
+void API::CommandRegistry::bindCheckpointStore(ICheckpointStore& store) noexcept
+{
+  m_checkpoints = &store;
+}
+
+/**
+ * @brief Returns the bound checkpoint store, or nullptr before the root binds one.
+ */
+API::ICheckpointStore* API::CommandRegistry::checkpointStore() const noexcept
+{
+  return m_checkpoints;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -218,8 +240,8 @@ static void scheduleProjectApply()
   QMetaObject::invokeMethod(
     qApp,
     [] {
-      pending                   = false;
-      static auto& frameBuilder = DataModel::FrameBuilder::instance();
+      pending            = false;
+      auto& frameBuilder = DataModel::pipelineModules().frameBuilder;
       frameBuilder.syncFromProjectModel();
     },
     Qt::QueuedConnection);
@@ -268,13 +290,14 @@ API::CommandResponse API::CommandRegistry::execute(const QString& name,
   const bool isDryRun = params.value(QStringLiteral("dryRun")).toBool(false);
   QString preMutationBackup;
   if (!isDryRun && ExecuteDepthGuard::depth() == 0 && destructiveCommandSet().contains(name)) {
-    static auto& backupManager = Misc::BackupManager::instance();
-    preMutationBackup          = backupManager.snapshot(QStringLiteral("pre-") + name);
+    SS_ASSERT_LOG(m_checkpoints != nullptr);
+    if (m_checkpoints != nullptr)
+      preMutationBackup = m_checkpoints->snapshot(QStringLiteral("pre-") + name);
   }
 
   const ExecuteDepthGuard depthGuard;
 
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
   const DataModel::ProjectUndoFrame undoFrame{projectModel, name};
   const qint64 epochBefore = projectModel.mutationEpoch();
 

@@ -26,7 +26,7 @@
 #include <QJsonObject>
 #include <QList>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
 #include "IO/Drivers/OpcUa/OpcUaTag.h"
 
 namespace IO {

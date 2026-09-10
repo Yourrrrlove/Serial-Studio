@@ -28,7 +28,7 @@
 #include <QVariantList>
 #include <vector>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
 #include "DataModel/Project/ProjectWorkspaceRefs.h"
 
 namespace DataModel {

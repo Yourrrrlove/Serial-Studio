@@ -70,6 +70,10 @@ The logic that turns a raw frame into an ordered list of values. It can be the B
 
 A container that holds related datasets and maps them onto a composite widget such as a GPS Map, 3D Plot, or Data Grid. Groups organize the project tree. See [Project Editor](Project-Editor.md).
 
+## Macro
+
+An ad-hoc JavaScript or Lua script, or a single typed command, run from the Macros window against the running application. Macros reach every registered API command in process, without the API server, and are not tied to a project. See [Macros](Macros.md).
+
 ## Notification
 
 A dashboard-level event — Info, Warning, or Critical — posted from frame parsers, dataset transforms, output widget scripts, C++ code, or the MCP API. Events are grouped into free-form channels and shown in the Notification Log widget, with an optional native OS desktop notification. Notifications are a Pro feature. See [Notifications](Notifications.md).
@@ -85,6 +89,10 @@ An external program (a Python script or a native binary) that connects to Serial
 ## Pro / Free
 
 Serial Studio ships in a free GPL edition and a commercial Pro edition. Pro adds output widgets, Modbus, CAN Bus, MDF4, 3D, Image View, Waterfall, file-transfer protocols, the Historian, and more. See [Pro vs Free Features](Pro-vs-Free.md).
+
+## Problem Center
+
+The window that lists standing diagnostics for the session: project mistakes, link conditions, script errors, and failed extensions, each with a cause and a remedy. **Connection Diagnostics** adds self-checks of the machine (port permissions, Bluetooth state, host reachability, audio access) to the same list. See [Problem Center](Problem-Center.md).
 
 ## Project file (`.ssproj`)
 

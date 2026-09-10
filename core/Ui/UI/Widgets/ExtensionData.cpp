@@ -24,6 +24,7 @@
 #include <algorithm>
 
 #include "Core/SSAssert.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
 #include "UI/Dashboard.h"
 #include "UI/WidgetExtensions.h"
@@ -246,7 +247,7 @@ Widgets::ExtensionData::ExtensionData(const QString& extensionId,
   reloadConfig();
   rebuildRows();
 
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
   connect(&m_dashboard, &UI::Dashboard::updated, this, &Widgets::ExtensionData::updateData);
   connect(
     &m_dashboard, &UI::Dashboard::widgetCountChanged, this, &Widgets::ExtensionData::rebuildRows);
@@ -484,7 +485,7 @@ void Widgets::ExtensionData::setConfigValue(const QString& key, const QVariant& 
   if (key.isEmpty() || !valid())
     return;
 
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  auto& projectModel = DataModel::pipelineModules().projectModel;
   projectModel.saveWidgetSetting(widgetId(), key, value);
   reloadConfig();
 }
@@ -534,8 +535,8 @@ void Widgets::ExtensionData::updateData()
  */
 void Widgets::ExtensionData::reloadConfig()
 {
-  static auto& catalog      = UI::WidgetExtensions::instance();
-  static auto& projectModel = DataModel::ProjectModel::instance();
+  static auto& catalog = UI::WidgetExtensions::instance();
+  auto& projectModel   = DataModel::pipelineModules().projectModel;
 
   QVariantMap merged;
   const auto& descriptor = catalog.descriptor(m_extensionId);

@@ -19,7 +19,7 @@
 #include "AI/Logging.h"
 #include "AI/Providers/ProviderJson.h"
 #include "AI/SseEventReader.h"
-#include "Misc/JsonValidator.h"
+#include "Core/JsonValidator.h"
 
 static constexpr int kInitialResponseTimeoutMs = 120 * 1000;
 static const char* kEndpoint                   = "https://api.anthropic.com/v1/messages";

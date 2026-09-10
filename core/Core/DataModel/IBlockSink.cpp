@@ -1,0 +1,32 @@
+/*
+ * Serial Studio
+ * https://serial-studio.com/
+ *
+ * Copyright (C) 2020-2025 Alex Spataru
+ *
+ * This file is dual-licensed:
+ *
+ * - Under the GNU GPLv3 (or later) for builds that exclude Pro modules.
+ * - Under the Serial Studio Commercial License for builds that include
+ *   any Pro functionality.
+ *
+ * You must comply with the terms of one of these licenses, depending
+ * on your use case.
+ *
+ * For GPL terms, see <https://www.gnu.org/licenses/gpl-3.0.html>
+ * For commercial terms, see LICENSES/LicenseRef-SerialStudio-Commercial.txt.
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later OR LicenseRef-SerialStudio-Commercial
+ */
+
+#include "Core/DataModel/IBlockSink.h"
+
+/**
+ * @brief Constructs the sink base; the QObject parent is the concrete sink's choice.
+ */
+DataModel::IBlockSink::IBlockSink(QObject* parent) : QObject(parent) {}
+
+/**
+ * @brief Out-of-line so the vtable and the meta-object land in this translation unit.
+ */
+DataModel::IBlockSink::~IBlockSink() = default;

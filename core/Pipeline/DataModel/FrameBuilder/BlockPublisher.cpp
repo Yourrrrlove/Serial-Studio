@@ -21,22 +21,8 @@
 
 #include "DataModel/FrameBuilder/BlockPublisher.h"
 
-#include "API/Server.h"
 #include "Core/SSAssert.h"
-#include "CSV/Export.h"
 #include "IO/PipelineHost.h"
-#include "MDF4/Export.h"
-
-#ifdef BUILD_COMMERCIAL
-#  include "InfluxDB/Export.h"
-#  include "MQTT/Publisher.h"
-#  include "Sessions/Export.h"
-#  include "UI/Widgets/AudioExport.h"
-#endif
-
-#ifdef ENABLE_GRPC
-#  include "API/GRPC/GRPCServer.h"
-#endif
 
 /**
  * @brief Binds the sink mask the replay and synthetic lanes raise; the sinks themselves arrive
@@ -47,39 +33,48 @@ DataModel::BlockPublisher::BlockPublisher(const bool& maskSinks)
 {}
 
 /**
- * @brief Adopts the resolved sink pointers and derives the cached flag once.
+ * @brief Adopts the resolved sink table and derives the cached flag once. Every bound slot is
+ *        asserted non-null here so the per-block loop never tests a pointer.
  */
 void DataModel::BlockPublisher::bind(const Sinks& sinks)
 {
   SS_ASSERT(sinks.pipeline != nullptr, return);
-  SS_ASSERT(sinks.server && sinks.csv && sinks.mdf4, return);
+  SS_ASSERT(sinks.sinkCount <= Sinks::kMaxSinks, return);
+
+  for (std::size_t i = 0; i < sinks.sinkCount; ++i)
+    SS_ASSERT(sinks.sinks[i] != nullptr, return);
 
   m_sinks = sinks;
   refreshSinkFlag();
 }
 
 /**
- * @brief Recomputes the cached any-async-consumer flag from every export/output module. The TCP
- *        and gRPC servers only count while a client is connected: with zero clients their workers
- *        drop every frame, so the per-frame detached copy would be pure waste. A pre-bind() call
+ * @brief True once a composition root bound the pipeline the dashboard hop goes through.
+ */
+bool DataModel::BlockPublisher::bound() const noexcept
+{
+  return m_sinks.pipeline != nullptr;
+}
+
+/**
+ * @brief The bound sink table, for the builder's activity wiring.
+ */
+const DataModel::BlockPublisher::Sinks& DataModel::BlockPublisher::sinks() const noexcept
+{
+  return m_sinks;
+}
+
+/**
+ * @brief Recomputes the cached any-async-consumer flag from every bound sink's own verdict: a
+ *        streaming server counts only while a client is connected, a recorder only while enabled,
+ *        so with nothing consuming the per-frame detached copy is never made. A pre-bind() call
  *        leaves the flag false, which is startup ordering: nothing publishes before bind().
  */
 void DataModel::BlockPublisher::refreshSinkFlag()
 {
-  if (!m_sinks.csv || !m_sinks.mdf4 || !m_sinks.server) {
-    m_anyAsyncSink = false;
-    return;
-  }
-
-  bool any = m_sinks.csv->exportEnabled() || m_sinks.mdf4->exportEnabled()
-          || (m_sinks.server->enabled() && m_sinks.server->clientCount() > 0);
-#ifdef BUILD_COMMERCIAL
-  any = any || m_sinks.sessions->exportEnabled() || m_sinks.mqtt->enabled()
-     || m_sinks.audio->hasActiveSessions() || m_sinks.influx->exportEnabled();
-#endif
-#ifdef ENABLE_GRPC
-  any = any || (m_sinks.grpc->enabled() && m_sinks.grpc->clientCount() > 0);
-#endif
+  bool any = false;
+  for (std::size_t i = 0; i < m_sinks.sinkCount; ++i)
+    any = any || m_sinks.sinks[i]->sinkActive();
 
   m_anyAsyncSink = any;
 }
@@ -97,15 +92,9 @@ bool DataModel::BlockPublisher::anyAsyncSink() const noexcept
  */
 bool DataModel::BlockPublisher::observedByReadOnly() const
 {
-  if (!m_sinks.server) [[unlikely]]
-    return false;
-
-  const bool api = m_sinks.server->enabled() && m_sinks.server->clientCount() > 0;
-#ifdef ENABLE_GRPC
-  return api || (m_sinks.grpc->enabled() && m_sinks.grpc->clientCount() > 0);
-#else
-  return api;
-#endif
+  const bool api  = m_sinks.server && m_sinks.server->sinkActive();
+  const bool grpc = m_sinks.grpc && m_sinks.grpc->sinkActive();
+  return api || grpc;
 }
 
 /**
@@ -117,13 +106,11 @@ void DataModel::BlockPublisher::fanOutToObservers(const DataBlockPtr& block)
   SS_ASSERT_HOTPATH(block != nullptr);
 
   const DataBlockPtr replayed = clone_block_trimmed(*block);
-  if (m_sinks.server->enabled() && m_sinks.server->clientCount() > 0)
+  if (m_sinks.server && m_sinks.server->sinkActive())
     m_sinks.server->ingestBlock(replayed);
 
-#ifdef ENABLE_GRPC
-  if (m_sinks.grpc->enabled() && m_sinks.grpc->clientCount() > 0)
+  if (m_sinks.grpc && m_sinks.grpc->sinkActive())
     m_sinks.grpc->ingestBlock(replayed);
-#endif
 }
 
 /**
@@ -151,16 +138,6 @@ void DataModel::BlockPublisher::publish(const DataBlockPtr& block)
     return;
 
   const DataBlockPtr detached = clone_block_trimmed(*block);
-  m_sinks.csv->ingestBlock(detached);
-  m_sinks.mdf4->ingestBlock(detached);
-  m_sinks.server->ingestBlock(detached);
-#ifdef BUILD_COMMERCIAL
-  m_sinks.sessions->ingestBlock(detached);
-  m_sinks.mqtt->ingestBlock(detached);
-  m_sinks.audio->ingestBlock(detached);
-  m_sinks.influx->ingestBlock(detached);
-#endif
-#ifdef ENABLE_GRPC
-  m_sinks.grpc->ingestBlock(detached);
-#endif
+  for (std::size_t i = 0; i < m_sinks.sinkCount; ++i)
+    m_sinks.sinks[i]->ingestBlock(detached);
 }

@@ -22,13 +22,16 @@
 #include <cmath>
 #include <optional>
 #include <QByteArray>
+#include <QColor>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QString>
 #include <QTest>
 #include <vector>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/DataModel/PropertyValidators.h"
+#include "DataModel/ActionBytes.h"
 
 // Companion to tst_frame_serialization: that suite pins the happy-path round trip of every entity,
 // this one pins the legacy, clamping and repair branches a saved project can still reach -- the TX
@@ -54,6 +57,13 @@ class TstFrameJsonLegacy : public QObject {
   Q_OBJECT
 
 private slots:
+
+  void initTestCase()
+  {
+    DataModel::PropertyHooks::setColorValidator(
+      [](const QString& color) { return QColor::fromString(color).isValid(); });
+  }
+
   void txBytesResolveEscapesAndAppendTheEol();
   void txBytesDecodeAHexPayloadWhenBinary();
   void txBytesHonourTheConfiguredTextEncoding();

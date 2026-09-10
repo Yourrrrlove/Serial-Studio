@@ -11,7 +11,7 @@
 #include <QJsonArray>
 #include <QStringList>
 
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
 
 namespace AI::ToolDetail {
 

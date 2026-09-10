@@ -23,6 +23,7 @@
 #include "API/Handlers/ModbusHandler.h"
 
 #include "API/CommandRegistry.h"
+#include "API/HandlerContext.h"
 #include "API/SchemaBuilder.h"
 #include "IO/ConnectionManager.h"
 
@@ -245,10 +246,10 @@ API::CommandResponse API::Handlers::ModbusHandler::setProtocolIndex(const QStrin
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: protocolIndex"));
   }
 
-  const int protocolIndex        = params.value(QStringLiteral("protocolIndex")).toInt();
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* modbus                   = connectionManager.modbus();
-  const auto& protocolList       = modbus->protocolList();
+  const int protocolIndex  = params.value(QStringLiteral("protocolIndex")).toInt();
+  auto& connectionManager  = API::handlerContext().connectionManager;
+  auto* modbus             = connectionManager.modbus();
+  const auto& protocolList = modbus->protocolList();
 
   if (protocolIndex < 0 || protocolIndex >= protocolList.count()) {
     return CommandResponse::makeError(id,
@@ -286,7 +287,7 @@ API::CommandResponse API::Handlers::ModbusHandler::setSlaveAddress(const QString
       QStringLiteral("Invalid address: %1. Valid range: 1-247").arg(address));
   }
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
+  auto& connectionManager = API::handlerContext().connectionManager;
   connectionManager.modbus()->setSlaveAddress(static_cast<quint8>(address));
 
   QJsonObject result;
@@ -312,7 +313,7 @@ API::CommandResponse API::Handlers::ModbusHandler::setPollInterval(const QString
       id, ErrorCode::InvalidParam, QStringLiteral("intervalMs must be at least 10 milliseconds"));
   }
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
+  auto& connectionManager = API::handlerContext().connectionManager;
   connectionManager.modbus()->setPollInterval(static_cast<quint16>(intervalMs));
 
   QJsonObject result;
@@ -338,7 +339,7 @@ API::CommandResponse API::Handlers::ModbusHandler::setHost(const QString& id,
       id, ErrorCode::InvalidParam, QStringLiteral("Host cannot be empty"));
   }
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
+  auto& connectionManager = API::handlerContext().connectionManager;
   connectionManager.modbus()->setHost(host);
 
   QJsonObject result;
@@ -366,7 +367,7 @@ API::CommandResponse API::Handlers::ModbusHandler::setPort(const QString& id,
       QStringLiteral("Invalid port: %1. Valid range: 1-65535").arg(port));
   }
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
+  auto& connectionManager = API::handlerContext().connectionManager;
   connectionManager.modbus()->setPort(static_cast<quint16>(port));
 
   QJsonObject result;
@@ -385,10 +386,10 @@ API::CommandResponse API::Handlers::ModbusHandler::setSerialPortIndex(const QStr
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: portIndex"));
   }
 
-  const int portIndex            = params.value(QStringLiteral("portIndex")).toInt();
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* modbus                   = connectionManager.modbus();
-  const auto& portList           = modbus->serialPortList();
+  const int portIndex     = params.value(QStringLiteral("portIndex")).toInt();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  auto* modbus            = connectionManager.modbus();
+  const auto& portList    = modbus->serialPortList();
 
   if (portIndex < 0 || portIndex >= portList.count()) {
     return CommandResponse::makeError(id,
@@ -424,7 +425,7 @@ API::CommandResponse API::Handlers::ModbusHandler::setBaudRate(const QString& id
       id, ErrorCode::InvalidParam, QStringLiteral("baudRate must be positive"));
   }
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
+  auto& connectionManager = API::handlerContext().connectionManager;
   connectionManager.modbus()->setBaudRate(baudRate);
 
   QJsonObject result;
@@ -443,10 +444,10 @@ API::CommandResponse API::Handlers::ModbusHandler::setParityIndex(const QString&
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: parityIndex"));
   }
 
-  const int parityIndex          = params.value(QStringLiteral("parityIndex")).toInt();
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* modbus                   = connectionManager.modbus();
-  const auto& parityList         = modbus->parityList();
+  const int parityIndex   = params.value(QStringLiteral("parityIndex")).toInt();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  auto* modbus            = connectionManager.modbus();
+  const auto& parityList  = modbus->parityList();
 
   if (parityIndex < 0 || parityIndex >= parityList.count()) {
     return CommandResponse::makeError(id,
@@ -475,10 +476,10 @@ API::CommandResponse API::Handlers::ModbusHandler::setDataBitsIndex(const QStrin
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: dataBitsIndex"));
   }
 
-  const int dataBitsIndex        = params.value(QStringLiteral("dataBitsIndex")).toInt();
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* modbus                   = connectionManager.modbus();
-  const auto& dataBitsList       = modbus->dataBitsList();
+  const int dataBitsIndex  = params.value(QStringLiteral("dataBitsIndex")).toInt();
+  auto& connectionManager  = API::handlerContext().connectionManager;
+  auto* modbus             = connectionManager.modbus();
+  const auto& dataBitsList = modbus->dataBitsList();
 
   if (dataBitsIndex < 0 || dataBitsIndex >= dataBitsList.count()) {
     return CommandResponse::makeError(id,
@@ -507,10 +508,10 @@ API::CommandResponse API::Handlers::ModbusHandler::setStopBitsIndex(const QStrin
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: stopBitsIndex"));
   }
 
-  const int stopBitsIndex        = params.value(QStringLiteral("stopBitsIndex")).toInt();
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* modbus                   = connectionManager.modbus();
-  const auto& stopBitsList       = modbus->stopBitsList();
+  const int stopBitsIndex  = params.value(QStringLiteral("stopBitsIndex")).toInt();
+  auto& connectionManager  = API::handlerContext().connectionManager;
+  auto* modbus             = connectionManager.modbus();
+  const auto& stopBitsList = modbus->stopBitsList();
 
   if (stopBitsIndex < 0 || stopBitsIndex >= stopBitsList.count()) {
     return CommandResponse::makeError(id,
@@ -546,9 +547,9 @@ API::CommandResponse API::Handlers::ModbusHandler::addRegisterGroup(const QStrin
   const int startAddress = params.value(QStringLiteral("startAddress")).toInt();
   const int count        = params.value(QStringLiteral("count")).toInt();
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* modbus                   = connectionManager.modbus();
-  const auto& typeList           = modbus->registerTypeList();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  auto* modbus            = connectionManager.modbus();
+  const auto& typeList    = modbus->registerTypeList();
 
   if (type < 0 || type >= typeList.count()) {
     return CommandResponse::makeError(
@@ -601,9 +602,9 @@ API::CommandResponse API::Handlers::ModbusHandler::removeRegisterGroup(const QSt
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: groupIndex"));
   }
 
-  const int groupIndex           = params.value(QStringLiteral("groupIndex")).toInt();
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* modbus                   = connectionManager.modbus();
+  const int groupIndex    = params.value(QStringLiteral("groupIndex")).toInt();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  auto* modbus            = connectionManager.modbus();
 
   if (groupIndex < 0 || groupIndex >= modbus->registerGroupCount()) {
     return CommandResponse::makeError(id,
@@ -629,7 +630,7 @@ API::CommandResponse API::Handlers::ModbusHandler::clearRegisterGroups(const QSt
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
+  auto& connectionManager = API::handlerContext().connectionManager;
   connectionManager.modbus()->clearRegisterGroups();
 
   QJsonObject result;
@@ -649,8 +650,8 @@ API::CommandResponse API::Handlers::ModbusHandler::getConfiguration(const QStrin
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* modbus                   = connectionManager.modbus();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  auto* modbus            = connectionManager.modbus();
 
   QJsonObject result;
 
@@ -703,8 +704,8 @@ API::CommandResponse API::Handlers::ModbusHandler::getProtocolList(const QString
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  const auto& protocolList       = connectionManager.modbus()->protocolList();
+  auto& connectionManager  = API::handlerContext().connectionManager;
+  const auto& protocolList = connectionManager.modbus()->protocolList();
 
   QJsonArray protocols;
   for (int i = 0; i < protocolList.count(); ++i) {
@@ -728,8 +729,8 @@ API::CommandResponse API::Handlers::ModbusHandler::getSerialPortList(const QStri
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  const auto& portList           = connectionManager.modbus()->serialPortList();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  const auto& portList    = connectionManager.modbus()->serialPortList();
 
   QJsonArray ports;
   for (int i = 0; i < portList.count(); ++i) {
@@ -753,8 +754,8 @@ API::CommandResponse API::Handlers::ModbusHandler::getParityList(const QString& 
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  const auto& parityList         = connectionManager.modbus()->parityList();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  const auto& parityList  = connectionManager.modbus()->parityList();
 
   QJsonArray parities;
   for (int i = 0; i < parityList.count(); ++i) {
@@ -778,8 +779,8 @@ API::CommandResponse API::Handlers::ModbusHandler::getDataBitsList(const QString
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  const auto& dataBitsList       = connectionManager.modbus()->dataBitsList();
+  auto& connectionManager  = API::handlerContext().connectionManager;
+  const auto& dataBitsList = connectionManager.modbus()->dataBitsList();
 
   QJsonArray dataBitsArray;
   for (int i = 0; i < dataBitsList.count(); ++i) {
@@ -803,8 +804,8 @@ API::CommandResponse API::Handlers::ModbusHandler::getStopBitsList(const QString
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  const auto& stopBitsList       = connectionManager.modbus()->stopBitsList();
+  auto& connectionManager  = API::handlerContext().connectionManager;
+  const auto& stopBitsList = connectionManager.modbus()->stopBitsList();
 
   QJsonArray stopBitsArray;
   for (int i = 0; i < stopBitsList.count(); ++i) {
@@ -828,8 +829,8 @@ API::CommandResponse API::Handlers::ModbusHandler::getBaudRateList(const QString
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  const auto& baudRateList       = connectionManager.modbus()->baudRateList();
+  auto& connectionManager  = API::handlerContext().connectionManager;
+  const auto& baudRateList = connectionManager.modbus()->baudRateList();
 
   QJsonArray baudRates;
   for (const auto& rate : baudRateList)
@@ -849,8 +850,8 @@ API::CommandResponse API::Handlers::ModbusHandler::getRegisterTypeList(const QSt
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  const auto& typeList           = connectionManager.modbus()->registerTypeList();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  const auto& typeList    = connectionManager.modbus()->registerTypeList();
 
   QJsonArray types;
   for (int i = 0; i < typeList.count(); ++i) {
@@ -873,9 +874,9 @@ API::CommandResponse API::Handlers::ModbusHandler::getRegisterGroups(const QStri
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* modbus                   = connectionManager.modbus();
-  const int groupCount           = modbus->registerGroupCount();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  auto* modbus            = connectionManager.modbus();
+  const int groupCount    = modbus->registerGroupCount();
 
   QJsonArray groups;
   for (int i = 0; i < groupCount; ++i) {

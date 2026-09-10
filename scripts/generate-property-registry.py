@@ -5,8 +5,8 @@ Reads app/rcc/properties/dataset.json -- the single declaration of every persist
 or editable dataset property -- and emits four checked-in C++ translation units:
 
     core/Pipeline/DataModel/Generated/DatasetRegistry.h        descriptor table + form-id enum
-    core/Pipeline/DataModel/Generated/DatasetSerialization.cpp project-JSON write + read
-    core/Pipeline/DataModel/Generated/DatasetForm.cpp          editor rows + commit dispatcher
+    core/Core/DataModel/Generated/DatasetSerialization.cpp     project-JSON write + read
+    core/Ui/ProjectEditor/Generated/DatasetForm.cpp            editor rows + commit dispatcher
     core/Api/API/Generated/DatasetApiFields.cpp                API field appliers + typed schema
 
 Output is deterministic (manifest order, LF endings) and each file is fenced with
@@ -54,9 +54,9 @@ OUT_REGISTRY = (
     ROOT / "core" / "Pipeline" / "DataModel" / "Generated" / "DatasetRegistry.h"
 )
 OUT_SERIAL = (
-    ROOT / "core" / "Pipeline" / "DataModel" / "Generated" / "DatasetSerialization.cpp"
+    ROOT / "core" / "Core" / "DataModel" / "Generated" / "DatasetSerialization.cpp"
 )
-OUT_FORM = ROOT / "core" / "Pipeline" / "DataModel" / "Generated" / "DatasetForm.cpp"
+OUT_FORM = ROOT / "core" / "Ui" / "ProjectEditor" / "Generated" / "DatasetForm.cpp"
 OUT_API = ROOT / "core" / "Api" / "API" / "Generated" / "DatasetApiFields.cpp"
 
 LICENSE = """/*
@@ -281,11 +281,9 @@ def key(prop: dict) -> str:
 
 def key_constants() -> dict[str, str]:
     """Map every Keys:: literal to its constant name so emitted code never hard-codes a key."""
-    header = (ROOT / "core" / "Pipeline" / "DataModel" / "FrameKeys.h").read_text(
+    header = (ROOT / "core" / "Core" / "DataModel" / "FrameKeys.h").read_text(
         encoding="utf-8"
-    ) + (ROOT / "core" / "Pipeline" / "DataModel" / "Frame.h").read_text(
-        encoding="utf-8"
-    )
+    ) + (ROOT / "core" / "Core" / "DataModel" / "Frame.h").read_text(encoding="utf-8")
     found: dict[str, str] = {}
     for name, value in re.findall(
         r"inline constexpr KeyView (\w+)\(\"([^\"]*)\"\)", header
@@ -401,7 +399,7 @@ def render_registry(manifest: dict) -> str:
 
     out: list[str] = [LICENSE, BANNER, "\n#pragma once\n"]
     out.append("\n#include <QLatin1StringView>\n#include <QVariant>\n")
-    out.append('\n#include "DataModel/Frame.h"\n')
+    out.append('\n#include "Core/DataModel/Frame.h"\n')
     out.append('#include "DataModel/Project/PropertyHooks.h"\n')
     out.append("\n// clang-format off\n")
 
@@ -700,9 +698,9 @@ def render_serialization(manifest: dict) -> str:
     lines: list[str] = [LICENSE.rstrip(), "", BANNER.rstrip(), ""]
     lines += ["#include <QJsonArray>", ""]
     lines += [
-        '#include "DataModel/Frame.h"',
-        '#include "DataModel/Project/PropertyHooks.h"',
-        '#include "SerialStudio.h"',
+        '#include "Core/DataModel/Frame.h"',
+        '#include "Core/DataModel/PropertyValidators.h"',
+        '#include "Core/SerialStudio.h"',
         "",
     ]
     lines += ["// clang-format off", ""]
@@ -974,7 +972,7 @@ def emit_row(prop: dict, builder: dict, manifest: dict) -> list[str]:
 
 def emit_section_header(section: dict) -> list[str]:
     lines = [
-        "  static auto& registry = Misc::IconRegistry::instance();",
+        "  auto& registry = Core::services().iconRegistry;",
         "  auto* header = new QStandardItem();",
         "  header->setData(SectionHeader, WidgetType);",
     ]
@@ -999,10 +997,11 @@ def render_form(manifest: dict) -> str:
 
     lines: list[str] = [LICENSE.rstrip(), "", BANNER.rstrip(), ""]
     lines += [
+        '#include "Core/IconRegistry.h"',
+        '#include "Core/Services.h"',
         '#include "DataModel/Generated/DatasetRegistry.h"',
-        '#include "DataModel/ProjectEditor.h"',
+        '#include "ProjectEditor/ProjectEditor.h"',
         '#include "DataModel/ProjectModel.h"',
-        '#include "Misc/IconRegistry.h"',
         "",
         "// clang-format off",
         "",
@@ -1495,9 +1494,10 @@ def render_api(manifest: dict) -> str:
         "#include <QJsonArray>",
         "",
         '#include "API/Handlers/ProjectHandler.h"',
+        '#include "Core/SerialStudio.h"',
+        '#include "DataModel/PipelineModules.h"',
         '#include "DataModel/Project/PropertyHooks.h"',
         '#include "DataModel/ProjectModel.h"',
-        '#include "SerialStudio.h"',
         "",
         "// clang-format off",
         "",
@@ -1542,7 +1542,7 @@ def render_api(manifest: dict) -> str:
                 body += ["  Q_UNUSED(rebuildTree);", ""]
             if any(p.get("validate") == "aliasUnique" for p in chunk):
                 body += [
-                    "  static auto& project = DataModel::ProjectModel::instance();",
+                    "  auto& project = DataModel::pipelineModules().projectModel;",
                     "",
                 ]
 

@@ -27,7 +27,8 @@
 #include <QSet>
 
 #include "API/SchemaBuilder.h"
-#include "DataModel/Frame.h"
+#include "Core/DataModel/Frame.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
 
 //--------------------------------------------------------------------------------------------------
@@ -349,7 +350,7 @@ API::CommandResponse API::Handlers::ProjectBatchCommands::projectBatch(const QSt
       return *invalid;
   }
 
-  static auto& project = DataModel::ProjectModel::instance();
+  auto& project = DataModel::pipelineModules().projectModel;
   if (!isDryRun)
     project.setAutoSaveSuspended(true);
 

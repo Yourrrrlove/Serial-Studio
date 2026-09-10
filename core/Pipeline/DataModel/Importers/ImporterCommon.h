@@ -28,9 +28,11 @@
 #include <QMap>
 #include <vector>
 
-#include "DataModel/Frame.h"
-#include "Misc/IconRegistry.h"
-#include "SerialStudio.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/IconRegistry.h"
+#include "Core/SerialStudio.h"
+#include "Core/Services.h"
+#include "DataModel/WidgetResolution.h"
 
 namespace DataModel {
 
@@ -196,7 +198,7 @@ inline void applyTableTransform(Dataset& dataset, const QString& table, const QS
 
   QJsonArray workspaces;
   if (perGroup.size() >= 2) {
-    static auto& registry = Misc::IconRegistry::instance();
+    auto& registry = Core::services().iconRegistry;
     Workspace overview;
     overview.workspaceId = WorkspaceIds::UserStart;
     overview.title       = overviewTitle;

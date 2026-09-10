@@ -24,8 +24,8 @@
 #include <cmath>
 #include <QtGlobal>
 
+#include "Core/SerialStudio.h"
 #include "Core/SSAssert.h"
-#include "SerialStudio.h"
 
 // Frame.h defaults Dataset::fftWindow to the literal 5 (it cannot name the enumerator).
 static_assert(static_cast<int>(SerialStudio::FFTWindowBlackmanHarris) == 5,

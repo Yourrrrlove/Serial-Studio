@@ -27,38 +27,26 @@
 #include <unordered_map>
 #include <vector>
 
-namespace DataModel {
-class ProjectModel;
-}  // namespace DataModel
+namespace Core::Bus {
+struct ProjectStructureSnapshot;
+}  // namespace Core::Bus
 
 namespace IO {
-
-/**
- * @brief Link counters summed across every open device, sampled once per second by the problem
- *        center. Readers are recreated on connect/reconfigure, so a decrease means a reset.
- */
-struct LinkStats {
-  quint64 bytesIn;
-  quint64 droppedFrames;
-  quint64 overflowBytes;
-  quint64 checksumErrors;
-  quint64 framesExtracted;
-};
 
 class DeviceManager;
 class HAL_Driver;
 
 /**
- * @brief Every read over the live device table (spec 0075, C14): open counts, the link state and
- *        its 1 Hz diagnostics sample, the configuration verdict, and the id lookups the connect
- *        fan-outs iterate. Read-only by construction, so no path through here can mutate a
- *        device or emit a signal.
+ * @brief Every read over the live device table (spec 0075, C14): open counts, the link state, the
+ *        configuration verdict, and the id lookups the connect fan-outs iterate. Read-only by
+ * construction, so no path through here can mutate a device or emit a signal.
  */
 class DeviceTableQuery {
 public:
   using DeviceTable = std::unordered_map<int, std::unique_ptr<DeviceManager>>;
 
-  DeviceTableQuery(const DeviceTable& devices, DataModel::ProjectModel& projectModel);
+  DeviceTableQuery(const DeviceTable& devices,
+                   const std::shared_ptr<const Core::Bus::ProjectStructureSnapshot>& project);
 
   DeviceTableQuery(DeviceTableQuery&&)                 = delete;
   DeviceTableQuery(const DeviceTableQuery&)            = delete;
@@ -70,7 +58,6 @@ public:
   [[nodiscard]] bool isDeviceConnected(int deviceId) const;
   [[nodiscard]] bool anyDeviceConnecting() const;
   [[nodiscard]] int connectedDeviceCount() const;
-  [[nodiscard]] LinkStats linkStats() const;
   [[nodiscard]] bool projectConfigurationOk() const;
   [[nodiscard]] int deviceIdForDriver(const HAL_Driver* driver) const;
   [[nodiscard]] std::vector<int> deviceIdSnapshot(bool projectSourcesOnly) const;
@@ -79,7 +66,7 @@ public:
 
 private:
   const DeviceTable& m_devices;
-  DataModel::ProjectModel& m_projectModel;
+  const std::shared_ptr<const Core::Bus::ProjectStructureSnapshot>& m_project;
 };
 
 }  // namespace IO

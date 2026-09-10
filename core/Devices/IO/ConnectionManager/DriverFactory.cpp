@@ -21,14 +21,15 @@
 
 #include "IO/ConnectionManager/DriverFactory.h"
 
+#include "Core/DiagnosticsTypes.h"
 #include "Core/SSAssert.h"
 #include "IO/ConnectionManager/DriverUiRegistry.h"
 #include "IO/Drivers/BluetoothLE.h"
 #include "IO/Drivers/Network.h"
 #include "IO/Drivers/UART.h"
-#include "Misc/Diagnostics/DiagnosticsShared.h"
 
 #ifdef BUILD_COMMERCIAL
+#  include "Core/Licensing/CommercialToken.h"
 #  include "IO/Drivers/Audio.h"
 #  include "IO/Drivers/CANBus.h"
 #  include "IO/Drivers/EthernetIp.h"
@@ -40,7 +41,6 @@
 #  include "IO/Drivers/Process.h"
 #  include "IO/Drivers/S7.h"
 #  include "IO/Drivers/USB.h"
-#  include "Licensing/CommercialToken.h"
 #endif
 
 //--------------------------------------------------------------------------------------------------
@@ -94,11 +94,15 @@ template<typename Driver>
 
 /**
  * @brief Binds the factory to the UI-config registry whose instances the live listen-only
- *        drivers publish their status through.
+ *        drivers publish their status through, and to the message bus every driver it builds
+ *        raises notifications on (spec 0077 T30).
  */
-IO::DriverFactory::DriverFactory([[maybe_unused]] DriverUiRegistry& uiDrivers)
+IO::DriverFactory::DriverFactory([[maybe_unused]] DriverUiRegistry& uiDrivers,
+                                 Core::Bus::MessageBus& bus)
 #ifdef BUILD_COMMERCIAL
-  : m_uiDrivers(uiDrivers)
+  : m_uiDrivers(uiDrivers), m_bus(bus)
+#else
+  : m_bus(bus)
 #endif
 {}
 
@@ -107,14 +111,26 @@ IO::DriverFactory::DriverFactory([[maybe_unused]] DriverUiRegistry& uiDrivers)
 //--------------------------------------------------------------------------------------------------
 
 /**
- * @brief Creates a fresh driver instance for the given bus @p type, or nullptr when this build
- *        or this licence does not carry that bus.
+ * @brief Creates a fresh driver instance for the given bus @p type with the message bus attached,
+ *        or nullptr when this build or this licence does not carry that bus.
  */
 std::unique_ptr<IO::HAL_Driver> IO::DriverFactory::create(SerialStudio::BusType type) const
 {
   SS_ASSERT(static_cast<int>(type) >= static_cast<int>(SerialStudio::BusType::UART),
             return nullptr);
 
+  auto driver = build(type);
+  if (driver)
+    driver->attachMessageBus(m_bus);
+
+  return driver;
+}
+
+/**
+ * @brief Constructs the unattached driver for @p type, one case per bus behind its licence gate.
+ */
+std::unique_ptr<IO::HAL_Driver> IO::DriverFactory::build(SerialStudio::BusType type) const
+{
   switch (type) {
     case SerialStudio::BusType::UART:
       return std::make_unique<IO::Drivers::UART>();

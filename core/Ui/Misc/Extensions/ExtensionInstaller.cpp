@@ -32,8 +32,8 @@
 #include <QNetworkRequest>
 
 #include "Core/SSAssert.h"
+#include "Core/WorkspaceManager.h"
 #include "Misc/Extensions/ExtensionCatalog.h"
-#include "Misc/WorkspaceManager.h"
 
 //--------------------------------------------------------------------------------------------------
 // Constructor

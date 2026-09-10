@@ -21,11 +21,15 @@
 
 #include "SessionContext.h"
 
+#include "API/HandlerContext.h"
 #include "AppState.h"
 #include "Console/Handler.h"
+#include "Core/Bus/MessageBus.h"
+#include "Core/Services.h"
 #include "Core/SSAssert.h"
 #include "DataModel/FrameBuilder.h"
 #include "DataModel/NotificationCenter.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
 #include "DataModel/Scripting/FrameParser.h"
 #include "IO/ConnectionManager.h"
@@ -70,18 +74,37 @@ int SessionContext::sessionId() const noexcept
 }
 
 /**
+ * @brief Whether slot 0, the message bus, is adopted; the Core service bootstrap runs before the
+ *        pinned order and the root must not adopt a second bus.
+ */
+bool SessionContext::hasBus() const noexcept
+{
+  return m_bus != nullptr;
+}
+
+/**
  * @brief Whether every session subsystem is owned by this context. True from the moment the
  *        composition root finishes the pinned order until shutdown() releases the slots.
  */
 bool SessionContext::sealed() const noexcept
 {
-  return m_appState && m_dashboard && m_console && m_frameParser && m_frameBuilder && m_projectModel
-      && m_pipelineHost && m_connectionManager && m_notifications;
+  return m_bus && m_appState && m_dashboard && m_console && m_frameParser && m_frameBuilder
+      && m_projectModel && m_pipelineHost && m_connectionManager && m_notifications;
 }
 
 //--------------------------------------------------------------------------------------------------
 // Ownership
 //--------------------------------------------------------------------------------------------------
+
+/**
+ * @brief Takes ownership of this session's message bus, slot 0 of the pinned order.
+ */
+void SessionContext::adoptBus(std::unique_ptr<Core::Bus::MessageBus> bus)
+{
+  SS_ASSERT(!m_bus, return);
+  SS_ASSERT(bus != nullptr, return);
+  m_bus = std::move(bus);
+}
 
 /**
  * @brief Takes ownership of this session's application state.
@@ -91,6 +114,7 @@ void SessionContext::adoptAppState(std::unique_ptr<AppState> module)
   SS_ASSERT(!m_appState, return);
   SS_ASSERT(module != nullptr, return);
   m_appState = std::move(module);
+  AppState::bindInstance(m_appState.get());
 }
 
 /**
@@ -101,6 +125,7 @@ void SessionContext::adoptDashboard(std::unique_ptr<UI::Dashboard> module)
   SS_ASSERT(!m_dashboard, return);
   SS_ASSERT(module != nullptr, return);
   m_dashboard = std::move(module);
+  UI::Dashboard::bindInstance(m_dashboard.get());
 }
 
 /**
@@ -111,6 +136,7 @@ void SessionContext::adoptConsole(std::unique_ptr<Console::Handler> module)
   SS_ASSERT(!m_console, return);
   SS_ASSERT(module != nullptr, return);
   m_console = std::move(module);
+  Console::Handler::bindInstance(m_console.get());
 }
 
 /**
@@ -121,6 +147,7 @@ void SessionContext::adoptFrameParser(std::unique_ptr<DataModel::FrameParser> mo
   SS_ASSERT(!m_frameParser, return);
   SS_ASSERT(module != nullptr, return);
   m_frameParser = std::move(module);
+  DataModel::FrameParser::bindInstance(m_frameParser.get());
 }
 
 /**
@@ -131,6 +158,7 @@ void SessionContext::adoptFrameBuilder(std::unique_ptr<DataModel::FrameBuilder> 
   SS_ASSERT(!m_frameBuilder, return);
   SS_ASSERT(module != nullptr, return);
   m_frameBuilder = std::move(module);
+  DataModel::FrameBuilder::bindInstance(m_frameBuilder.get());
 }
 
 /**
@@ -141,6 +169,7 @@ void SessionContext::adoptProjectModel(std::unique_ptr<DataModel::ProjectModel> 
   SS_ASSERT(!m_projectModel, return);
   SS_ASSERT(module != nullptr, return);
   m_projectModel = std::move(module);
+  DataModel::ProjectModel::bindInstance(m_projectModel.get());
 }
 
 /**
@@ -151,6 +180,7 @@ void SessionContext::adoptPipelineHost(std::unique_ptr<IO::PipelineHost> module)
   SS_ASSERT(!m_pipelineHost, return);
   SS_ASSERT(module != nullptr, return);
   m_pipelineHost = std::move(module);
+  IO::PipelineHost::bindInstance(m_pipelineHost.get());
 }
 
 /**
@@ -161,6 +191,7 @@ void SessionContext::adoptConnectionManager(std::unique_ptr<IO::ConnectionManage
   SS_ASSERT(!m_connectionManager, return);
   SS_ASSERT(module != nullptr, return);
   m_connectionManager = std::move(module);
+  IO::ConnectionManager::bindInstance(m_connectionManager.get());
 }
 
 /**
@@ -171,6 +202,7 @@ void SessionContext::adoptNotifications(std::unique_ptr<DataModel::NotificationC
   SS_ASSERT(!m_notifications, return);
   SS_ASSERT(module != nullptr, return);
   m_notifications = std::move(module);
+  DataModel::NotificationCenter::bindInstance(m_notifications.get());
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -178,12 +210,14 @@ void SessionContext::adoptNotifications(std::unique_ptr<DataModel::NotificationC
 //--------------------------------------------------------------------------------------------------
 
 /**
- * @brief Releases every adopted subsystem in exact reverse pinned order, while qApp is alive and
- *        after the QML engine died (INV-6). An abandoned processing thread is the one exception:
- *        parser, builder and host leak instead, since the thread's wirings still capture them.
+ * @brief Releases every adopted subsystem in exact reverse pinned order, the bus last, while qApp
+ *        is alive and after the QML engine died (INV-6). An abandoned processing thread is the one
+ *        exception: parser, builder and host leak AND stay bound, since the thread's wirings
+ *        still reach them.
  */
 void SessionContext::shutdown()
 {
+  UI::Dashboard::bindInstance(nullptr);
   m_dashboard.reset();
 
   const bool pipelineAbandoned = m_pipelineHost && m_pipelineHost->pipelineAbandoned();
@@ -193,19 +227,43 @@ void SessionContext::shutdown()
     (void)m_pipelineHost.release();
   }
 
+  if (!pipelineAbandoned) {
+    DataModel::FrameParser::bindInstance(nullptr);
+    IO::PipelineHost::bindInstance(nullptr);
+    DataModel::FrameBuilder::bindInstance(nullptr);
+  }
+
   m_frameParser.reset();
+  Console::Handler::bindInstance(nullptr);
   m_console.reset();
+  IO::ConnectionManager::bindInstance(nullptr);
   m_connectionManager.reset();
   m_pipelineHost.reset();
   m_frameBuilder.reset();
+  AppState::bindInstance(nullptr);
   m_appState.reset();
+  DataModel::ProjectModel::bindInstance(nullptr);
   m_projectModel.reset();
+  DataModel::NotificationCenter::bindInstance(nullptr);
   m_notifications.reset();
+  API::bindHandlerContext(nullptr);
+  DataModel::bindPipelineModules(nullptr);
+  Core::bindServices(nullptr);
+  m_bus.reset();
 }
 
 //--------------------------------------------------------------------------------------------------
 // Session-scoped subsystems (all nine owned; a reach before adoption is a named fatal)
 //--------------------------------------------------------------------------------------------------
+
+/**
+ * @brief Returns the message bus every module of this session publishes on (spec 0077).
+ */
+Core::Bus::MessageBus& SessionContext::bus() const
+{
+  SS_ASSERT(m_bus != nullptr, qFatal("SessionContext: %s accessed before adoption", "bus"));
+  return *m_bus;
+}
 
 /**
  * @brief Returns the application state (operation mode, project path, frame config).

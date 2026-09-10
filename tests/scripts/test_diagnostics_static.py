@@ -35,10 +35,10 @@ DIAGNOSTICS_SOURCES = (
     "core/Ui/Misc/Diagnostics/AudioChecks.cpp",
     "core/Ui/Misc/Diagnostics/BluetoothChecks.cpp",
     "core/Ui/Misc/Diagnostics/DeviceAccess.cpp",
-    "core/Ui/Misc/Diagnostics/DiagnosticsShared.h",
+    "core/Core/DiagnosticsTypes.h",
     "core/Ui/Misc/Diagnostics/NetworkChecks.cpp",
     "core/Ui/Misc/Diagnostics/SerialChecks.cpp",
-    "core/Api/API/Handlers/DiagnosticsHandler.cpp",
+    "core/Ui/ApiHandlers/DiagnosticsHandler.cpp",
 )
 
 
@@ -110,29 +110,27 @@ def test_diagnostics_commands_are_in_exactly_one_tier():
 
 
 def test_diagnostics_commands_are_registered_in_cpp():
-    handler = read_text("core/Api/API/Handlers/DiagnosticsHandler.cpp")
+    handler = read_text("core/Ui/ApiHandlers/DiagnosticsHandler.cpp")
 
     for name in COMMANDS:
         assert f'QStringLiteral("{name}")' in handler
 
 
 def test_diagnostics_handler_is_registered_in_the_gpl_block():
-    source = read_text("core/Api/API/CommandHandler.cpp")
+    source = read_text("core/Ui/ApiHandlers/UiHandlers.cpp")
 
-    assert "API/Handlers/DiagnosticsHandler.h" in source
+    assert "ApiHandlers/DiagnosticsHandler.h" in source
     assert "Handlers::DiagnosticsHandler::registerCommands();" in source
 
     call = source.index("Handlers::DiagnosticsHandler::registerCommands();")
-    commercial = source.index(
-        "#ifdef BUILD_COMMERCIAL", source.index("initializeHandlers")
-    )
+    commercial = source.index("#ifdef BUILD_COMMERCIAL", source.index("registerAll()"))
     assert call < commercial, "the handler must register outside the commercial block"
 
 
 def test_diagnostics_handler_carries_no_commercial_guard():
     for path in (
-        "core/Api/API/Handlers/DiagnosticsHandler.h",
-        "core/Api/API/Handlers/DiagnosticsHandler.cpp",
+        "core/Ui/ApiHandlers/DiagnosticsHandler.h",
+        "core/Ui/ApiHandlers/DiagnosticsHandler.cpp",
     ):
         assert "BUILD_COMMERCIAL" not in read_text(path), f"{path} must stay GPL-clean"
 
@@ -146,7 +144,7 @@ def test_diagnostics_scope_has_a_description():
 
 
 def test_bus_slugs_match_the_declared_bus_count():
-    shared = read_text("core/Ui/Misc/Diagnostics/DiagnosticsShared.h")
+    shared = read_text("core/Core/DiagnosticsTypes.h")
     slugs = re.findall(r'return QStringLiteral\("(\w+)"\);', shared)
 
     for bus in BUSES:
@@ -156,7 +154,7 @@ def test_bus_slugs_match_the_declared_bus_count():
 
 
 def test_checker_ids_are_derived_from_the_bus_slugs():
-    shared = read_text("core/Ui/Misc/Diagnostics/DiagnosticsShared.h")
+    shared = read_text("core/Core/DiagnosticsTypes.h")
     runner = read_text("core/Ui/Misc/ConnectionDiagnostics.cpp")
 
     assert 'QStringLiteral("diagnostics.") + busSlug(bus)' in shared
@@ -167,7 +165,7 @@ def test_checker_ids_are_derived_from_the_bus_slugs():
 
 
 def test_handler_documents_every_checker_id():
-    handler = read_text("core/Api/API/Handlers/DiagnosticsHandler.cpp")
+    handler = read_text("core/Ui/ApiHandlers/DiagnosticsHandler.cpp")
 
     for bus in BUSES:
         assert (

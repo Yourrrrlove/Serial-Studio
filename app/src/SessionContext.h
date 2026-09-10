@@ -22,8 +22,13 @@
 #pragma once
 
 #include <memory>
+#include <utility>
 
 class AppState;
+
+namespace Core::Bus {
+class MessageBus;
+}  // namespace Core::Bus
 
 namespace Console {
 class Handler;
@@ -51,9 +56,9 @@ class Dashboard;
 
 /**
  * @brief Names the subsystems of one capture session and owns each once the composition root
- *        adopts it. INV-4: an adopted address never changes, so every frozen reference stays
- *        valid. INV-5: adopt*() asserts an empty slot; the only exit is shutdown(). The ctor
- *        and dtor stay empty or a module ctor re-enters current()'s Meyers guard (spec 0039).
+ *        adopts it. INV-4: an adopted address never changes. INV-5: adopt*() asserts an empty
+ *        slot; the only exit is shutdown(). Ctor and dtor stay empty (spec 0039). Slot 0 is the
+ *        message bus (spec 0077): adopted first, released last, handed to every module ctor.
  */
 class SessionContext {
 public:
@@ -68,8 +73,10 @@ public:
   [[nodiscard]] static SessionContext& current();
 
   [[nodiscard]] bool sealed() const noexcept;
+  [[nodiscard]] bool hasBus() const noexcept;
   [[nodiscard]] int sessionId() const noexcept;
 
+  [[nodiscard]] virtual Core::Bus::MessageBus& bus() const;
   [[nodiscard]] virtual AppState& appState() const;
   [[nodiscard]] virtual Console::Handler& console() const;
   [[nodiscard]] virtual UI::Dashboard& dashboard() const;
@@ -82,6 +89,7 @@ public:
 
   void shutdown();
 
+  void adoptBus(std::unique_ptr<Core::Bus::MessageBus> bus);
   void adoptAppState(std::unique_ptr<AppState> module);
   void adoptDashboard(std::unique_ptr<UI::Dashboard> module);
   void adoptConsole(std::unique_ptr<Console::Handler> module);
@@ -96,17 +104,19 @@ private:
   friend class Misc::ModuleManager;
 
   /**
-   * @brief Builds a session subsystem whose constructor is private to this context. The
-   *        composition root is the only caller, so a module stays unconstructible everywhere
-   *        else while the pinned order keeps one construction per line (spec 0039 M2).
+   * @brief Builds a session subsystem whose constructor is private to this context. The composition
+   *        root is the only caller, so a module stays unconstructible everywhere else while the
+   *        pinned order keeps one construction per line (spec 0039 M2). The bus (slot 0, spec 0077)
+   *        and any earlier slot's interface are handed in by reference the same way.
    */
-  template<typename T>
-  [[nodiscard]] static std::unique_ptr<T> create()
+  template<typename T, typename... Args>
+  [[nodiscard]] static std::unique_ptr<T> create(Args&&... args)
   {
-    return std::unique_ptr<T>(new T());
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
   }
 
   int m_sessionId;
+  std::unique_ptr<Core::Bus::MessageBus> m_bus;
   std::unique_ptr<AppState> m_appState;
   std::unique_ptr<UI::Dashboard> m_dashboard;
   std::unique_ptr<Console::Handler> m_console;

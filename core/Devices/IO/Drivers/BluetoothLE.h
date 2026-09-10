@@ -27,7 +27,7 @@
 #include <QLowEnergyController>
 #include <QLowEnergyService>
 
-#include "IO/HAL_Driver.h"
+#include "Core/IO/HAL_Driver.h"
 
 namespace IO {
 namespace Drivers {

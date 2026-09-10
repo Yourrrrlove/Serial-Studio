@@ -569,14 +569,10 @@ Item {
   }
 
   //
-  // Opens the surface owning a finding: sourceId, actionId, groupId, dataset uniqueId or settings
+  // Opens the Project Editor at the entity owning a finding: sourceId, actionId, groupId or
+  // dataset uniqueId
   //
   function jumpToProblemTarget(kind, uniqueId) {
-    if (kind.indexOf("settings/") === 0) {
-      app.showSettingsDialog()
-      return
-    }
-
     app.showProjectEditor()
 
     if (kind === "source")

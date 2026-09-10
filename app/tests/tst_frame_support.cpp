@@ -26,8 +26,10 @@
 #include <QVector>
 #include <vector>
 
-#include "DataModel/Frame.h"
-#include "SerialStudio.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/DataModel/FrameSupport.h"
+#include "Core/SerialStudio.h"
+#include "DataModel/TextCodec.h"
 
 // Every test function here is self-contained: no state is carried between slots, so Qt Test's
 // declaration-order execution is never load-bearing. CJK/emoji fixtures are spelled with \u escapes

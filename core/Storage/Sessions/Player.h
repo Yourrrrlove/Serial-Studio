@@ -25,17 +25,26 @@
 #  include <QVector>
 #  include <vector>
 
+#  include "Core/SerialStudio.h"
+#  include "Core/SSAssert.h"
 #  include "DataModel/ReplayPlaybackEngine.h"
-#  include "SerialStudio.h"
 #  include "Sessions/Player/PreSessionState.h"
 #  include "Sessions/Player/ReplaySynthesis.h"
 #  include "Sessions/PlayerLoaderWorker.h"
 
 class QThread;
 
-namespace UI {
-class Dashboard;
-}  // namespace UI
+namespace Core::Bus {
+class MessageBus;
+}  // namespace Core::Bus
+
+namespace DataModel {
+class IReplayPlotSink;
+}  // namespace DataModel
+
+namespace IO {
+class IPayloadInjector;
+}  // namespace IO
 
 namespace Sessions {
 
@@ -88,6 +97,12 @@ private:
 public:
   [[nodiscard]] static Player& instance();
 
+  void setPlotSink(DataModel::IReplayPlotSink* sink) noexcept { m_plotSink = sink; }
+
+  void setPayloadInjector(IO::IPayloadInjector* injector) noexcept { m_payloadInjector = injector; }
+
+  void attachMessageBus(Core::Bus::MessageBus& bus);
+
   [[nodiscard]] bool isOpen() const;
   [[nodiscard]] bool loading() const;
   [[nodiscard]] bool isPlaying() const;
@@ -122,13 +137,25 @@ protected:
   bool handleKeyPress(QKeyEvent* keyEvent);
 
 private:
+  [[nodiscard]] DataModel::IReplayPlotSink& plotSink() const
+  {
+    SS_ASSERT(m_plotSink != nullptr, qFatal("Sessions::Player: plot sink reached before binding"));
+    return *m_plotSink;
+  }
+
+  [[nodiscard]] IO::IPayloadInjector& payloadInjector() const
+  {
+    SS_ASSERT(m_payloadInjector != nullptr,
+              qFatal("Sessions::Player: payload injector reached before binding"));
+    return *m_payloadInjector;
+  }
+
   void initWorker();
   void joinWorker();
   void clearLocalState();
   void applyProjectLayout();
   void registerQuickPlotColumns();
   void applyBundledViewState(const QString& viewState, const QString& projectJson);
-  [[nodiscard]] static UI::Dashboard& viewStateDashboard();
   [[nodiscard]] ReplaySynthesis& synthesis();
 
   [[nodiscard]] bool restoreProjectFromJson(const QString& json);
@@ -172,6 +199,10 @@ private:
 
   bool m_restorePending;
   PreSessionState m_preSession;
+
+  Core::Bus::MessageBus* m_bus;
+  DataModel::IReplayPlotSink* m_plotSink;
+  IO::IPayloadInjector* m_payloadInjector;
 };
 
 }  // namespace Sessions

@@ -11,7 +11,7 @@
 
 #  include "API/GRPC/ConversionUtils.h"
 
-#  include "SerialStudio.h"
+#  include "Core/SerialStudio.h"
 
 //--------------------------------------------------------------------------------------------------
 // QJsonObject -> google.protobuf.Struct

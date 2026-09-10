@@ -161,7 +161,8 @@ judging anything on the `Driver -> FrameReader -> FrameBuilder -> Dashboard` pat
   two main-thread objects fills the 65536-slot queue at 10+ kHz and drops frames). Includes
   `DeviceManager` ready-read and `sourceStructureChanged -> rebuildDevices`.
 - **Allocation or a block copy on the dashboard path** — the Dashboard block must come from
-  `FrameBuilder::claimBlockSlot()` (slot pool), never a direct
+  the pooled block slots (`DataModel::BlockStager` on the frame lane,
+  `StreamProcessor::claimBlockSlot()` on the stream lane), never a direct
   `make_shared<DataModel::DataBlock>`. (The async-sink fan-out makes one *intentional*
   detached copy via `clone_block_trimmed`, gated on a sink being enabled — that is the slow
   export path, not a finding.)

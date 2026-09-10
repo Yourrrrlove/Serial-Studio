@@ -24,11 +24,11 @@
 #include <memory>
 #include <vector>
 
+#include "Core/IO/HAL_Driver.h"
+#include "Core/SerialStudio.h"
 #include "IO/Drivers/BluetoothLE.h"
 #include "IO/Drivers/Network.h"
 #include "IO/Drivers/UART.h"
-#include "IO/HAL_Driver.h"
-#include "SerialStudio.h"
 
 #ifdef BUILD_COMMERCIAL
 #  include "IO/Drivers/Audio.h"
@@ -45,6 +45,10 @@
 #endif
 
 class QObject;
+
+namespace Core::Bus {
+class MessageBus;
+}  // namespace Core::Bus
 
 namespace IO {
 /**
@@ -63,6 +67,7 @@ public:
   DriverUiRegistry& operator=(const DriverUiRegistry&) = delete;
 
   void releaseAll();
+  void attachMessageBus(Core::Bus::MessageBus& bus) const;
   void setupExternalConnections();
   void detachFrom(QObject* receiver) const;
 

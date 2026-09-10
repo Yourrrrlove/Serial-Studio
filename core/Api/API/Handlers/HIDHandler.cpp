@@ -14,6 +14,7 @@
 #include <QJsonArray>
 
 #include "API/CommandRegistry.h"
+#include "API/HandlerContext.h"
 #include "IO/ConnectionManager.h"
 
 //--------------------------------------------------------------------------------------------------
@@ -81,9 +82,9 @@ API::CommandResponse API::Handlers::HIDHandler::setDeviceIndex(const QString& id
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: deviceIndex"));
   }
 
-  const int device_index         = params.value(QStringLiteral("deviceIndex")).toInt();
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  const auto& devices            = connectionManager.hid()->deviceList();
+  const int device_index  = params.value(QStringLiteral("deviceIndex")).toInt();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  const auto& devices     = connectionManager.hid()->deviceList();
 
   if (device_index < 0 || device_index >= devices.count()) {
     return CommandResponse::makeError(
@@ -114,8 +115,8 @@ API::CommandResponse API::Handlers::HIDHandler::getDeviceList(const QString& id,
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  const auto& devices            = connectionManager.hid()->deviceList();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  const auto& devices     = connectionManager.hid()->deviceList();
 
   QJsonArray devices_array;
   for (const auto& device : devices)
@@ -135,8 +136,8 @@ API::CommandResponse API::Handlers::HIDHandler::getConfiguration(const QString& 
 {
   Q_UNUSED(params)
 
-  static auto& connectionManager = IO::ConnectionManager::instance();
-  auto* hid                      = connectionManager.hid();
+  auto& connectionManager = API::handlerContext().connectionManager;
+  auto* hid               = connectionManager.hid();
 
   QJsonObject result;
   result[QStringLiteral("deviceIndex")] = hid->deviceIndex();

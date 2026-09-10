@@ -14,6 +14,7 @@
 #include <QJsonArray>
 
 #include "API/CommandRegistry.h"
+#include "API/HandlerContext.h"
 #include "API/SchemaBuilder.h"
 #include "Core/SSAssert.h"
 #include "IO/ConnectionManager.h"
@@ -179,7 +180,7 @@ API::CommandResponse API::Handlers::EipHandler::getStatus(const QString& id,
 {
   Q_UNUSED(params)
 
-  static auto& manager = IO::ConnectionManager::instance();
+  auto& manager = API::handlerContext().connectionManager;
   return CommandResponse::makeSuccess(id, manager.ethernetIp()->statusJson());
 }
 
@@ -191,8 +192,8 @@ API::CommandResponse API::Handlers::EipHandler::getConfig(const QString& id,
 {
   Q_UNUSED(params)
 
-  static auto& manager = IO::ConnectionManager::instance();
-  auto* driver         = manager.ethernetIp();
+  auto& manager = API::handlerContext().connectionManager;
+  auto* driver  = manager.ethernetIp();
 
   QJsonObject result;
   result[QStringLiteral("host")]         = driver->host();
@@ -224,8 +225,8 @@ API::CommandResponse API::Handlers::EipHandler::setProperty(const QString& id,
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: value"));
   }
 
-  static auto& manager = IO::ConnectionManager::instance();
-  auto* driver         = manager.ethernetIp();
+  auto& manager = API::handlerContext().connectionManager;
+  auto* driver  = manager.ethernetIp();
 
   const auto value = params.value(QStringLiteral("value")).toVariant();
   QString reason;
@@ -257,8 +258,8 @@ API::CommandResponse API::Handlers::EipHandler::addTag(const QString& id, const 
       id, ErrorCode::InvalidParam, QStringLiteral("Unknown tag type: %1").arg(type));
   }
 
-  static auto& manager = IO::ConnectionManager::instance();
-  auto* driver         = manager.ethernetIp();
+  auto& manager = API::handlerContext().connectionManager;
+  auto* driver  = manager.ethernetIp();
 
   const int before = driver->tagCount();
   driver->addTag(params.value(QStringLiteral("name")).toString(),
@@ -292,8 +293,8 @@ API::CommandResponse API::Handlers::EipHandler::removeTag(const QString& id,
       id, ErrorCode::InvalidParam, QStringLiteral("Parameter \"index\" must be an integer"));
   }
 
-  static auto& manager = IO::ConnectionManager::instance();
-  auto* driver         = manager.ethernetIp();
+  auto& manager = API::handlerContext().connectionManager;
+  auto* driver  = manager.ethernetIp();
 
   const int index = indexValue.toInt();
   if (index < 0 || index >= driver->tagCount()) {
@@ -316,8 +317,8 @@ API::CommandResponse API::Handlers::EipHandler::clearTags(const QString& id,
 {
   Q_UNUSED(params)
 
-  static auto& manager = IO::ConnectionManager::instance();
-  auto* driver         = manager.ethernetIp();
+  auto& manager = API::handlerContext().connectionManager;
+  auto* driver  = manager.ethernetIp();
   driver->clearTags();
   return CommandResponse::makeSuccess(id,
                                       QJsonObject{
@@ -333,8 +334,8 @@ API::CommandResponse API::Handlers::EipHandler::generateProject(const QString& i
 {
   Q_UNUSED(params)
 
-  static auto& manager = IO::ConnectionManager::instance();
-  auto* driver         = manager.ethernetIp();
+  auto& manager = API::handlerContext().connectionManager;
+  auto* driver  = manager.ethernetIp();
   if (!driver->loadGeneratedProject()) {
     return CommandResponse::makeError(
       id, ErrorCode::OperationFailed, QStringLiteral("The project could not be generated"));

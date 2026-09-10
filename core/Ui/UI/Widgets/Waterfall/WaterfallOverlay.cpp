@@ -30,9 +30,9 @@
 #include <QtMath>
 
 #include "Core/SSAssert.h"
+#include "Core/TimerEvents.h"
 #include "Misc/CommonFonts.h"
 #include "Misc/ThemeManager.h"
-#include "Misc/TimerEvents.h"
 #include "UI/Widgets/Waterfall/WaterfallMath.h"
 #include "UI/Widgets/Waterfall/WaterfallTicks.h"
 
@@ -505,8 +505,8 @@ void Widgets::WaterfallOverlay::drawYAxis(QPainter* painter)
     const QString label  = WaterfallTicks::formatTimeTick(v, step);
     const int labelWidth = fm.horizontalAdvance(label);
     const double textCy  = qBound(m_plotRect.top() + fm.ascent() * 0.5,
-                                  y + fm.ascent() * 0.5,
-                                  m_plotRect.bottom() + fm.ascent() * 0.5);
+                                 y + fm.ascent() * 0.5,
+                                 m_plotRect.bottom() + fm.ascent() * 0.5);
     painter->setPen(m_textColor);
     painter->drawText(QPointF(labelRight - labelWidth, textCy), label);
   }

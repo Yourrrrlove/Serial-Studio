@@ -187,7 +187,8 @@ Item {
         boundsBehavior: Flickable.StopAtBounds
 
         ScrollBar.vertical: ScrollBar {
-          policy: ScrollBar.AsNeeded
+          policy: listView.contentHeight > listView.height ? ScrollBar.AlwaysOn
+                                                           : ScrollBar.AlwaysOff
         }
 
         function positionAtTail() {

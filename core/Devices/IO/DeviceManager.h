@@ -23,18 +23,17 @@
 
 #include <memory>
 #include <QObject>
-#include <QPointer>
 
-#include "IO/FrameConfig.h"
-#include "IO/FrameReader.h"
-#include "IO/HAL_Driver.h"
+#include "Core/IO/FrameConfig.h"
+#include "Core/IO/HAL_Driver.h"
+#include "Core/IO/IIngestBinder.h"
 
 namespace IO {
 
-class PipelineHost;
-
 /**
- * @brief Non-singleton owner of one HAL driver and one FrameReader.
+ * @brief Non-singleton owner of one HAL driver, attached to the acquisition pipeline through the
+ *        ingest binder (spec 0077): the reader that frames this driver's bytes is created,
+ *        recreated and retired by the binder, never named here.
  */
 class DeviceManager : public QObject {
   Q_OBJECT
@@ -47,15 +46,15 @@ public:
   explicit DeviceManager(int deviceId,
                          std::unique_ptr<HAL_Driver> driver,
                          const FrameConfig& config,
+                         IIngestBinder& binder,
                          QObject* parent = nullptr);
   ~DeviceManager();
 
   [[nodiscard]] int deviceId() const noexcept;
   [[nodiscard]] bool isOpen() const;
   [[nodiscard]] bool isWritable() const;
+  [[nodiscard]] bool isAttached() const noexcept;
   [[nodiscard]] HAL_Driver* driver() const noexcept;
-
-  [[nodiscard]] inline FrameReader* frameReader() const noexcept { return m_frameReader.data(); }
 
   [[nodiscard]] qint64 write(const QByteArray& data);
 
@@ -70,16 +69,15 @@ private slots:
   void onConsoleDataReceived(const IO::CapturedDataPtr& data);
 
 private:
-  void startFrameReader(const FrameConfig& config);
-  void killFrameReader();
+  void attachToPipeline(const FrameConfig& config);
+  void detachFromPipeline();
 
 private:
   int m_deviceId;
-  PipelineHost& m_pipeline;
+  bool m_attached;
+  IIngestBinder& m_binder;
   FrameConfig m_frameConfig;
   std::unique_ptr<HAL_Driver> m_driver;
-  QPointer<FrameReader> m_frameReader;
-  QMetaObject::Connection m_readerFeed;
 };
 
 }  // namespace IO

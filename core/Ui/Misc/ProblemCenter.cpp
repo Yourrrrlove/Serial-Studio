@@ -27,14 +27,16 @@
 #include <QVariantMap>
 #include <utility>
 
+#include "Core/Services.h"
 #include "Core/SSAssert.h"
+#include "Core/TimerEvents.h"
 #include "DataModel/NotificationCenter.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
 #include "Misc/Problems/ExtensionCheckers.h"
 #include "Misc/Problems/LinkCheckers.h"
 #include "Misc/Problems/ProjectCheckers.h"
 #include "Misc/Problems/ScriptCheckers.h"
-#include "Misc/TimerEvents.h"
 
 //--------------------------------------------------------------------------------------------------
 // Finding comparison
@@ -60,7 +62,12 @@ bool Misc::ProblemCenter::Finding::operator==(const Finding& other) const noexce
  *        holds only while this constructor stays a leaf (see the class documentation).
  */
 Misc::ProblemCenter::ProblemCenter()
-  : m_infoCount(0), m_errorCount(0), m_warningCount(0), m_lastRun(), m_notifications(nullptr)
+  : m_infoCount(0)
+  , m_errorCount(0)
+  , m_warningCount(0)
+  , m_lastRun()
+  , m_notifications(nullptr)
+  , m_bus(nullptr)
 {}
 
 /**
@@ -419,6 +426,15 @@ bool Misc::ProblemCenter::activate(int row)
 }
 
 /**
+ * @brief Adopts the root-owned message bus this module publishes on and subscribes to.
+ */
+void Misc::ProblemCenter::attachMessageBus(Core::Bus::MessageBus& bus)
+{
+  SS_ASSERT(m_bus == nullptr, return);
+  m_bus = &bus;
+}
+
+/**
  * @brief Registers the built-in checkers and wires the project-change signals and the shared 1 Hz
  *        sample tick. Called once from the composition root after every module exists and before
  *        the last project is restored; the constructor stays inert.
@@ -430,9 +446,9 @@ void Misc::ProblemCenter::setupExternalConnections()
   Misc::ScriptCheckers::registerAll();
   Misc::ExtensionCheckers::registerAll();
 
-  m_notifications = &DataModel::NotificationCenter::instance();
+  m_notifications = &DataModel::pipelineModules().notifications;
 
-  auto* project = &DataModel::ProjectModel::instance();
+  auto* project = &DataModel::pipelineModules().projectModel;
   connect(
     project, &DataModel::ProjectModel::groupsChanged, this, &Misc::ProblemCenter::onProjectChanged);
   connect(project,
@@ -444,7 +460,7 @@ void Misc::ProblemCenter::setupExternalConnections()
           this,
           &Misc::ProblemCenter::onProjectChanged);
 
-  connect(&Misc::TimerEvents::instance(),
+  connect(&Core::services().timerEvents,
           &Misc::TimerEvents::timeout1Hz,
           this,
           &Misc::ProblemCenter::onLinkSample);

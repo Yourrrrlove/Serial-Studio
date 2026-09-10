@@ -24,14 +24,15 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QList>
 #include <QSet>
 #include <QString>
 #include <QStringList>
 #include <QTest>
 
+#include "Core/SerialStudio.h"
 #include "DataModel/Scripting/CFrameParser.h"
 #include "DataModel/Scripting/NativeTemplates/NativeTemplate.h"
-#include "SerialStudio.h"
 
 // Every test function here is self-contained: each builds its own CFrameParser, so Qt Test's
 // declaration-order execution is never load-bearing. Every load passes showMessageBoxes = false,

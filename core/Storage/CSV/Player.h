@@ -32,11 +32,24 @@
 #include <QTimer>
 #include <QVector>
 
+#include "Core/SSAssert.h"
 #include "CSV/Player/FileIndexer.h"
 #include "CSV/Player/MultiSourceMap.h"
 #include "CSV/Player/RowCodec.h"
 #include "CSV/PlayerLoaderWorker.h"
 #include "DataModel/ReplayPlaybackEngine.h"
+
+namespace Core::Bus {
+class MessageBus;
+}  // namespace Core::Bus
+
+namespace DataModel {
+class IReplayPlotSink;
+}  // namespace DataModel
+
+namespace IO {
+class IPayloadInjector;
+}  // namespace IO
 
 namespace CSV {
 /**
@@ -91,6 +104,16 @@ private:
 public:
   [[nodiscard]] static Player& instance();
 
+  void setPlotSink(DataModel::IReplayPlotSink* sink) noexcept { m_plotSink = sink; }
+
+  void setPayloadInjector(IO::IPayloadInjector* injector) noexcept { m_payloadInjector = injector; }
+
+  void attachMessageBus(Core::Bus::MessageBus& bus)
+  {
+    SS_ASSERT(m_bus == nullptr, return);
+    m_bus = &bus;
+  }
+
   [[nodiscard]] bool isOpen() const;
   [[nodiscard]] double progress() const;
   [[nodiscard]] bool isPlaying() const;
@@ -136,6 +159,19 @@ protected:
   bool handleKeyPress(QKeyEvent* keyEvent);
 
 private:
+  [[nodiscard]] DataModel::IReplayPlotSink& plotSink() const
+  {
+    SS_ASSERT(m_plotSink != nullptr, qFatal("CSV::Player: plot sink reached before binding"));
+    return *m_plotSink;
+  }
+
+  [[nodiscard]] IO::IPayloadInjector& payloadInjector() const
+  {
+    SS_ASSERT(m_payloadInjector != nullptr,
+              qFatal("CSV::Player: payload injector reached before binding"));
+    return *m_payloadInjector;
+  }
+
   void buildReplayLayout();
   void injectFrame(const QByteArray& frame);
   void injectRow(int row);
@@ -184,5 +220,9 @@ private:
   RowCodec m_rows;
   FileIndexer m_indexer;
   MultiSourceMap m_sources;
+
+  Core::Bus::MessageBus* m_bus;
+  DataModel::IReplayPlotSink* m_plotSink;
+  IO::IPayloadInjector* m_payloadInjector;
 };
 }  // namespace CSV

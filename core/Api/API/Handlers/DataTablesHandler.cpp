@@ -26,11 +26,12 @@
 
 #include "API/CommandRegistry.h"
 #include "API/SchemaBuilder.h"
+#include "Core/DataModel/Frame.h"
+#include "Core/SerialStudio.h"
 #include "DataModel/DataTable.h"
-#include "DataModel/Frame.h"
 #include "DataModel/FrameBuilder.h"
+#include "DataModel/PipelineModules.h"
 #include "DataModel/ProjectModel.h"
-#include "SerialStudio.h"
 
 //--------------------------------------------------------------------------------------------------
 // Local helpers
@@ -328,9 +329,9 @@ API::CommandResponse API::Handlers::DataTablesHandler::tablesList(const QString&
 {
   Q_UNUSED(params)
 
-  static auto& projectModel = DataModel::ProjectModel::instance();
-  const auto& tables        = projectModel.tables();
-  const auto& folders       = projectModel.editorTableFolders();
+  auto& projectModel  = DataModel::pipelineModules().projectModel;
+  const auto& tables  = projectModel.tables();
+  const auto& folders = projectModel.editorTableFolders();
 
   QJsonArray arr;
   for (const auto& t : tables) {
@@ -358,9 +359,9 @@ API::CommandResponse API::Handlers::DataTablesHandler::tableGet(const QString& i
     return CommandResponse::makeError(
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: name"));
 
-  static auto& projectModel = DataModel::ProjectModel::instance();
-  const auto& tables        = projectModel.tables();
-  const auto& folders       = projectModel.editorTableFolders();
+  auto& projectModel  = DataModel::pipelineModules().projectModel;
+  const auto& tables  = projectModel.tables();
+  const auto& folders = projectModel.editorTableFolders();
 
   QString path;
   for (const auto& t : tables) {
@@ -399,8 +400,8 @@ API::CommandResponse API::Handlers::DataTablesHandler::tableAdd(const QString& i
   const QString desired =
     params.value(QStringLiteral("name")).toString(QStringLiteral("Shared Table"));
 
-  static auto& projectModel = DataModel::ProjectModel::instance();
-  const QString actual      = projectModel.addTable(desired);
+  auto& projectModel   = DataModel::pipelineModules().projectModel;
+  const QString actual = projectModel.addTable(desired);
 
   QJsonObject result;
   result[QStringLiteral("name")]  = actual;
@@ -420,7 +421,7 @@ API::CommandResponse API::Handlers::DataTablesHandler::tableDelete(const QString
     return CommandResponse::makeError(
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: name"));
 
-  static auto& pm     = DataModel::ProjectModel::instance();
+  auto& pm            = DataModel::pipelineModules().projectModel;
   const auto& tables  = pm.tables();
   const auto& folders = pm.editorTableFolders();
 
@@ -480,7 +481,7 @@ API::CommandResponse API::Handlers::DataTablesHandler::tableRename(const QString
     return CommandResponse::makeError(
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: newName"));
 
-  static auto& pm     = DataModel::ProjectModel::instance();
+  auto& pm            = DataModel::pipelineModules().projectModel;
   const auto& tables  = pm.tables();
   const auto& folders = pm.editorTableFolders();
 
@@ -543,7 +544,7 @@ API::CommandResponse API::Handlers::DataTablesHandler::registerAdd(const QString
     return CommandResponse::makeError(
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: name"));
 
-  static auto& pm     = DataModel::ProjectModel::instance();
+  auto& pm            = DataModel::pipelineModules().projectModel;
   const auto& tables  = pm.tables();
   const auto& folders = pm.editorTableFolders();
 
@@ -606,7 +607,7 @@ API::CommandResponse API::Handlers::DataTablesHandler::registerDelete(const QStr
     return CommandResponse::makeError(
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: name"));
 
-  static auto& pm     = DataModel::ProjectModel::instance();
+  auto& pm            = DataModel::pipelineModules().projectModel;
   const auto& tables  = pm.tables();
   const auto& folders = pm.editorTableFolders();
 
@@ -669,7 +670,7 @@ API::CommandResponse API::Handlers::DataTablesHandler::registerUpdate(const QStr
     return CommandResponse::makeError(
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: name"));
 
-  static auto& pm     = DataModel::ProjectModel::instance();
+  auto& pm            = DataModel::pipelineModules().projectModel;
   const auto& tables  = pm.tables();
   const auto& folders = pm.editorTableFolders();
 
@@ -748,7 +749,7 @@ API::CommandResponse API::Handlers::DataTablesHandler::valueGet(const QString& i
     return CommandResponse::makeError(
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: name"));
 
-  static auto& frameBuilder = DataModel::FrameBuilder::instance();
+  auto& frameBuilder = DataModel::pipelineModules().frameBuilder;
 
   bool initialized = false;
   bool found       = false;
@@ -814,7 +815,7 @@ API::CommandResponse API::Handlers::DataTablesHandler::valueSet(const QString& i
   if (!rv.isNumeric)
     rv.stringValue = v.toString();
 
-  static auto& frameBuilder = DataModel::FrameBuilder::instance();
+  static auto& frameBuilder = DataModel::pipelineModules().frameBuilder;
 
   const auto& tableCtx = frameBuilder.guiTableApiContext();
 
@@ -864,7 +865,7 @@ API::CommandResponse API::Handlers::DataTablesHandler::valueHandle(const QString
     return CommandResponse::makeError(
       id, ErrorCode::MissingParam, QStringLiteral("Missing required parameter: name"));
 
-  static auto& frameBuilder = DataModel::FrameBuilder::instance();
+  auto& frameBuilder = DataModel::pipelineModules().frameBuilder;
 
   bool initialized = false;
   qint64 handle    = -1;
@@ -898,7 +899,7 @@ API::CommandResponse API::Handlers::DataTablesHandler::valueGetH(const QString& 
   const qint64 handle =
     static_cast<qint64>(SerialStudio::toDouble(params.value(QStringLiteral("handle"))));
 
-  static auto& frameBuilder = DataModel::FrameBuilder::instance();
+  auto& frameBuilder = DataModel::pipelineModules().frameBuilder;
 
   bool initialized = false;
   bool found       = false;
@@ -957,7 +958,7 @@ API::CommandResponse API::Handlers::DataTablesHandler::valueSetH(const QString& 
   if (!rv.isNumeric)
     rv.stringValue = v.toString();
 
-  static auto& frameBuilder = DataModel::FrameBuilder::instance();
+  static auto& frameBuilder = DataModel::pipelineModules().frameBuilder;
 
   const auto& tableCtx = frameBuilder.guiTableApiContext();
 

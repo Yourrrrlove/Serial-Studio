@@ -32,7 +32,7 @@
 class QJSEngine;
 
 namespace API {
-class CommandRegistry;
+class ICommandExecutor;
 }  // namespace API
 
 namespace DataModel {
@@ -77,7 +77,7 @@ private:
   ControlApiMarshaller* m_marshaller;
   DataModel::JsWatchdog* m_watchdog;
   const std::atomic<bool>* m_stop;
-  API::CommandRegistry& m_registry;
+  API::ICommandExecutor& m_executor;
 };
 
 /**

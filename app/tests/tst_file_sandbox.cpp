@@ -28,7 +28,7 @@
 
 #include "AI/Conversation/AsyncToolRunner.h"
 #include "AI/FileSandbox.h"
-#include "Misc/WorkspaceManager.h"
+#include "Core/WorkspaceManager.h"
 
 // The sandbox is a singleton over the live workspace, so the fixture points WorkspaceManager at a
 // temporary directory for the whole suite and every case works inside it.

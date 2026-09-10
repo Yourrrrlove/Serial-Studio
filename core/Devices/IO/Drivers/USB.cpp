@@ -27,11 +27,11 @@
 #include <QMetaObject>
 #include <QTimer>
 
+#include "Core/Bus/MessageBus.h"
+#include "Core/Bus/Messages.h"
 #include "Core/SSAssert.h"
-#include "DataModel/NotificationCenter.h"
 #include "IO/ConnectionManager.h"
 #include "IO/Drivers/USB/UsbHex.h"
-#include "Misc/Utilities.h"
 
 using namespace IO::Drivers::UsbHex;
 
@@ -43,6 +43,7 @@ constexpr unsigned int kBulkWriteTimeout = 1000;
 constexpr int kDefaultIsoPacketSize      = 1024;
 constexpr int kHotplugFallbackIntervalMs = 2000;
 constexpr int kMaxControlLength          = 4096;
+constexpr int kNotificationWarning       = 1;
 
 //--------------------------------------------------------------------------------------------------
 // libusb status pinning
@@ -488,16 +489,15 @@ void IO::Drivers::USB::setTransferMode(const int mode)
                    tr("Advanced control transfers stay off until they are enabled from the USB "
                       "setup pane: an incorrect control request can damage connected hardware."));
 
-    static auto& notifications = DataModel::NotificationCenter::instance();
-    QMetaObject::invokeMethod(
-      &notifications,
-      "postWarning",
-      Qt::QueuedConnection,
-      Q_ARG(QString, QStringLiteral("USB")),
-      Q_ARG(QString, tr("Advanced USB mode refused")),
-      Q_ARG(QString,
-            tr("This project asked for advanced control transfers. Enable them from the USB "
-               "setup pane if that is what you want.")));
+    auto* bus = messageBus();
+    if (bus)
+      bus->publish<Core::Bus::NotificationRaised>(
+        kNotificationWarning,
+        QStringLiteral("USB"),
+        QString(),
+        tr("Advanced USB mode refused"),
+        tr("This project asked for advanced control transfers. Enable them from the USB "
+           "setup pane if that is what you want."));
 
     Q_EMIT transferModeChanged();
     return;
@@ -1323,6 +1323,7 @@ QList<IO::DriverProperty> IO::Drivers::USB::driverProperties() const
   iso.value = m_isoPacketSize;
   iso.min   = 1;
   iso.max   = 65535;
+  iso.showWhen(QStringLiteral("transferMode"), {static_cast<int>(TransferMode::Isochronous)});
   props.append(iso);
 
   return props;
