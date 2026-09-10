@@ -8,7 +8,6 @@
 #  - clang-format pass 1      -> normalize layout
 #  - code-verify.py --fix     -> rules clang-format can't express
 #  - clang-format pass 2      -> reflow after code-verify's edits
-#  - code-verify.py --check   -> regenerate .code-report
 #  - clang-tidy-verify.py     -> opt-in (--clang-tidy): advisory .tidy-report over the changed
 #                                first-party C++; one line and a skip when no clang-tidy or
 #                                compile database exists, never a failure
@@ -29,6 +28,9 @@
 #  - build_search_index.py    -> refresh AI assistant BM25 index
 #  - baseline-manifest refresh -> re-hash the shipped .ssproj corpus into the spec-0036
 #                                baseline manifest so a resaved example never drifts from it
+#  - code-verify.py --check   -> regenerate .code-report LAST, after every generator has
+#                                written its C++: the commit gate hook judges staleness by
+#                                mtime against this report, so it must postdate them all
 #
 # Sanitize only: committing and pushing are left to the developer.
 #
@@ -268,10 +270,6 @@ def main(argv: list[str] | None = None) -> int:
     print("Running clang-format (pass 2)...")
     run_clang_format(root)
 
-    run_python_step_quiet(
-        "Regenerating .code-report", root / "scripts" / "code-verify.py", "--check"
-    )
-
     if args.clang_tidy:
         run_clang_tidy_advisories(root)
 
@@ -344,6 +342,10 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     refresh_baseline_manifest(root)
+
+    run_python_step_quiet(
+        "Regenerating .code-report", root / "scripts" / "code-verify.py", "--check"
+    )
 
     print("Checking for changes...")
     changed = capture(["git", "status", "--short"])
